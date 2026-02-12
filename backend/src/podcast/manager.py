@@ -1,0 +1,77 @@
+"""Batch orchestration for podcast generation."""
+
+import logging
+from datetime import datetime
+
+from sqlalchemy.orm import Session
+
+from src.config import Config
+from src.models import Post
+from src.podcast.generator import generate_podcast_for_post
+
+logger = logging.getLogger(__name__)
+
+
+def generate_pending(session: Session, config: Config, limit: int = 10) -> int:
+    """Find posts with audio_status='pending' and full_text available.
+    Generate podcasts for up to `limit` posts.
+    Updates audio_status, audio_path, audio_duration_secs.
+    Returns count of successfully generated audio files.
+    """
+    posts = (
+        session.query(Post)
+        .filter(Post.audio_status == "pending")
+        .filter(Post.full_text.isnot(None))
+        .filter(Post.full_text != "")
+        .order_by(Post.crawled_at.desc())
+        .limit(limit)
+        .all()
+    )
+
+    if not posts:
+        logger.info("No pending posts with full_text found")
+        return 0
+
+    logger.info(f"Generating podcasts for {len(posts)} posts...")
+    success_count = 0
+
+    for post in posts:
+        result = _generate_single(session, post, config)
+        if result:
+            success_count += 1
+
+    return success_count
+
+
+def generate_for_post(session: Session, post_id: int, config: Config) -> bool:
+    """Generate podcast for a specific post by ID. Returns True on success."""
+    post = session.query(Post).filter(Post.id == post_id).first()
+    if not post:
+        logger.error(f"Post {post_id} not found")
+        return False
+
+    return _generate_single(session, post, config)
+
+
+def _generate_single(session: Session, post: Post, config: Config) -> bool:
+    """Generate podcast for a single post. Returns True on success."""
+    logger.info(f"Generating podcast for: [{post.source_key}] {post.title}")
+
+    post.audio_status = "processing"
+    session.commit()
+
+    result = generate_podcast_for_post(post, config)
+
+    if result:
+        audio_path, duration = result
+        post.audio_status = "ready"
+        post.audio_path = audio_path
+        post.audio_duration_secs = duration
+        session.commit()
+        logger.info(f"  -> Success: {audio_path} ({duration}s)")
+        return True
+    else:
+        post.audio_status = "failed"
+        session.commit()
+        logger.warning(f"  -> Failed for post {post.id}")
+        return False

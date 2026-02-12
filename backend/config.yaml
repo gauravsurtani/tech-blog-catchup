@@ -1,0 +1,291 @@
+sources:
+  uber:
+    name: "Uber Engineering"
+    feed_url: "https://eng.uber.com/feed/"
+    sitemap_url: "https://www.uber.com/sitemap.xml"
+    blog_url_pattern: "/blog/"
+    enabled: true
+  airbnb:
+    name: "Airbnb Tech Blog"
+    feed_url: "https://medium.com/feed/airbnb-engineering"
+    archive_url: "https://medium.com/airbnb-engineering/archive"
+    blog_url_pattern: "/airbnb-engineering/"
+    platform: "medium"
+    enabled: true
+  meta:
+    name: "Meta Engineering"
+    feed_url: "https://engineering.fb.com/feed/"
+    sitemap_url: "https://engineering.fb.com/sitemap.xml"
+    enabled: true
+  aws:
+    name: "AWS Architecture"
+    feed_url: "https://aws.amazon.com/blogs/architecture/feed"
+    sitemap_url: "https://aws.amazon.com/blogs/architecture/sitemap.xml"
+    enabled: true
+  discord:
+    name: "Discord Engineering"
+    feed_url: "https://discord.com/blog/rss.xml"
+    sitemap_url: "https://discord.com/sitemap.xml"
+    blog_url_pattern: "/blog/"
+    enabled: true
+  netflix:
+    name: "Netflix TechBlog"
+    feed_url: "https://netflixtechblog.com/feed"
+    archive_url: "https://netflixtechblog.medium.com/archive"
+    blog_url_pattern: "netflixtechblog"
+    platform: "medium"
+    enabled: true
+  google:
+    name: "Google Research"
+    feed_url: "https://research.google/blog/rss/"
+    sitemap_url: "https://research.google/sitemap.xml"
+    blog_url_pattern: "/blog/"
+    enabled: true
+  nvidia:
+    name: "NVIDIA Developer"
+    feed_url: "https://developer.nvidia.com/blog/feed"
+    sitemap_url: "https://developer.nvidia.com/sitemap.xml"
+    blog_url_pattern: "/blog/"
+    enabled: true
+  cloudflare:
+    name: "Cloudflare Blog"
+    feed_url: "https://blog.cloudflare.com/rss/"
+    sitemap_url: "https://blog.cloudflare.com/sitemap.xml"
+    enabled: true
+  slack:
+    name: "Slack Engineering"
+    feed_url: "https://slack.engineering/feed"
+    sitemap_url: "https://slack.engineering/sitemap.xml"
+    enabled: true
+  figma:
+    name: "Figma Tech Blog"
+    feed_url: "https://www.figma.com/blog/feed/atom.xml"
+    sitemap_url: "https://www.figma.com/sitemap.xml"
+    blog_url_pattern: "/blog/"
+    enabled: true
+  shopify:
+    name: "Shopify Engineering"
+    feed_url: "https://shopify.engineering/blog.atom"
+    sitemap_url: "https://shopify.engineering/sitemap.xml"
+    enabled: true
+  stripe:
+    name: "Stripe Engineering"
+    feed_url: "https://stripe.com/blog/feed.rss"
+    sitemap_url: "https://stripe.com/sitemap.xml"
+    blog_url_pattern: "/blog/"
+    enabled: true
+  microsoft:
+    name: "Microsoft DevBlogs"
+    feed_url: "https://devblogs.microsoft.com/engineering-at-microsoft/feed"
+    sitemap_url: "https://devblogs.microsoft.com/sitemap.xml"
+    blog_url_pattern: "/engineering-at-microsoft/"
+    enabled: true
+  github:
+    name: "GitHub Engineering"
+    feed_url: "https://githubengineering.com/atom.xml"
+    sitemap_url: "https://github.blog/sitemap.xml"
+    blog_url_pattern: "/engineering/"
+    enabled: true
+
+tags:
+  Generative AI:
+    keywords:
+      - "generative ai"
+      - "genai"
+      - "gen ai"
+      - "text generation"
+      - "image generation"
+      - "diffusion"
+      - "dall-e"
+      - "midjourney"
+      - "stable diffusion"
+      - "chatgpt"
+      - "copilot"
+  LLMs:
+    keywords:
+      - "llm"
+      - "large language model"
+      - "language model"
+      - "transformer"
+      - "attention mechanism"
+      - "bert"
+      - "gpt"
+      - "llama"
+      - "mistral"
+      - "claude"
+      - "gemini"
+      - "token"
+      - "tokenizer"
+      - "prompt engineering"
+      - "rag"
+      - "retrieval augmented"
+  Fine Tuning:
+    keywords:
+      - "fine-tuning"
+      - "fine tuning"
+      - "finetuning"
+      - "lora"
+      - "qlora"
+      - "peft"
+      - "rlhf"
+      - "instruction tuning"
+      - "alignment"
+      - "dpo"
+  Infrastructure:
+    keywords:
+      - "infrastructure"
+      - "kubernetes"
+      - "k8s"
+      - "docker"
+      - "container"
+      - "terraform"
+      - "cloud"
+      - "microservice"
+      - "service mesh"
+      - "load balancer"
+      - "cdn"
+      - "scaling"
+  Data Engineering:
+    keywords:
+      - "data engineering"
+      - "data pipeline"
+      - "etl"
+      - "data lake"
+      - "data warehouse"
+      - "spark"
+      - "kafka"
+      - "airflow"
+      - "dbt"
+      - "batch processing"
+      - "stream processing"
+      - "data quality"
+  Frontend:
+    keywords:
+      - "frontend"
+      - "front-end"
+      - "react"
+      - "vue"
+      - "angular"
+      - "css"
+      - "javascript"
+      - "typescript"
+      - "web component"
+      - "browser"
+      - "dom"
+      - "design system"
+      - "accessibility"
+  Mobile:
+    keywords:
+      - "mobile"
+      - "ios"
+      - "android"
+      - "swift"
+      - "kotlin"
+      - "react native"
+      - "flutter"
+      - "app development"
+  Security:
+    keywords:
+      - "security"
+      - "vulnerability"
+      - "authentication"
+      - "authorization"
+      - "encryption"
+      - "oauth"
+      - "zero trust"
+      - "penetration testing"
+      - "threat"
+      - "malware"
+      - "firewall"
+  ML/AI:
+    keywords:
+      - "machine learning"
+      - "deep learning"
+      - "neural network"
+      - "training"
+      - "inference"
+      - "prediction"
+      - "classification"
+      - "regression"
+      - "computer vision"
+      - "nlp"
+      - "natural language processing"
+      - "reinforcement learning"
+  DevOps:
+    keywords:
+      - "devops"
+      - "ci/cd"
+      - "continuous integration"
+      - "continuous delivery"
+      - "deployment"
+      - "monitoring"
+      - "observability"
+      - "sre"
+      - "site reliability"
+      - "incident"
+      - "on-call"
+      - "alerting"
+      - "grafana"
+      - "prometheus"
+  Databases:
+    keywords:
+      - "database"
+      - "sql"
+      - "nosql"
+      - "postgresql"
+      - "mysql"
+      - "mongodb"
+      - "redis"
+      - "cassandra"
+      - "dynamodb"
+      - "query optimization"
+      - "indexing"
+      - "sharding"
+      - "replication"
+  Distributed Systems:
+    keywords:
+      - "distributed system"
+      - "consensus"
+      - "raft"
+      - "paxos"
+      - "eventual consistency"
+      - "cap theorem"
+      - "partitioning"
+      - "fault tolerance"
+      - "availability"
+      - "latency"
+      - "throughput"
+      - "rpc"
+      - "grpc"
+
+podcast:
+  llm_model: "gpt-4o"
+  tts_model: "openai"
+  conversation_style:
+    - "engaging"
+    - "educational"
+    - "technical but accessible"
+  roles_person1: "Main host - explains concepts clearly"
+  roles_person2: "Co-host - asks insightful questions, adds context"
+  dialogue_structure:
+    - "Introduction"
+    - "Main Discussion"
+    - "Key Takeaways"
+    - "Wrap-up"
+  output_language: "English"
+  engagement_techniques:
+    - "analogies"
+    - "real-world examples"
+    - "humor where appropriate"
+
+crawl:
+  delay_between_requests: 1.5
+  max_concurrent_crawls: 3
+  request_timeout: 30
+  max_retries: 3
+  respect_robots_txt: true
+
+app:
+  db_path: "data/techblog.db"
+  audio_dir: "audio"
+  fastapi_port: 8000

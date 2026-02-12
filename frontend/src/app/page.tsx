@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { usePosts } from "@/hooks/usePosts";
+import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import PostCard from "@/components/PostCard";
 import type { Post } from "@/lib/types";
 
@@ -36,6 +37,7 @@ function PostCardSkeleton() {
 
 export default function Home() {
   const [limit, setLimit] = useState(PAGE_SIZE);
+  const { play, addToQueue } = useAudioPlayer();
 
   const params = useMemo(
     () => ({ sort: "newest", limit, offset: 0 }),
@@ -48,10 +50,13 @@ export default function Home() {
     setLimit((prev) => prev + PAGE_SIZE);
   }
 
-  function handlePlay(post: Post) {
-    // Placeholder for audio player integration
-    console.log("Play:", post.id, post.title);
-  }
+  const handlePlay = useCallback((post: Post) => {
+    play(post);
+  }, [play]);
+
+  const handleAddToQueue = useCallback((post: Post) => {
+    addToQueue(post);
+  }, [addToQueue]);
 
   const hasMore = posts.length < total;
 
@@ -90,7 +95,7 @@ export default function Home() {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {posts.map((post) => (
-              <PostCard key={post.id} post={post} onPlay={handlePlay} />
+              <PostCard key={post.id} post={post} onPlay={handlePlay} onAddToQueue={handleAddToQueue} />
             ))}
           </div>
 

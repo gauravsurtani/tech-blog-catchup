@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Search, SlidersHorizontal, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { usePosts } from "@/hooks/usePosts";
+import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import { getTags, getSources } from "@/lib/api";
 import PostCard from "@/components/PostCard";
 import SourceFilter from "@/components/SourceFilter";
@@ -123,9 +124,15 @@ export default function ExplorePage() {
     setOffset(0);
   }, []);
 
-  function handlePlay(post: Post) {
-    console.log("Play:", post.id, post.title);
-  }
+  const { play, addToQueue } = useAudioPlayer();
+
+  const handlePlay = useCallback((post: Post) => {
+    play(post);
+  }, [play]);
+
+  const handleAddToQueue = useCallback((post: Post) => {
+    addToQueue(post);
+  }, [addToQueue]);
 
   // Pagination
   const totalPages = Math.ceil(total / PAGE_SIZE);
@@ -293,7 +300,7 @@ export default function ExplorePage() {
         {!loading && posts.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
             {posts.map((post) => (
-              <PostCard key={post.id} post={post} onPlay={handlePlay} />
+              <PostCard key={post.id} post={post} onPlay={handlePlay} onAddToQueue={handleAddToQueue} />
             ))}
           </div>
         )}

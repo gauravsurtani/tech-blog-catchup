@@ -310,6 +310,87 @@ pip install -e ".[dev]"
 pytest tests/ -v
 ```
 
+## Deployment
+
+### Option 1: Docker (recommended for local testing)
+
+```bash
+# Copy and configure environment
+cp backend/.env.example backend/.env
+# Edit backend/.env and add your OPENAI_API_KEY
+
+# Start everything
+docker-compose up --build
+
+# Frontend: http://localhost:3000
+# Backend API: http://localhost:8000
+# Swagger docs: http://localhost:8000/docs
+```
+
+### Option 2: Vercel (frontend) + Railway (backend)
+
+**Frontend on Vercel:**
+1. Connect your GitHub repo to [Vercel](https://vercel.com)
+2. Set root directory to `frontend/`
+3. Add environment variable: `NEXT_PUBLIC_API_URL=https://your-backend.railway.app`
+4. Deploy
+
+**Backend on Railway:**
+1. Connect your GitHub repo to [Railway](https://railway.app)
+2. Set root directory to `backend/`
+3. Set start command: `python run.py api`
+4. Add environment variables:
+   - `OPENAI_API_KEY=your-key`
+   - `CORS_ORIGINS=https://your-frontend.vercel.app`
+5. Deploy
+
+### Option 3: Any VPS with Docker
+
+```bash
+# On your server
+git clone <repo-url> && cd tech-blog-catchup
+cp backend/.env.example backend/.env
+# Edit backend/.env
+
+# Build and start
+docker-compose up -d --build
+
+# Initialize the database
+docker-compose exec backend python run.py init
+
+# Start crawling
+docker-compose exec backend python run.py crawl --source cloudflare
+```
+
+### Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `OPENAI_API_KEY` | For podcasts | -- | OpenAI API key for GPT-4o + TTS |
+| `CORS_ORIGINS` | For production | `http://localhost:3000` | Comma-separated allowed origins |
+| `NEXT_PUBLIC_API_URL` | For production | `http://localhost:8000` | Backend URL for frontend |
+
+## Development Notes
+
+### Podcastfy Installation
+
+Podcastfy may have transitive dependency issues. If `pip install podcastfy` fails:
+
+```bash
+pip install --no-deps podcastfy
+pip install openai  # already included in project deps
+```
+
+### Crawl4AI Browser Setup
+
+After installing dependencies, run the browser setup:
+
+```bash
+crawl4ai-setup
+```
+
+This installs Playwright's Chromium browser for JavaScript-rendered page crawling.
+
 ## License
 
 MIT

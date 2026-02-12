@@ -7,6 +7,7 @@ import TagBadge from "./TagBadge";
 interface PostCardProps {
   post: Post;
   onPlay?: (post: Post) => void;
+  onAddToQueue?: (post: Post) => void;
 }
 
 function formatDate(dateStr: string | null): string {
@@ -49,7 +50,7 @@ function formatWordCount(count: number | null): string {
   return `${count} words`;
 }
 
-export default function PostCard({ post, onPlay }: PostCardProps) {
+export default function PostCard({ post, onPlay, onAddToQueue }: PostCardProps) {
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 flex flex-col gap-3 hover:border-gray-700 transition-colors">
       {/* Source name */}
@@ -131,7 +132,10 @@ export default function PostCard({ post, onPlay }: PostCardProps) {
             Generating...
           </span>
         )}
-        <button className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm font-medium rounded-lg transition-colors ml-auto cursor-pointer">
+        <button
+          onClick={() => onAddToQueue?.(post)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm font-medium rounded-lg transition-colors ml-auto cursor-pointer"
+        >
           <Plus className="w-4 h-4" />
           Add to queue
         </button>

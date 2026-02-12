@@ -1,8 +1,11 @@
 """FastAPI route definitions."""
 
-from fastapi import APIRouter, Query, HTTPException
+import logging
+from fastapi import APIRouter, Query, HTTPException, BackgroundTasks
 from sqlalchemy import func, desc, asc
 from sqlalchemy.orm import joinedload
+
+logger = logging.getLogger(__name__)
 
 from src.database import get_session
 from src.models import Post, Tag, CrawlLog, post_tags
@@ -46,9 +49,17 @@ def list_posts(
         query = session.query(Post).options(joinedload(Post.tags))
 
         if source:
-            query = query.filter(Post.source_key == source)
+            source_keys = [s.strip() for s in source.split(",")]
+            if len(source_keys) == 1:
+                query = query.filter(Post.source_key == source_keys[0])
+            else:
+                query = query.filter(Post.source_key.in_(source_keys))
         if tag:
-            query = query.join(Post.tags).filter(Tag.name == tag)
+            tag_names = [t.strip() for t in tag.split(",")]
+            if len(tag_names) == 1:
+                query = query.join(Post.tags).filter(Tag.name == tag_names[0])
+            else:
+                query = query.join(Post.tags).filter(Tag.name.in_(tag_names))
         if search:
             query = query.filter(Post.title.ilike(f"%{search}%"))
         if audio_status:
@@ -156,49 +167,73 @@ def get_playlist(
     )
 
 
-@router.post("/crawl")
-def trigger_crawl(req: CrawlRequest):
-    """Trigger a crawl. Returns immediately with status."""
-    # Import here to avoid circular imports
+def _do_crawl(source_key: str | None, mode: str):
+    """Background task: run crawl."""
     from src.crawler.crawl_manager import crawl_all, crawl_full, crawl_incremental
     from src.config import get_config
 
     config = get_config()
     session = get_session()
     try:
-        if req.source:
-            source = next((s for s in config.sources if s.key == req.source), None)
+        if source_key:
+            source = next((s for s in config.sources if s.key == source_key), None)
             if not source:
-                raise HTTPException(status_code=404, detail=f"Source '{req.source}' not found")
-            if req.mode == "full":
+                logger.error("Source '%s' not found", source_key)
+                return
+            if mode == "full":
                 count = crawl_full(session, source, config)
             else:
                 count = crawl_incremental(session, source, config)
-            return {"source": req.source, "mode": req.mode, "new_posts": count}
+            logger.info("Crawl %s (%s): %d new posts", source_key, mode, count)
         else:
-            results = crawl_all(session, config, mode=req.mode)
-            return {"mode": req.mode, "results": results}
+            results = crawl_all(session, config, mode=mode)
+            logger.info("Crawl all (%s): %s", mode, results)
+    except Exception as exc:
+        logger.error("Crawl failed: %s", exc)
     finally:
         session.close()
 
 
-@router.post("/generate")
-def trigger_generate(req: GenerateRequest):
-    """Trigger podcast generation."""
+def _do_generate(post_id: int | None, limit: int):
+    """Background task: run podcast generation."""
     from src.podcast.manager import generate_pending, generate_for_post
     from src.config import get_config
 
     config = get_config()
     session = get_session()
     try:
-        if req.post_id:
-            success = generate_for_post(session, req.post_id, config)
-            return {"post_id": req.post_id, "success": success}
+        if post_id:
+            success = generate_for_post(session, post_id, config)
+            logger.info("Generate post %d: %s", post_id, "ok" if success else "failed")
         else:
-            count = generate_pending(session, config, limit=req.limit)
-            return {"generated": count}
+            count = generate_pending(session, config, limit=limit)
+            logger.info("Generated %d podcasts", count)
+    except Exception as exc:
+        logger.error("Generate failed: %s", exc)
     finally:
         session.close()
+
+
+@router.post("/crawl")
+def trigger_crawl(req: CrawlRequest, background_tasks: BackgroundTasks):
+    """Trigger a crawl. Returns immediately — crawl runs in background."""
+    from src.config import get_config
+
+    if req.source:
+        config = get_config()
+        source = next((s for s in config.sources if s.key == req.source), None)
+        if not source:
+            raise HTTPException(status_code=404, detail=f"Source '{req.source}' not found")
+
+    background_tasks.add_task(_do_crawl, req.source, req.mode)
+    return {"status": "started", "source": req.source, "mode": req.mode}
+
+
+@router.post("/generate")
+def trigger_generate(req: GenerateRequest, background_tasks: BackgroundTasks):
+    """Trigger podcast generation. Returns immediately — generation runs in background."""
+    background_tasks.add_task(_do_generate, req.post_id, req.limit)
+    return {"status": "started", "post_id": req.post_id, "limit": req.limit}
 
 
 @router.get("/status", response_model=StatusInfo)
@@ -236,3 +271,9 @@ def get_status():
         )
     finally:
         session.close()
+
+
+@router.get("/health")
+def health():
+    """Health check endpoint."""
+    return {"status": "ok"}

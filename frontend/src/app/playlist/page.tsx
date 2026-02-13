@@ -3,22 +3,14 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   Play,
-  Plus,
   Loader2,
   Music,
-  ListMusic,
   Filter,
 } from "lucide-react";
 import { getPlaylist, getSources, getTags } from "@/lib/api";
 import type { Post, Source, Tag } from "@/lib/types";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
-
-function formatDuration(seconds: number | null): string {
-  if (!seconds || !isFinite(seconds)) return "";
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
-}
+import PostListItem from "@/components/PostListItem";
 
 export default function PlaylistPage() {
   const { play, addToQueue, currentTrack, queue } = useAudioPlayer();
@@ -167,108 +159,17 @@ export default function PlaylistPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {posts.map((post) => {
-            const playing = isCurrentlyPlaying(post);
-            const queued = isInQueue(post);
-
-            return (
-              <div
-                key={post.id}
-                className={`bg-gray-900 border rounded-xl p-4 transition-all hover:border-gray-600 ${
-                  playing
-                    ? "border-green-500/50 bg-green-500/5"
-                    : "border-gray-800"
-                }`}
-              >
-                {/* Source badge */}
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs font-medium text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full">
-                    {post.source_name}
-                  </span>
-                  {post.audio_duration_secs && (
-                    <span className="text-xs text-gray-500">
-                      {formatDuration(post.audio_duration_secs)}
-                    </span>
-                  )}
-                </div>
-
-                {/* Title */}
-                <h3 className="text-sm font-medium text-gray-100 leading-snug mb-1 line-clamp-2">
-                  {post.title}
-                </h3>
-
-                {/* Author */}
-                {post.author && (
-                  <p className="text-xs text-gray-500 mb-2">{post.author}</p>
-                )}
-
-                {/* Summary preview */}
-                {post.summary && (
-                  <p className="text-xs text-gray-400 line-clamp-2 mb-3">
-                    {post.summary}
-                  </p>
-                )}
-
-                {/* Tags */}
-                {post.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    {post.tags.slice(0, 3).map((tag) => (
-                      <span
-                        key={tag}
-                        className="text-[10px] text-gray-400 bg-gray-800 px-1.5 py-0.5 rounded"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                    {post.tags.length > 3 && (
-                      <span className="text-[10px] text-gray-500">
-                        +{post.tags.length - 3}
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                {/* Actions */}
-                <div className="flex items-center gap-2 mt-auto pt-2 border-t border-gray-800">
-                  <button
-                    onClick={() => play(post)}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
-                      playing
-                        ? "bg-green-500 text-black"
-                        : "bg-gray-800 text-gray-200 hover:bg-gray-700 hover:text-white"
-                    }`}
-                  >
-                    <Play size={12} />
-                    {playing ? "Playing" : "Play"}
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (!queued) addToQueue(post);
-                    }}
-                    disabled={queued}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
-                      queued
-                        ? "bg-gray-800 text-green-400 cursor-default"
-                        : "bg-gray-800 text-gray-200 hover:bg-gray-700 hover:text-white"
-                    }`}
-                  >
-                    {queued ? (
-                      <>
-                        <ListMusic size={12} />
-                        In Queue
-                      </>
-                    ) : (
-                      <>
-                        <Plus size={12} />
-                        Queue
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+        <div className="flex flex-col">
+          {posts.map((post) => (
+            <PostListItem
+              key={post.id}
+              post={post}
+              onPlay={() => play(post)}
+              onAddToQueue={() => { if (!isInQueue(post)) addToQueue(post); }}
+              isPlaying={isCurrentlyPlaying(post)}
+              isQueued={isInQueue(post)}
+            />
+          ))}
         </div>
       )}
     </div>

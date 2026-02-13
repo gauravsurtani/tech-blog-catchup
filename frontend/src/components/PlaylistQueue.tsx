@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { X, ChevronUp, ChevronDown, Trash2, Music } from "lucide-react";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 
@@ -25,6 +26,14 @@ export default function PlaylistQueue({ isOpen, onClose }: PlaylistQueueProps) {
     play,
   } = useAudioPlayer();
 
+  const [confirmClear, setConfirmClear] = useState(false);
+
+  useEffect(() => {
+    if (!confirmClear) return;
+    const timer = setTimeout(() => setConfirmClear(false), 5000);
+    return () => clearTimeout(timer);
+  }, [confirmClear]);
+
   return (
     <>
       {/* Backdrop overlay on mobile */}
@@ -47,12 +56,30 @@ export default function PlaylistQueue({ isOpen, onClose }: PlaylistQueueProps) {
           <h2 className="text-lg font-semibold text-white">Queue</h2>
           <div className="flex items-center gap-2">
             {queue.length > 0 && (
-              <button
-                onClick={clearQueue}
-                className="text-xs text-gray-400 hover:text-red-400 transition-colors px-2 py-1 rounded hover:bg-gray-800"
-              >
-                Clear All
-              </button>
+              confirmClear ? (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-gray-300">Clear {queue.length} tracks?</span>
+                  <button
+                    onClick={() => { clearQueue(); setConfirmClear(false); }}
+                    className="text-xs text-red-400 hover:text-red-300 px-2 py-0.5 rounded bg-red-900/30 hover:bg-red-900/50 transition-colors"
+                  >
+                    Yes
+                  </button>
+                  <button
+                    onClick={() => setConfirmClear(false)}
+                    className="text-xs text-gray-400 hover:text-gray-200 px-2 py-0.5 rounded hover:bg-gray-800 transition-colors"
+                  >
+                    No
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setConfirmClear(true)}
+                  className="text-xs text-gray-400 hover:text-red-400 transition-colors px-2 py-1 rounded hover:bg-gray-800"
+                >
+                  Clear All
+                </button>
+              )
             )}
             <button
               onClick={onClose}

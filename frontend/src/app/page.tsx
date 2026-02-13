@@ -3,34 +3,23 @@
 import { useState, useMemo, useCallback } from "react";
 import { usePosts } from "@/hooks/usePosts";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
-import PostCard from "@/components/PostCard";
+import PostListItem from "@/components/PostListItem";
+import { triggerGenerate } from "@/lib/api";
 import type { Post } from "@/lib/types";
 
 const PAGE_SIZE = 12;
 
-function PostCardSkeleton() {
+function ListItemSkeleton() {
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 flex flex-col gap-3 animate-pulse">
-      <div className="flex items-center justify-between">
-        <div className="h-3 w-20 bg-gray-800 rounded" />
-        <div className="h-3 w-16 bg-gray-800 rounded" />
+    <div className="flex items-center gap-3 px-3 py-2.5 border-b border-gray-800/50 animate-pulse">
+      <div className="flex-shrink-0 w-7 h-7 bg-gray-800 rounded-full" />
+      <div className="flex-1 min-w-0 space-y-1.5">
+        <div className="h-4 w-3/4 bg-gray-800 rounded" />
+        <div className="h-3 w-1/2 bg-gray-800 rounded" />
       </div>
-      <div className="h-5 w-full bg-gray-800 rounded" />
-      <div className="h-5 w-3/4 bg-gray-800 rounded" />
-      <div className="h-3 w-24 bg-gray-800 rounded" />
-      <div className="space-y-2">
-        <div className="h-3 w-full bg-gray-800 rounded" />
-        <div className="h-3 w-5/6 bg-gray-800 rounded" />
-      </div>
-      <div className="flex gap-1.5">
-        <div className="h-5 w-14 bg-gray-800 rounded-full" />
-        <div className="h-5 w-18 bg-gray-800 rounded-full" />
-        <div className="h-5 w-12 bg-gray-800 rounded-full" />
-      </div>
-      <div className="flex items-center gap-2 pt-2 border-t border-gray-800">
-        <div className="h-8 w-16 bg-gray-800 rounded-lg" />
-        <div className="h-8 w-28 bg-gray-800 rounded-lg ml-auto" />
-      </div>
+      <div className="h-5 w-16 bg-gray-800 rounded-full hidden sm:block" />
+      <div className="h-4 w-12 bg-gray-800 rounded hidden sm:block" />
+      <div className="w-7 h-7 bg-gray-800 rounded-md" />
     </div>
   );
 }
@@ -58,6 +47,10 @@ export default function Home() {
     addToQueue(post);
   }, [addToQueue]);
 
+  const handleGenerate = useCallback((post: Post) => {
+    triggerGenerate(post.id).catch(() => {});
+  }, []);
+
   const hasMore = posts.length < total;
 
   return (
@@ -72,9 +65,9 @@ export default function Home() {
 
       {/* Loading skeleton */}
       {loading && posts.length === 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <PostCardSkeleton key={i} />
+        <div className="flex flex-col">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <ListItemSkeleton key={i} />
           ))}
         </div>
       )}
@@ -90,12 +83,12 @@ export default function Home() {
         </div>
       )}
 
-      {/* Post grid */}
+      {/* Post list */}
       {posts.length > 0 && (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="flex flex-col">
             {posts.map((post) => (
-              <PostCard key={post.id} post={post} onPlay={handlePlay} onAddToQueue={handleAddToQueue} />
+              <PostListItem key={post.id} post={post} onPlay={handlePlay} onAddToQueue={handleAddToQueue} onGenerate={handleGenerate} />
             ))}
           </div>
 

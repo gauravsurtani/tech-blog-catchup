@@ -7,6 +7,7 @@ const navItems = [
   { href: "/", label: "Home" },
   { href: "/explore", label: "Explore" },
   { href: "/playlist", label: "Playlist" },
+  { href: "/status", label: "Status" },
 ];
 
 export default function Navbar() {

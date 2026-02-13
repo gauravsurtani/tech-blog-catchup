@@ -45,7 +45,17 @@ export interface StatusInfo {
   tag_counts: Tag[];
 }
 
-export interface PlaylistTrack {
-  post: Post;
-  position: number;
+export interface CrawlStatusItem {
+  source_key: string;
+  source_name: string;
+  enabled: boolean;
+  feed_url: string;
+  blog_url: string | null;
+  status: "success" | "error" | "running" | "never";
+  post_count: number;
+  last_crawl_at: string | null;
+  last_crawl_type: string | null;
+  posts_added_last: number | null;
+  urls_found_last: number | null;
+  error_message: string | null;
 }

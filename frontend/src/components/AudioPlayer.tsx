@@ -34,6 +34,8 @@ export default function AudioPlayer() {
     previous,
     setVolume,
     seek,
+    playbackRate,
+    setPlaybackRate,
   } = useAudioPlayer();
 
   const [queueOpen, setQueueOpen] = useState(false);
@@ -216,6 +218,20 @@ export default function AudioPlayer() {
               </div>
             </div>
           </div>
+
+          {/* Speed control */}
+          <button
+            onClick={() => {
+              const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2, 3];
+              const currentIndex = speeds.indexOf(playbackRate);
+              const nextIndex = (currentIndex + 1) % speeds.length;
+              setPlaybackRate(speeds[nextIndex]);
+            }}
+            className="text-xs font-medium px-2 py-1 rounded-md bg-gray-800 hover:bg-gray-700 text-gray-300 transition-colors shrink-0 min-w-[3rem] text-center cursor-pointer"
+            aria-label={`Playback speed: ${playbackRate}x`}
+          >
+            {playbackRate}x
+          </button>
 
           {/* Queue button */}
           <button

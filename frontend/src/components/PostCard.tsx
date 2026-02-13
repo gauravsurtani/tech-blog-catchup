@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Play, Clock, User, ExternalLink, Plus, Loader } from "lucide-react";
 import type { Post } from "@/lib/types";
 import TagBadge from "./TagBadge";
@@ -67,15 +68,23 @@ export default function PostCard({ post, onPlay, onAddToQueue }: PostCardProps) 
 
       {/* Title */}
       <h3 className="text-lg font-semibold leading-tight">
-        <a
-          href={post.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-gray-100 hover:text-white transition-colors inline-flex items-start gap-1.5 group"
-        >
-          <span className="group-hover:underline">{post.title}</span>
-          <ExternalLink className="w-3.5 h-3.5 mt-1 flex-shrink-0 text-gray-500 group-hover:text-gray-300" />
-        </a>
+        <div className="flex items-start gap-1.5">
+          <Link
+            href={`/post/${post.id}`}
+            className="text-gray-100 hover:text-white hover:underline transition-colors flex-1"
+          >
+            {post.title}
+          </Link>
+          <a
+            href={post.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-shrink-0 mt-1 text-gray-500 hover:text-gray-300 transition-colors"
+            title="Open original article"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        </div>
       </h3>
 
       {/* Author */}

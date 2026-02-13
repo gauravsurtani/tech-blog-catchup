@@ -1,17 +1,103 @@
+import type { PaginatedPosts, PostDetail, Tag, Source, CrawlStatusItem } from "./types";
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-async function fetchAPI<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options?.headers,
-    },
-  });
-  if (!res.ok) {
-    throw new Error(`API error: ${res.status} ${res.statusText}`);
+const DEFAULT_TIMEOUT_MS = 10_000;
+const MAX_RETRIES = 3;
+const INITIAL_BACKOFF_MS = 500;
+
+export class ApiError extends Error {
+  status: number;
+  details: string | null;
+
+  constructor(status: number, message: string, details: string | null = null) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.details = details;
   }
-  return res.json();
+}
+
+function isRetryable(status: number): boolean {
+  return status >= 500 || status === 429;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function parseErrorBody(res: Response): Promise<string | null> {
+  try {
+    const body = await res.json();
+    if (typeof body.detail === "string") return body.detail;
+    if (typeof body.message === "string") return body.message;
+    if (typeof body.error === "string") return body.error;
+  } catch {
+    // response body is not JSON or empty
+  }
+  return null;
+}
+
+async function fetchAPI<T>(path: string, options?: RequestInit): Promise<T> {
+  const url = `${API_BASE}${path}`;
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+
+    try {
+      const res = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+        headers: {
+          "Content-Type": "application/json",
+          ...options?.headers,
+        },
+      });
+
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        return res.json();
+      }
+
+      const detail = await parseErrorBody(res);
+      const message = detail || `${res.status} ${res.statusText}`;
+
+      if (isRetryable(res.status) && attempt < MAX_RETRIES - 1) {
+        lastError = new ApiError(res.status, message, detail);
+        await sleep(INITIAL_BACKOFF_MS * Math.pow(2, attempt));
+        continue;
+      }
+
+      throw new ApiError(res.status, message, detail);
+    } catch (err) {
+      clearTimeout(timeoutId);
+
+      if (err instanceof ApiError) {
+        throw err;
+      }
+
+      // Network error or abort
+      const isTimeout =
+        err instanceof DOMException && err.name === "AbortError";
+      const networkMessage = isTimeout
+        ? "Request timed out"
+        : "Network error";
+
+      lastError = new ApiError(0, networkMessage, null);
+
+      if (attempt < MAX_RETRIES - 1) {
+        await sleep(INITIAL_BACKOFF_MS * Math.pow(2, attempt));
+        continue;
+      }
+
+      throw lastError;
+    }
+  }
+
+  throw lastError ?? new ApiError(0, "Request failed after retries", null);
 }
 
 export interface PostsParams {
@@ -23,8 +109,6 @@ export interface PostsParams {
   limit?: number;
   sort?: string;
 }
-
-import type { PaginatedPosts, PostDetail, Tag, Source, StatusInfo } from "./types";
 
 export function getPosts(params: PostsParams = {}): Promise<PaginatedPosts> {
   const searchParams = new URLSearchParams();
@@ -60,14 +144,10 @@ export function getPlaylist(params: PostsParams = {}): Promise<PaginatedPosts> {
   return fetchAPI<PaginatedPosts>(`/api/playlist${qs ? `?${qs}` : ""}`);
 }
 
-export function getStatus(): Promise<StatusInfo> {
-  return fetchAPI<StatusInfo>("/api/status");
-}
-
-export function triggerCrawl(source?: string, mode: string = "incremental") {
+export function triggerCrawl(source?: string) {
   return fetchAPI("/api/crawl", {
     method: "POST",
-    body: JSON.stringify({ source, mode }),
+    body: JSON.stringify({ source }),
   });
 }
 
@@ -76,6 +156,10 @@ export function triggerGenerate(postId?: number, limit: number = 10) {
     method: "POST",
     body: JSON.stringify({ post_id: postId, limit }),
   });
+}
+
+export function getCrawlStatus(): Promise<CrawlStatusItem[]> {
+  return fetchAPI<CrawlStatusItem[]>("/api/crawl-status");
 }
 
 export function getAudioUrl(audioPath: string): string {

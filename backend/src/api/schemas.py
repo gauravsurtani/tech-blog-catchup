@@ -15,6 +15,7 @@ class PostSummary(BaseModel):
     published_at: datetime | None
     tags: list[str]
     audio_status: str
+    audio_path: str | None
     audio_duration_secs: int | None
     word_count: int | None
 
@@ -25,6 +26,9 @@ class PostDetail(PostSummary):
     full_text: str | None
     audio_path: str | None
     crawled_at: datetime
+    content_quality: str | None = None
+    quality_score: int | None = None
+    extraction_method: str | None = None
 
     model_config = {"from_attributes": True}
 
@@ -50,7 +54,6 @@ class StatusInfo(BaseModel):
 
 class CrawlRequest(BaseModel):
     source: str | None = None
-    mode: str = "incremental"  # "full" or "incremental"
 
 
 class GenerateRequest(BaseModel):
@@ -63,3 +66,32 @@ class PaginatedPosts(BaseModel):
     total: int
     offset: int
     limit: int
+
+
+class CrawlStatusItem(BaseModel):
+    source_key: str
+    source_name: str
+    enabled: bool
+    feed_url: str
+    blog_url: str | None
+    status: str  # "success", "error", "running", "never"
+    post_count: int
+    last_crawl_at: datetime | None
+    last_crawl_type: str | None
+    posts_added_last: int | None
+    urls_found_last: int | None
+    error_message: str | None
+
+
+class JobInfo(BaseModel):
+    id: int
+    job_type: str
+    status: str
+    params: str | None
+    result: str | None
+    error_message: str | None
+    created_at: datetime
+    started_at: datetime | None
+    completed_at: datetime | None
+
+    model_config = {"from_attributes": True}

@@ -1,8 +1,8 @@
-"""Podcastfy wrapper: convert blog post content to conversational podcast MP3."""
+"""TTS-only podcast generator — converts pre-generated podcast scripts to audio."""
 
-import os
-import shutil
 import logging
+import os
+import re
 from pathlib import Path
 
 from src.config import Config
@@ -11,34 +11,38 @@ from src.models import Post
 logger = logging.getLogger(__name__)
 
 
-def _get_conversation_config(config: Config) -> dict:
-    """Build Podcastfy conversation_config from our config.yaml settings."""
-    podcast_cfg = config.podcast
-    return {
-        "word_count": 3000,
-        "conversation_style": podcast_cfg.get("conversation_style", ["engaging", "educational"]),
-        "roles_person1": podcast_cfg.get("roles_person1", "Main host - explains concepts clearly"),
-        "roles_person2": podcast_cfg.get("roles_person2", "Co-host - asks insightful questions"),
-        "dialogue_structure": podcast_cfg.get("dialogue_structure", [
-            "Introduction", "Main Discussion", "Key Takeaways", "Wrap-up"
-        ]),
-        "output_language": podcast_cfg.get("output_language", "English"),
-        "engagement_techniques": podcast_cfg.get("engagement_techniques", [
-            "analogies", "real-world examples", "humor where appropriate"
-        ]),
-    }
+def _parse_script_segments(script: str) -> list[tuple[str, str]]:
+    """Parse a podcast script into (speaker, text) segments.
+
+    Expects XML-style tags: <Person1>text</Person1> <Person2>text</Person2>
+    Returns list of ("person1", "text") or ("person2", "text") tuples.
+    """
+    segments: list[tuple[str, str]] = []
+    pattern = re.compile(r"<(Person[12])>(.*?)</\1>", re.DOTALL)
+    for match in pattern.finditer(script):
+        speaker = match.group(1).lower()
+        text = match.group(2).strip()
+        if text:
+            segments.append((speaker, text))
+    return segments
 
 
 def generate_podcast_for_post(post: Post, config: Config) -> tuple[str, int] | None:
-    """Use Podcastfy to generate conversational podcast from post content.
+    """Generate podcast audio from a post's pre-generated podcast_script.
+
+    Uses OpenAI TTS API directly to synthesize each speaker segment,
+    then concatenates into a single MP3.
 
     Returns (audio_path, duration_secs) or None on failure.
     audio_path is relative to the backend/ directory (e.g., "audio/uber_42.mp3").
     """
-    try:
-        from podcastfy.client import generate_podcast
-    except ImportError:
-        logger.error("podcastfy not installed. Run: pip install podcastfy")
+    if not post.podcast_script:
+        logger.error("Post %d has no podcast_script, cannot generate audio", post.id)
+        return None
+
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        logger.error("OPENAI_API_KEY not set, cannot generate TTS audio")
         return None
 
     audio_dir = Path(__file__).parent.parent.parent / config.app.get("audio_dir", "audio")
@@ -47,44 +51,44 @@ def generate_podcast_for_post(post: Post, config: Config) -> tuple[str, int] | N
     filename = f"{post.source_key}_{post.id}.mp3"
     output_path = audio_dir / filename
 
+    podcast_cfg = config.podcast
+    voice_person1 = podcast_cfg.get("voice_person1", "nova")
+    voice_person2 = podcast_cfg.get("voice_person2", "onyx")
+    tts_model = podcast_cfg.get("tts_model_name", "tts-1")
+
+    segments = _parse_script_segments(post.podcast_script)
+    if not segments:
+        logger.error("No valid segments parsed from podcast_script for post %d", post.id)
+        return None
+
     try:
-        conversation_config = _get_conversation_config(config)
+        from openai import OpenAI
 
-        # Prefer passing the URL so Podcastfy can fetch context itself,
-        # but fall back to text if URL fails
-        kwargs = {
-            "conversation_config": conversation_config,
-            "tts_model": config.podcast.get("tts_model", "openai"),
-            "llm_model_name": config.podcast.get("llm_model", "gpt-4o"),
-        }
+        client = OpenAI()
+        audio_chunks: list[bytes] = []
 
-        if post.url:
-            kwargs["urls"] = [post.url]
-        elif post.full_text:
-            kwargs["text"] = post.full_text
-        else:
-            logger.warning(f"Post {post.id} has no URL or full_text, skipping")
-            return None
+        for speaker, text in segments:
+            voice = voice_person1 if speaker == "person1" else voice_person2
+            response = client.audio.speech.create(
+                model=tts_model,
+                voice=voice,
+                input=text,
+                response_format="mp3",
+            )
+            audio_chunks.append(response.content)
 
-        # generate_podcast returns path to the generated audio file
-        result_path = generate_podcast(**kwargs)
+        # Concatenate MP3 chunks
+        with open(output_path, "wb") as f:
+            for chunk in audio_chunks:
+                f.write(chunk)
 
-        if result_path and Path(result_path).exists():
-            # Move the generated file to our audio directory
-            if str(result_path) != str(output_path):
-                shutil.move(str(result_path), str(output_path))
+        duration = _get_audio_duration(output_path)
+        relative_path = f"audio/{filename}"
+        logger.info("Generated podcast for post %d: %s (%ds)", post.id, relative_path, duration)
+        return relative_path, duration
 
-            # Get duration using mutagen if available, otherwise estimate
-            duration = _get_audio_duration(output_path)
-            relative_path = f"audio/{filename}"
-            logger.info(f"Generated podcast for post {post.id}: {relative_path} ({duration}s)")
-            return relative_path, duration
-        else:
-            logger.error(f"Podcastfy returned no output for post {post.id}")
-            return None
-
-    except Exception as e:
-        logger.error(f"Failed to generate podcast for post {post.id}: {e}")
+    except Exception:
+        logger.exception("Failed to generate podcast audio for post %d", post.id)
         return None
 
 

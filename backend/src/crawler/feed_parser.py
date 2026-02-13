@@ -7,9 +7,17 @@ from datetime import datetime
 import atoma
 import requests
 
+from src.extractor.content_cleaner import strip_html_tags
+
 logger = logging.getLogger(__name__)
 
-_HEADERS = {"User-Agent": "TechBlogCatchup/1.0"}
+_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    ),
+    "Accept": "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
+}
 _TIMEOUT = 30
 
 
@@ -39,6 +47,8 @@ def _parse_rss(content: bytes) -> list[FeedEntry]:
 
         title = item.title or ""
         summary = item.description
+        if summary:
+            summary = strip_html_tags(summary)
         author = item.author
 
         published_at = item.pub_date  # This is already a datetime or None
@@ -85,6 +95,9 @@ def _parse_atom(content: bytes) -> list[FeedEntry]:
         summary = None
         if entry.summary:
             summary = entry.summary.value if hasattr(entry.summary, "value") else str(entry.summary)
+
+        if summary:
+            summary = strip_html_tags(summary)
 
         # Author
         author = None

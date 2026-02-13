@@ -15,9 +15,13 @@ class BlogSource:
     feed_url: str
     sitemap_url: str | None = None
     archive_url: str | None = None
+    blog_page_url: str | None = None
     blog_url_pattern: str | None = None
     platform: str | None = None
     enabled: bool = True
+    needs_browser: bool = False
+    article_selector: str | None = None
+    strip_selectors: list[str] | None = None
 
 
 @dataclass
@@ -34,6 +38,7 @@ class Config:
     podcast: dict
     crawl: dict
     app: dict
+    llm: dict
 
 
 def _slugify(text: str) -> str:
@@ -58,12 +63,16 @@ def load_config(path: str | None = None) -> Config:
         sources.append(BlogSource(
             key=key,
             name=data["name"],
-            feed_url=data["feed_url"],
+            feed_url=data.get("feed_url", ""),
             sitemap_url=data.get("sitemap_url"),
             archive_url=data.get("archive_url"),
+            blog_page_url=data.get("blog_page_url"),
             blog_url_pattern=data.get("blog_url_pattern"),
             platform=data.get("platform"),
             enabled=data.get("enabled", True),
+            needs_browser=data.get("needs_browser", False),
+            article_selector=data.get("article_selector"),
+            strip_selectors=data.get("strip_selectors"),
         ))
 
     tags = []
@@ -80,6 +89,7 @@ def load_config(path: str | None = None) -> Config:
         podcast=raw.get("podcast", {}),
         crawl=raw.get("crawl", {}),
         app=raw.get("app", {}),
+        llm=raw.get("llm", {}),
     )
 
 

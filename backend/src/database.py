@@ -2,8 +2,9 @@
 
 from pathlib import Path
 
-from sqlalchemy import create_engine, Engine
+from sqlalchemy import create_engine, event, Engine
 from sqlalchemy.orm import sessionmaker, Session, DeclarativeBase
+from sqlalchemy.pool import NullPool, QueuePool
 
 from src.config import get_config
 
@@ -14,6 +15,15 @@ class Base(DeclarativeBase):
 
 _engine: Engine | None = None
 _session_factory: sessionmaker[Session] | None = None
+
+
+def _set_sqlite_pragma(dbapi_connection, connection_record):
+    """Set WAL mode and busy timeout on every new SQLite connection."""
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL;")
+    cursor.execute("PRAGMA busy_timeout=30000;")
+    cursor.execute("PRAGMA synchronous=NORMAL;")
+    cursor.close()
 
 
 def get_engine(db_path: str | None = None) -> Engine:
@@ -30,11 +40,17 @@ def get_engine(db_path: str | None = None) -> Engine:
     db_file = Path(__file__).parent.parent / db_path
     db_file.parent.mkdir(parents=True, exist_ok=True)
 
+    # NullPool for SQLite: avoids self-locking from multiple pooled connections
+    # competing for the single-writer lock. Each session gets its own connection
+    # that is closed when the session ends, preventing stale lock issues.
+    # QueuePool is only appropriate for multi-connection databases (PostgreSQL, etc.).
     _engine = create_engine(
         f"sqlite:///{db_file}",
         echo=False,
         connect_args={"check_same_thread": False},
+        poolclass=NullPool,
     )
+    event.listen(_engine, "connect", _set_sqlite_pragma)
     return _engine
 
 

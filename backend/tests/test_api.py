@@ -45,7 +45,8 @@ def client(test_db):
 
     routes_module.get_session = _test_get_session
     try:
-        with patch("src.api.app.init_db"):
+        with patch("src.api.app.init_db"), \
+             patch("src.podcast.manager.recover_stuck_processing", return_value=0):
             from src.api.app import create_app
             app = create_app()
             with TestClient(app) as tc:

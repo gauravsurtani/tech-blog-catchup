@@ -6,7 +6,10 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from slowapi.errors import RateLimitExceeded
+from slowapi import _rate_limit_exceeded_handler
 
+from src.api.rate_limit import limiter
 from src.api.routes import router
 from src.database import init_db
 
@@ -14,6 +17,20 @@ from src.database import init_db
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    # Recover posts stuck in "processing" from previous crashes
+    try:
+        from src.podcast.manager import recover_stuck_processing
+        from src.database import get_session
+        session = get_session()
+        try:
+            recovered = recover_stuck_processing(session)
+            if recovered:
+                import logging
+                logging.getLogger(__name__).info(f"Recovered {recovered} stuck posts on startup")
+        finally:
+            session.close()
+    except Exception:
+        pass  # Recovery is best-effort; don't block startup
     yield
 
 
@@ -24,6 +41,10 @@ def create_app() -> FastAPI:
         version="0.1.0",
         lifespan=lifespan,
     )
+
+    # Rate limiting
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
     # CORS — configurable via CORS_ORIGINS env var (comma-separated)
     origins = os.getenv(

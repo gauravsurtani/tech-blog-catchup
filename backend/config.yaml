@@ -1,9 +1,11 @@
 sources:
   uber:
     name: "Uber Engineering"
-    feed_url: "https://eng.uber.com/feed/"
+    feed_url: ""
+    blog_page_url: "https://www.uber.com/en-US/blog/engineering/"
     sitemap_url: "https://www.uber.com/sitemap.xml"
     blog_url_pattern: "/blog/"
+    needs_browser: true
     enabled: true
   airbnb:
     name: "Airbnb Tech Blog"
@@ -28,9 +30,10 @@ sources:
     sitemap_url: "https://discord.com/sitemap.xml"
     blog_url_pattern: "/blog/"
     enabled: true
+    needs_browser: true
   netflix:
     name: "Netflix TechBlog"
-    feed_url: "https://netflixtechblog.com/feed"
+    feed_url: "https://netflixtechblog.medium.com/feed"
     archive_url: "https://netflixtechblog.medium.com/archive"
     blog_url_pattern: "netflixtechblog"
     platform: "medium"
@@ -63,6 +66,7 @@ sources:
     sitemap_url: "https://www.figma.com/sitemap.xml"
     blog_url_pattern: "/blog/"
     enabled: true
+    needs_browser: true
   shopify:
     name: "Shopify Engineering"
     feed_url: "https://shopify.engineering/blog.atom"
@@ -82,7 +86,7 @@ sources:
     enabled: true
   github:
     name: "GitHub Engineering"
-    feed_url: "https://githubengineering.com/atom.xml"
+    feed_url: "https://github.blog/engineering/feed/"
     sitemap_url: "https://github.blog/sitemap.xml"
     blog_url_pattern: "/engineering/"
     enabled: true
@@ -277,6 +281,13 @@ podcast:
     - "analogies"
     - "real-world examples"
     - "humor where appropriate"
+
+llm:
+  # Model config per task — swap models without touching code
+  content_generation:
+    model: "gpt-5.2"     # Summary + podcast script in one call
+  content_scanner:
+    model: "gpt-5.2"     # Article vs junk classification
 
 crawl:
   delay_between_requests: 1.5

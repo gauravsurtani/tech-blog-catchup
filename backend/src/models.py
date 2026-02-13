@@ -33,6 +33,10 @@ class Post(Base):
     audio_path: Mapped[str | None] = mapped_column(String, nullable=True)
     audio_duration_secs: Mapped[int | None] = mapped_column(Integer, nullable=True)
     word_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    content_quality: Mapped[str | None] = mapped_column(String, nullable=True)  # "good", "low", "rejected"
+    quality_score: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 0-100
+    extraction_method: Mapped[str | None] = mapped_column(String, nullable=True)  # "trafilatura", "crawl4ai", "bs4"
+    podcast_script: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     tags: Mapped[list["Tag"]] = relationship(secondary=post_tags, back_populates="posts")
 
@@ -59,10 +63,29 @@ class CrawlLog(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     source_key: Mapped[str] = mapped_column(String, nullable=False)
     crawl_type: Mapped[str] = mapped_column(String, nullable=False)  # "full" or "incremental"
+    status: Mapped[str] = mapped_column(String, nullable=False, default="running")  # running, success, error
     started_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     urls_found: Mapped[int | None] = mapped_column(Integer, nullable=True)
     posts_added: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     def __repr__(self) -> str:
-        return f"<CrawlLog(id={self.id}, source={self.source_key}, type={self.crawl_type})>"
+        return f"<CrawlLog(id={self.id}, source={self.source_key}, type={self.crawl_type}, status={self.status})>"
+
+
+class Job(Base):
+    __tablename__ = "jobs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    job_type: Mapped[str] = mapped_column(String, nullable=False)  # "crawl" or "generate"
+    status: Mapped[str] = mapped_column(String, nullable=False, default="queued", index=True)
+    params: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON string of job parameters
+    result: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON string of job result
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+    def __repr__(self) -> str:
+        return f"<Job(id={self.id}, type={self.job_type}, status={self.status})>"

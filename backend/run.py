@@ -46,10 +46,10 @@ def cmd_init(args):
 
 
 def cmd_crawl(args):
-    """Crawl blog feeds."""
+    """Crawl blog feeds (unified smart crawl)."""
     from src.config import get_config
     from src.database import get_session, init_db
-    from src.crawler.crawl_manager import crawl_all, crawl_full, crawl_incremental
+    from src.crawler.crawl_manager import crawl_all, crawl_source
     from src.tagger.auto_tagger import ensure_tags_exist, auto_tag_post
 
     config = get_config()
@@ -58,6 +58,7 @@ def cmd_crawl(args):
     session = get_session()
     try:
         ensure_tags_exist(config.tags, session)
+        dry_run = getattr(args, "dry_run", False)
 
         if args.source:
             source = next((s for s in config.sources if s.key == args.source), None)
@@ -65,15 +66,15 @@ def cmd_crawl(args):
                 console.print(f"[red]Source '{args.source}' not found[/red]")
                 sys.exit(1)
 
-            console.print(f"Crawling [cyan]{source.name}[/cyan] ({args.mode} mode)...")
-            if args.mode == "full":
-                count = crawl_full(session, source, config)
-            else:
-                count = crawl_incremental(session, source, config)
+            label = " (dry run)" if dry_run else ""
+            console.print(f"Crawling [cyan]{source.name}[/cyan]{label}...")
+            max_posts = getattr(args, "max_posts", None)
+            count = crawl_source(session, source, config, dry_run=dry_run, max_posts=max_posts)
             console.print(f"[green]Added {count} new posts from {source.name}[/green]")
         else:
-            console.print(f"Crawling all {len(config.sources)} sources ({args.mode} mode)...")
-            results = crawl_all(session, config, mode=args.mode)
+            label = " (dry run)" if dry_run else ""
+            console.print(f"Crawling all {len(config.sources)} sources{label}...")
+            results = crawl_all(session, config, dry_run=dry_run)
 
             table = Table(title="Crawl Results")
             table.add_column("Source", style="cyan")
@@ -85,14 +86,15 @@ def cmd_crawl(args):
             table.add_row("[bold]Total[/bold]", f"[bold]{sum(results.values())}[/bold]")
             console.print(table)
 
-        # Auto-tag new posts
-        from src.models import Post
-        untagged = session.query(Post).filter(~Post.tags.any()).all()
-        if untagged:
-            console.print(f"Auto-tagging {len(untagged)} posts...")
-            for post in untagged:
-                auto_tag_post(post, config.tags, session)
-            console.print("[green]Tagging complete[/green]")
+        # Auto-tag new posts (skip on dry run)
+        if not dry_run:
+            from src.models import Post
+            untagged = session.query(Post).filter(~Post.tags.any()).all()
+            if untagged:
+                console.print(f"Auto-tagging {len(untagged)} posts...")
+                for post in untagged:
+                    auto_tag_post(post, config.tags, session)
+                console.print("[green]Tagging complete[/green]")
 
     finally:
         session.close()
@@ -194,6 +196,251 @@ def cmd_status(args):
         session.close()
 
 
+def cmd_reextract(args):
+    """Re-extract content for existing posts using the new extraction pipeline."""
+    from src.config import get_config
+    from src.database import get_session, init_db
+    from src.models import Post
+    from src.extractor import extract_article
+    from src.tagger.auto_tagger import auto_tag_post
+
+    config = get_config()
+    init_db()
+    session = get_session()
+
+    try:
+        query = session.query(Post)
+
+        if args.source:
+            source = next((s for s in config.sources if s.key == args.source), None)
+            if not source:
+                console.print(f"[red]Source '{args.source}' not found[/red]")
+                sys.exit(1)
+            query = query.filter(Post.source_key == args.source)
+            console.print(f"Filtering to source: [cyan]{source.name}[/cyan]")
+
+        if args.quality_below:
+            query = query.filter(
+                (Post.quality_score < args.quality_below) | (Post.quality_score.is_(None))
+            )
+            console.print(f"Filtering to quality_score < {args.quality_below}")
+
+        if args.limit:
+            query = query.limit(args.limit)
+
+        posts = query.all()
+        console.print(f"Found [bold]{len(posts)}[/bold] posts to re-extract")
+
+        if args.dry_run:
+            table = Table(title="Posts to Re-extract (Dry Run)")
+            table.add_column("ID", justify="right")
+            table.add_column("Source", style="cyan")
+            table.add_column("Title")
+            table.add_column("Quality", justify="right")
+            table.add_column("Method")
+            for post in posts:
+                table.add_row(
+                    str(post.id),
+                    post.source_key,
+                    (post.title[:50] + "...") if len(post.title) > 50 else post.title,
+                    str(post.quality_score or "N/A"),
+                    post.extraction_method or "legacy",
+                )
+            console.print(table)
+            return
+
+        improved = 0
+        failed = 0
+        for i, post in enumerate(posts):
+            console.print(f"[{i+1}/{len(posts)}] Re-extracting: {post.title[:60]}...")
+
+            source_cfg = next((s for s in config.sources if s.key == post.source_key), None)
+            needs_browser = source_cfg.needs_browser if source_cfg else False
+            article_selector = source_cfg.article_selector if source_cfg else None
+            strip_selectors = source_cfg.strip_selectors if source_cfg else None
+
+            try:
+                result = asyncio.run(extract_article(
+                    url=post.url,
+                    source_key=post.source_key,
+                    needs_browser=needs_browser,
+                    article_selector=article_selector,
+                    strip_selectors=strip_selectors,
+                ))
+            except Exception as exc:
+                console.print(f"  [red]ERROR: {exc}[/red]")
+                failed += 1
+                continue
+
+            if result is None:
+                console.print(f"  [yellow]SKIP: extraction returned nothing[/yellow]")
+                failed += 1
+                continue
+
+            old_score = post.quality_score or 0
+            new_score = result.quality.score
+
+            if new_score > old_score:
+                post.full_text = result.markdown
+                post.summary = result.summary
+                post.word_count = result.word_count
+                post.content_quality = result.quality.quality_label
+                post.quality_score = result.quality.score
+                post.extraction_method = result.extraction_method
+                if result.author and not post.author:
+                    post.author = result.author
+
+                # Re-run auto-tagger
+                auto_tag_post(post, config.tags, session)
+
+                improved += 1
+                console.print(
+                    f"  [green]IMPROVED: {old_score} -> {new_score} "
+                    f"({result.quality.grade}, {result.extraction_method})[/green]"
+                )
+            else:
+                console.print(
+                    f"  [dim]NO CHANGE: {old_score} -> {new_score}[/dim]"
+                )
+
+        session.commit()
+        console.print(f"\n[bold]Re-extraction complete: {improved} improved, {failed} failed[/bold]")
+
+    finally:
+        session.close()
+
+
+def cmd_regenerate(args):
+    """Regenerate summaries and podcast scripts for posts with bad/missing content."""
+    from src.config import get_config
+    from src.database import get_session, init_db
+    from src.models import Post
+    from sqlalchemy import or_
+
+    config = get_config()
+    init_db()
+    session = get_session()
+
+    try:
+        query = session.query(Post)
+
+        if args.source:
+            source = next((s for s in config.sources if s.key == args.source), None)
+            if not source:
+                console.print(f"[red]Source '{args.source}' not found[/red]")
+                sys.exit(1)
+            query = query.filter(Post.source_key == args.source)
+            console.print(f"Filtering to source: [cyan]{source.name}[/cyan]")
+
+        summary_only = getattr(args, "summary_only", False)
+
+        # Find posts with bad summaries or missing podcast_script
+        conditions = [
+            Post.summary.contains("[Skip to"),
+            Post.summary.is_(None),
+            Post.summary == "",
+        ]
+        if not summary_only:
+            conditions.append(Post.podcast_script.is_(None))
+
+        query = query.filter(or_(*conditions))
+
+        # Also filter by summary length < 50 (but need to handle None)
+        # Already covered by is_(None) above; additionally check short summaries
+        short_summary_query = session.query(Post)
+        if args.source:
+            short_summary_query = short_summary_query.filter(Post.source_key == args.source)
+        short_summary_query = short_summary_query.filter(
+            Post.summary.isnot(None),
+            Post.summary != "",
+            ~Post.summary.contains("[Skip to"),
+            func_len_workaround(Post.summary) < 50,
+        )
+
+        # Merge both queries via union of IDs
+        bad_ids = {p.id for p in query.all()}
+        # For short summaries, just do a Python filter since SQLite lacks LEN on text easily
+        all_posts_for_len_check = session.query(Post)
+        if args.source:
+            all_posts_for_len_check = all_posts_for_len_check.filter(Post.source_key == args.source)
+        for p in all_posts_for_len_check.all():
+            if p.summary and len(p.summary) < 50 and "[Skip to" not in p.summary:
+                bad_ids.add(p.id)
+            if not summary_only and p.podcast_script is None:
+                bad_ids.add(p.id)
+
+        if not bad_ids:
+            console.print("[green]No posts need regeneration[/green]")
+            return
+
+        posts = session.query(Post).filter(Post.id.in_(bad_ids))
+        if args.limit:
+            posts = posts.limit(args.limit)
+        posts = posts.all()
+
+        console.print(f"Found [bold]{len(posts)}[/bold] posts to regenerate")
+
+        if args.dry_run:
+            table = Table(title="Posts to Regenerate (Dry Run)")
+            table.add_column("ID", justify="right")
+            table.add_column("Source", style="cyan")
+            table.add_column("Title")
+            table.add_column("Summary", style="dim")
+            table.add_column("Has Script", justify="center")
+            for post in posts:
+                summary_preview = (post.summary[:40] + "...") if post.summary and len(post.summary) > 40 else (post.summary or "N/A")
+                has_script = "Yes" if post.podcast_script else "No"
+                table.add_row(
+                    str(post.id),
+                    post.source_key,
+                    (post.title[:50] + "...") if len(post.title) > 50 else post.title,
+                    summary_preview,
+                    has_script,
+                )
+            console.print(table)
+            return
+
+        updated = 0
+        failed = 0
+        for i, post in enumerate(posts):
+            console.print(f"[{i+1}/{len(posts)}] Regenerating: {post.title[:60]}...")
+
+            if not post.full_text:
+                console.print(f"  [yellow]SKIP: no full_text[/yellow]")
+                failed += 1
+                continue
+
+            try:
+                if summary_only:
+                    from src.extractor.content_generator import generate_summary_only
+                    new_summary = asyncio.run(generate_summary_only(post.title, post.full_text))
+                    post.summary = new_summary
+                    console.print(f"  [green]Summary updated[/green]")
+                else:
+                    from src.extractor.content_generator import generate_content
+                    content = asyncio.run(generate_content(post.title, post.full_text))
+                    post.summary = content.get("summary", post.summary)
+                    post.podcast_script = content.get("podcast_script", post.podcast_script)
+                    has_script = "yes" if post.podcast_script else "no"
+                    console.print(f"  [green]Updated (script={has_script})[/green]")
+                updated += 1
+            except Exception as exc:
+                console.print(f"  [red]ERROR: {exc}[/red]")
+                failed += 1
+
+        session.commit()
+        console.print(f"\n[bold]Regeneration complete: {updated} updated, {failed} failed[/bold]")
+
+    finally:
+        session.close()
+
+
+def func_len_workaround(column):
+    """SQLite-compatible length function for filtering."""
+    from sqlalchemy import func
+    return func.length(column)
+
+
 def cmd_api(args):
     """Start FastAPI server."""
     import uvicorn
@@ -222,10 +469,8 @@ def main():
     # crawl
     crawl_parser = subparsers.add_parser("crawl", help="Crawl blog feeds")
     crawl_parser.add_argument("--source", help="Crawl specific source only (e.g., 'cloudflare')")
-    crawl_parser.add_argument(
-        "--mode", choices=["full", "incremental"], default="incremental",
-        help="Crawl mode: 'full' for sitemap archive, 'incremental' for RSS new posts (default)"
-    )
+    crawl_parser.add_argument("--max-posts", type=int, help="Limit number of new posts to extract")
+    crawl_parser.add_argument("--dry-run", action="store_true", help="Discover URLs without extracting or storing")
 
     # generate
     gen_parser = subparsers.add_parser("generate", help="Generate podcast audio")
@@ -239,6 +484,20 @@ def main():
     api_parser = subparsers.add_parser("api", help="Start FastAPI server")
     api_parser.add_argument("--port", type=int, default=8000, help="Port (default: 8000)")
     api_parser.add_argument("--reload", action="store_true", help="Enable auto-reload")
+
+    # reextract
+    reextract_parser = subparsers.add_parser("reextract", help="Re-extract content for existing posts")
+    reextract_parser.add_argument("--source", help="Re-extract specific source only (e.g., 'github')")
+    reextract_parser.add_argument("--quality-below", type=int, help="Only re-extract posts with quality_score below this")
+    reextract_parser.add_argument("--dry-run", action="store_true", help="Show what would be re-extracted without doing it")
+    reextract_parser.add_argument("--limit", type=int, help="Max posts to re-extract")
+
+    # regenerate
+    regen_parser = subparsers.add_parser("regenerate", help="Regenerate summaries and podcast scripts")
+    regen_parser.add_argument("--source", help="Regenerate specific source only (e.g., 'github')")
+    regen_parser.add_argument("--limit", type=int, help="Max posts to regenerate")
+    regen_parser.add_argument("--dry-run", action="store_true", help="Show what would be regenerated without doing it")
+    regen_parser.add_argument("--summary-only", action="store_true", help="Only regenerate summaries, skip podcast scripts")
 
     # serve
     serve_parser = subparsers.add_parser("serve", help="Start backend server")
@@ -257,6 +516,8 @@ def main():
         "crawl": cmd_crawl,
         "generate": cmd_generate,
         "status": cmd_status,
+        "reextract": cmd_reextract,
+        "regenerate": cmd_regenerate,
         "api": cmd_api,
         "serve": cmd_serve,
     }

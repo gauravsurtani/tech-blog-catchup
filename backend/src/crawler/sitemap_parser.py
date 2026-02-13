@@ -132,48 +132,87 @@ def parse_sitemap(sitemap_url: str, url_pattern: str | None = None) -> list[str]
     return all_urls
 
 
-def parse_medium_archive(archive_url: str) -> list[str]:
-    """Fetch a Medium /archive page and extract article URLs.
+def scrape_medium_archive_urls(base_url: str) -> list[str]:
+    """Scrape Medium archive pages year-by-year using Crawl4AI browser rendering.
 
-    Medium archive pages list articles as links. We look for <a> tags whose
-    href points to a Medium article (contains a 12-hex-char ID suffix pattern).
+    Medium archive pages are JS-heavy, so we use a headless browser to render
+    ``{base_url}/archive/{year}`` for each year from 2015 to the current year.
 
-    Returns an empty list on any network or parse error.
+    Skips non-article pages (archive, tagged, about, etc.) and deduplicates.
+
+    Args:
+        base_url: The Medium publication base URL, e.g.
+                  ``https://netflixtechblog.medium.com`` or
+                  ``https://medium.com/airbnb-engineering``.
+
+    Returns:
+        Deduplicated list of article URLs discovered across all years.
     """
-    resp = _fetch(archive_url)
-    if resp is None:
-        return []
+    import asyncio
+    import time
+    from datetime import datetime
+    from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig
 
-    soup = BeautifulSoup(resp.text, "lxml")
-    urls: list[str] = []
+    base_url = base_url.rstrip("/")
+    # Strip trailing /archive if the caller passed the old archive_url
+    if base_url.endswith("/archive"):
+        base_url = base_url[: -len("/archive")]
+
+    current_year = datetime.utcnow().year
+    years = list(range(2015, current_year + 1))
+
+    skip_segments = (
+        "/archive", "/tagged/", "/about", "/followers",
+        "/following", "/latest", "/search",
+    )
+    domain = base_url.split("/")[2]  # e.g. netflixtechblog.medium.com
+
     seen: set[str] = set()
+    all_urls: list[str] = []
 
-    for a_tag in soup.find_all("a", href=True):
-        href: str = a_tag["href"]
+    async def _scrape_all_years():
+        async with AsyncWebCrawler(config=BrowserConfig(headless=True)) as crawler:
+            for year in years:
+                archive_url = f"{base_url}/archive/{year}"
+                logger.info("Scraping Medium archive: %s", archive_url)
+                try:
+                    result = await crawler.arun(
+                        url=archive_url,
+                        config=CrawlerRunConfig(),
+                    )
+                    if not result or not result.success or not result.markdown:
+                        logger.warning("No content from %s", archive_url)
+                        continue
 
-        # Normalise protocol-relative URLs
-        if href.startswith("//"):
-            href = "https:" + href
+                    # Extract URLs from the rendered markdown
+                    import re as _re
+                    raw_links = _re.findall(r'https?://[^\s\)>\]"\']+', result.markdown)
 
-        # Skip non-http links and anchors
-        if not href.startswith("http"):
-            continue
+                    for href in raw_links:
+                        href = href.rstrip("/").rstrip(".")
 
-        # Medium article URLs typically contain a hex ID at the end (e.g. -a1b2c3d4e5f6)
-        # They also live under the publication path.  Accept anything that looks
-        # like a medium.com article link and isn't a tag/archive/about page.
-        skip_segments = ("/archive", "/tagged/", "/about", "/followers", "/following", "/latest")
-        if any(seg in href for seg in skip_segments):
-            continue
+                        if any(seg in href for seg in skip_segments):
+                            continue
 
-        # Must be on medium.com or a custom Medium domain
-        if "medium.com" in href or archive_url.split("/")[2] in href:
-            # Rough heuristic: article paths have at least one path component after the pub
-            parts = href.rstrip("/").split("/")
-            if len(parts) >= 5:  # https://medium.com/pub/article-slug-id
-                if href not in seen:
-                    seen.add(href)
-                    urls.append(href)
+                        # Must be on the same Medium domain
+                        if domain not in href and "medium.com" not in href:
+                            continue
 
-    logger.info("Parsed Medium archive %s — found %d article URLs", archive_url, len(urls))
-    return urls
+                        # Article paths have at least 5 parts: https://domain/pub/slug
+                        parts = href.rstrip("/").split("/")
+                        if len(parts) < 5:
+                            continue
+
+                        if href not in seen:
+                            seen.add(href)
+                            all_urls.append(href)
+
+                except Exception as exc:
+                    logger.warning("Failed to scrape %s: %s", archive_url, exc)
+
+                # Polite delay between years
+                await asyncio.sleep(2)
+
+    asyncio.run(_scrape_all_years())
+    logger.info("Medium archive scrape for %s — found %d article URLs", base_url, len(all_urls))
+    return all_urls

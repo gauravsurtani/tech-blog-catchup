@@ -49,6 +49,7 @@ def list_posts(
     tag: str | None = None,
     search: str | None = None,
     audio_status: str | None = None,
+    quality_min: int | None = None,
     offset: int = Query(default=0, ge=0),
     limit: int = Query(default=20, ge=1, le=100),
     sort: str = "-published_at",
@@ -73,6 +74,8 @@ def list_posts(
             query = query.filter(Post.title.ilike(f"%{search}%"))
         if audio_status:
             query = query.filter(Post.audio_status == audio_status)
+        if quality_min is not None:
+            query = query.filter(Post.quality_score >= quality_min)
 
         total = query.count()
 

@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+from datetime import datetime
 
 from src.extractor.types import ExtractionResult, QualityResult
 from src.extractor.quality_scorer import score_content
@@ -110,6 +111,18 @@ async def extract_article(
 
     author = raw_result.get("author")
     published_at = raw_result.get("published_at")
+    # Ensure published_at is a datetime (strategies may return strings)
+    if isinstance(published_at, str):
+        for fmt in ("%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%S%z"):
+            try:
+                published_at = datetime.strptime(published_at, fmt).replace(tzinfo=None)
+                break
+            except ValueError:
+                continue
+        else:
+            published_at = None
+    elif hasattr(published_at, 'tzinfo') and published_at is not None and published_at.tzinfo:
+        published_at = published_at.replace(tzinfo=None)
     word_count = quality.word_count
 
     return ExtractionResult(

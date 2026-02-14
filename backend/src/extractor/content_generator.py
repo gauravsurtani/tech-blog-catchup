@@ -13,8 +13,10 @@ async def generate_content(title: str, markdown: str) -> dict:
     """Generate summary and podcast script from article content.
 
     Uses a single OpenAI API call to produce both a concise summary and a
-    two-host podcast script. Model is configured via config.yaml
-    llm.content_generation.model.
+    two-host podcast script. Script length scales with article length to
+    avoid padding short articles or truncating long ones.
+
+    Model is configured via config.yaml llm.content_generation.model.
 
     Returns dict with keys: summary (str), podcast_script (str | None).
     """
@@ -25,6 +27,21 @@ async def generate_content(title: str, markdown: str) -> dict:
     config = get_config()
     llm_cfg = config.llm.get("content_generation", {})
     model = llm_cfg.get("model", "gpt-5.2")
+
+    # Scale script length to article size
+    word_count = len(markdown.split())
+    if word_count < 800:
+        script_words = 1000
+        duration_hint = "5-7 minute"
+    elif word_count < 1500:
+        script_words = 2000
+        duration_hint = "10-12 minute"
+    elif word_count < 3000:
+        script_words = 3000
+        duration_hint = "15-18 minute"
+    else:
+        script_words = 4000
+        duration_hint = "20-25 minute"
 
     try:
         from openai import AsyncOpenAI
@@ -41,11 +58,18 @@ async def generate_content(title: str, markdown: str) -> dict:
                         "full markdown content, produce TWO things:\n\n"
                         "1. **summary**: A 2-3 sentence technical summary covering what was built, "
                         "why it matters, and the key result or insight.\n\n"
-                        "2. **podcast_script**: A ~3000 word two-host conversational podcast script. "
+                        f"2. **podcast_script**: A ~{script_words} word two-host conversational "
+                        f"podcast script ({duration_hint} when read aloud). "
                         "Use <Person1> and <Person2> XML tags to denote speakers. Person1 is the main "
                         "host who explains concepts clearly. Person2 is the co-host who asks insightful "
                         "questions and adds context. The conversation should be engaging, educational, "
-                        "and technically accurate. Cover the key points from the article naturally.\n\n"
+                        "and technically accurate.\n\n"
+                        "IMPORTANT: Cover every key point from the article — do not skip or oversimplify "
+                        "any technical detail. Use natural conversation (rephrasing, examples, reactions) "
+                        "to make the content accessible, but stay faithful to the source material. "
+                        "Do not invent facts, statistics, or examples not present in the original article. "
+                        "The depth should match the article — short articles get concise discussions, "
+                        "long detailed articles get thorough deep dives.\n\n"
                         'Return JSON: {"summary": "...", "podcast_script": "<Person1>...</Person1>..."}'
                     ),
                 },

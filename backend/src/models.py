@@ -36,6 +36,7 @@ class Post(Base):
     content_quality: Mapped[str | None] = mapped_column(String, nullable=True)  # "good", "low", "rejected"
     quality_score: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 0-100
     extraction_method: Mapped[str | None] = mapped_column(String, nullable=True)  # "trafilatura", "crawl4ai", "bs4"
+    content_hash: Mapped[str | None] = mapped_column(String, nullable=True)
     podcast_script: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     tags: Mapped[list["Tag"]] = relationship(secondary=post_tags, back_populates="posts")

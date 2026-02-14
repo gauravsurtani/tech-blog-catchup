@@ -23,6 +23,9 @@ def generate_pending(session: Session, config: Config, limit: int = 10) -> int:
         .filter(Post.audio_status == "pending")
         .filter(Post.full_text.isnot(None))
         .filter(Post.full_text != "")
+        .filter(
+            (Post.quality_score >= 60) | (Post.quality_score.is_(None))
+        )
         .order_by(Post.crawled_at.desc())
         .limit(limit)
         .all()

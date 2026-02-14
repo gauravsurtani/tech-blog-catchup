@@ -7,7 +7,6 @@ import {
   useRef,
   useCallback,
   useEffect,
-  createElement,
   type ReactNode,
 } from "react";
 import { getAudioUrl } from "@/lib/api";
@@ -390,19 +389,19 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     setPlaybackRate,
   };
 
-  return createElement(
-    AudioPlayerContext.Provider,
-    { value: contextValue },
-    children,
-    createElement("audio", {
-      ref: audioRef,
-      preload: "metadata",
-      onTimeUpdate: handleTimeUpdate,
-      onLoadedMetadata: handleLoadedMetadata,
-      onEnded: handleEnded,
-      onPlay: handlePlay,
-      onPause: handlePause,
-    })
+  return (
+    <AudioPlayerContext.Provider value={contextValue}>
+      {children}
+      <audio
+        ref={audioRef}
+        preload="metadata"
+        onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={handleLoadedMetadata}
+        onEnded={handleEnded}
+        onPlay={handlePlay}
+        onPause={handlePause}
+      />
+    </AudioPlayerContext.Provider>
   );
 }
 

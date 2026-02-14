@@ -78,11 +78,11 @@ function PostDetailSkeleton() {
         <div className="h-3 w-24 bg-gray-800 rounded" />
       </div>
       <div className="border-t border-gray-800 pt-8 space-y-3">
-        {Array.from({ length: 12 }).map((_, i) => (
+        {[95, 100, 88, 72, 100, 80, 96, 65, 100, 90, 78, 85].map((w, i) => (
           <div
             key={i}
             className="h-3 bg-gray-800 rounded"
-            style={{ width: `${60 + Math.random() * 40}%` }}
+            style={{ width: `${w}%` }}
           />
         ))}
       </div>

@@ -4,7 +4,7 @@
 import argparse
 import asyncio
 import logging
-import subprocess
+
 import sys
 from datetime import datetime
 
@@ -196,6 +196,79 @@ def cmd_status(args):
         session.close()
 
 
+def cmd_discover(args):
+    """Discover URLs for sources without extracting (dry-run discovery)."""
+    from src.config import get_config
+    from src.database import get_session, init_db
+    from src.crawler.crawl_manager import discover_urls, filter_new_urls
+
+    config = get_config()
+    init_db()
+    session = get_session()
+
+    try:
+        sources = [s for s in config.sources if s.enabled]
+        if args.source:
+            source = next((s for s in config.sources if s.key == args.source), None)
+            if not source:
+                console.print(f"[red]Source '{args.source}' not found[/red]")
+                sys.exit(1)
+            sources = [source]
+
+        table = Table(title="URL Discovery Report")
+        table.add_column("Source", style="cyan")
+        table.add_column("Discoverable", justify="right", style="bold")
+        table.add_column("In DB", justify="right", style="green")
+        table.add_column("New", justify="right", style="yellow")
+        table.add_column("Methods", style="dim")
+
+        total_disc = 0
+        total_db = 0
+        total_new = 0
+
+        for source in sources:
+            console.print(f"\n[bold cyan]{source.name}[/bold cyan] ({source.key})")
+            try:
+                all_urls, methods = discover_urls(source)
+            except Exception as exc:
+                console.print(f"  [red]Discovery failed: {exc}[/red]")
+                continue
+
+            new_urls = filter_new_urls(session, all_urls)
+            in_db_count = len(all_urls) - len(new_urls)
+            new_count = len(new_urls)
+
+            method_parts = []
+            for method_name, method_urls in methods.items():
+                method_parts.append(f"{method_name}({len(method_urls)})")
+            methods_str = ", ".join(method_parts)
+
+            table.add_row(
+                source.name,
+                str(len(all_urls)),
+                str(in_db_count),
+                str(new_count),
+                methods_str,
+            )
+
+            total_disc += len(all_urls)
+            total_db += in_db_count
+            total_new += new_count
+
+        table.add_row(
+            "[bold]Total[/bold]",
+            f"[bold]{total_disc}[/bold]",
+            f"[bold]{total_db}[/bold]",
+            f"[bold]{total_new}[/bold]",
+            "",
+        )
+        console.print()
+        console.print(table)
+
+    finally:
+        session.close()
+
+
 def cmd_reextract(args):
     """Re-extract content for existing posts using the new extraction pipeline."""
     from src.config import get_config
@@ -345,18 +418,6 @@ def cmd_regenerate(args):
 
         query = query.filter(or_(*conditions))
 
-        # Also filter by summary length < 50 (but need to handle None)
-        # Already covered by is_(None) above; additionally check short summaries
-        short_summary_query = session.query(Post)
-        if args.source:
-            short_summary_query = short_summary_query.filter(Post.source_key == args.source)
-        short_summary_query = short_summary_query.filter(
-            Post.summary.isnot(None),
-            Post.summary != "",
-            ~Post.summary.contains("[Skip to"),
-            func_len_workaround(Post.summary) < 50,
-        )
-
         # Merge both queries via union of IDs
         bad_ids = {p.id for p in query.all()}
         # For short summaries, just do a Python filter since SQLite lacks LEN on text easily
@@ -435,12 +496,6 @@ def cmd_regenerate(args):
         session.close()
 
 
-def func_len_workaround(column):
-    """SQLite-compatible length function for filtering."""
-    from sqlalchemy import func
-    return func.length(column)
-
-
 def cmd_api(args):
     """Start FastAPI server."""
     import uvicorn
@@ -485,6 +540,10 @@ def main():
     api_parser.add_argument("--port", type=int, default=8000, help="Port (default: 8000)")
     api_parser.add_argument("--reload", action="store_true", help="Enable auto-reload")
 
+    # discover
+    discover_parser = subparsers.add_parser("discover", help="Discover URLs without extracting")
+    discover_parser.add_argument("--source", help="Discover for specific source only")
+
     # reextract
     reextract_parser = subparsers.add_parser("reextract", help="Re-extract content for existing posts")
     reextract_parser.add_argument("--source", help="Re-extract specific source only (e.g., 'github')")
@@ -516,6 +575,7 @@ def main():
         "crawl": cmd_crawl,
         "generate": cmd_generate,
         "status": cmd_status,
+        "discover": cmd_discover,
         "reextract": cmd_reextract,
         "regenerate": cmd_regenerate,
         "api": cmd_api,

@@ -10,6 +10,7 @@ import {
   Rss,
   AlertTriangle,
   ExternalLink,
+  Loader,
 } from "lucide-react";
 import { getCrawlStatus, triggerCrawl, triggerGenerate } from "@/lib/api";
 import type { CrawlStatusItem } from "@/lib/types";
@@ -171,10 +172,12 @@ export default function StatusPage() {
             disabled={generating || crawling !== null}
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-500 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
-            <RefreshCw
-              className={`w-4 h-4 ${generating ? "animate-spin" : ""}`}
-            />
-            Generate Podcasts
+            {generating ? (
+              <Loader className="w-4 h-4 animate-spin" />
+            ) : (
+              <RefreshCw className="w-4 h-4" />
+            )}
+            {generating ? "Generating..." : "Generate Podcasts"}
           </button>
           <button
             onClick={handleCrawlAll}

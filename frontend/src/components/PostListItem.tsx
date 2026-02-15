@@ -58,7 +58,7 @@ export default function PostListItem({
           <div className="w-7 h-7 flex items-center justify-center">
             <Loader className="w-4 h-4 text-yellow-400 animate-spin" />
           </div>
-        ) : onGenerate && post.audio_status === "pending" ? (
+        ) : onGenerate && (post.audio_status === "pending" || post.audio_status === "failed") ? (
           <button
             onClick={() => onGenerate(post)}
             className="w-7 h-7 flex items-center justify-center bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-full transition-colors cursor-pointer"

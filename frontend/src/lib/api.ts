@@ -1,4 +1,4 @@
-import type { PaginatedPosts, PostDetail, Tag, Source, CrawlStatusItem } from "./types";
+import type { PaginatedPosts, PostDetail, Tag, Source, CrawlStatusItem, Job } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -160,6 +160,17 @@ export function triggerGenerate(postId?: number, limit: number = 10) {
 
 export function getCrawlStatus(): Promise<CrawlStatusItem[]> {
   return fetchAPI<CrawlStatusItem[]>("/api/crawl-status");
+}
+
+export function getJobs(params: { job_type?: string; status?: string } = {}): Promise<Job[]> {
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      searchParams.set(key, String(value));
+    }
+  });
+  const qs = searchParams.toString();
+  return fetchAPI<Job[]>(`/api/jobs${qs ? `?${qs}` : ""}`);
 }
 
 export function getAudioUrl(audioPath: string): string {

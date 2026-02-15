@@ -5,6 +5,7 @@ import ThemeProvider from "@/components/ThemeProvider";
 import ThemeToggle from "@/components/ThemeToggle";
 import { AudioPlayerProvider } from "@/hooks/useAudioPlayer";
 import AudioPlayer from "@/components/AudioPlayer";
+import GenerationBanner from "@/components/GenerationBanner";
 
 export const metadata: Metadata = {
   title: "Tech Blog Catchup",
@@ -22,6 +23,7 @@ export default function RootLayout({
         <ThemeProvider>
           <AudioPlayerProvider>
             <Navbar />
+            <GenerationBanner />
             <div className="fixed top-4 right-4 z-50">
               <ThemeToggle />
             </div>

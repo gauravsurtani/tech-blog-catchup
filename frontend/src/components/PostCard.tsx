@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Play, Clock, User, ExternalLink, Plus, Loader } from "lucide-react";
+import { Play, Clock, User, ExternalLink, Plus, Loader, Mic } from "lucide-react";
 import type { Post } from "@/lib/types";
 import TagBadge from "./TagBadge";
 
@@ -9,6 +9,7 @@ interface PostCardProps {
   post: Post;
   onPlay?: (post: Post) => void;
   onAddToQueue?: (post: Post) => void;
+  onGenerate?: (post: Post) => void;
 }
 
 function formatDate(dateStr: string | null): string {
@@ -51,7 +52,7 @@ function formatWordCount(count: number | null): string {
   return `${count} words`;
 }
 
-export default function PostCard({ post, onPlay, onAddToQueue }: PostCardProps) {
+export default function PostCard({ post, onPlay, onAddToQueue, onGenerate }: PostCardProps) {
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 flex flex-col gap-3 hover:border-gray-700 transition-colors">
       {/* Source name */}
@@ -133,6 +134,15 @@ export default function PostCard({ post, onPlay, onAddToQueue }: PostCardProps) 
           >
             <Play className="w-4 h-4" fill="currentColor" />
             Play
+          </button>
+        )}
+        {(post.audio_status === "pending" || post.audio_status === "failed") && onGenerate && (
+          <button
+            onClick={() => onGenerate(post)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm font-medium rounded-lg transition-colors cursor-pointer"
+          >
+            <Mic className="w-4 h-4" />
+            Generate
           </button>
         )}
         {post.audio_status === "processing" && (

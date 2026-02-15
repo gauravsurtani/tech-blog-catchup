@@ -45,6 +45,18 @@ export interface StatusInfo {
   tag_counts: Tag[];
 }
 
+export interface Job {
+  id: number;
+  job_type: string;
+  status: string;
+  params: string | null;
+  result: string | null;
+  error_message: string | null;
+  created_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+}
+
 export interface CrawlStatusItem {
   source_key: string;
   source_name: string;

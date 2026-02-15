@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { Search, SlidersHorizontal, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { usePosts } from "@/hooks/usePosts";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
-import { getTags, getSources } from "@/lib/api";
+import { getTags, getSources, triggerGenerate } from "@/lib/api";
 import PostCard from "@/components/PostCard";
 import SourceFilter from "@/components/SourceFilter";
 import TagFilter from "@/components/TagFilter";
@@ -133,6 +133,14 @@ export default function ExplorePage() {
   const handleAddToQueue = useCallback((post: Post) => {
     addToQueue(post);
   }, [addToQueue]);
+
+  const handleGenerate = useCallback(async (post: Post) => {
+    try {
+      await triggerGenerate(post.id);
+    } catch (err) {
+      console.error("Generate failed:", err);
+    }
+  }, []);
 
   // Pagination
   const totalPages = Math.ceil(total / PAGE_SIZE);
@@ -300,7 +308,7 @@ export default function ExplorePage() {
         {!loading && posts.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
             {posts.map((post) => (
-              <PostCard key={post.id} post={post} onPlay={handlePlay} onAddToQueue={handleAddToQueue} />
+              <PostCard key={post.id} post={post} onPlay={handlePlay} onAddToQueue={handleAddToQueue} onGenerate={handleGenerate} />
             ))}
           </div>
         )}

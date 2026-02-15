@@ -11,8 +11,9 @@ import {
   Clock,
   User,
   Loader,
+  Mic,
 } from "lucide-react";
-import { getPost, ApiError } from "@/lib/api";
+import { getPost, triggerGenerate, ApiError } from "@/lib/api";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import TagBadge from "@/components/TagBadge";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
@@ -97,8 +98,22 @@ export default function PostDetailPage() {
   const [post, setPost] = useState<PostDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
 
   const { play, addToQueue } = useAudioPlayer();
+
+  async function handleGenerate() {
+    if (!post) return;
+    setGenerating(true);
+    try {
+      await triggerGenerate(post.id);
+      setPost({ ...post, audio_status: "processing" });
+    } catch (err) {
+      console.error("Generate failed:", err);
+    } finally {
+      setGenerating(false);
+    }
+  }
 
   useEffect(() => {
     if (!postId || isNaN(postId)) {
@@ -225,6 +240,20 @@ export default function PostDetailPage() {
           >
             <Play className="w-4 h-4" fill="currentColor" />
             Play Podcast
+          </button>
+        )}
+        {(post.audio_status === "pending" || post.audio_status === "failed") && (
+          <button
+            onClick={handleGenerate}
+            disabled={generating}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          >
+            {generating ? (
+              <Loader className="w-4 h-4 animate-spin" />
+            ) : (
+              <Mic className="w-4 h-4" />
+            )}
+            {generating ? "Generating..." : "Generate Podcast"}
           </button>
         )}
         {post.audio_status === "processing" && (

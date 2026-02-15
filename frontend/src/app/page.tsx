@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
+import Link from "next/link";
 import { usePosts } from "@/hooks/usePosts";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import PostListItem from "@/components/PostListItem";
-import { triggerGenerate } from "@/lib/api";
 import type { Post } from "@/lib/types";
 
 const PAGE_SIZE = 12;
@@ -28,12 +28,22 @@ export default function Home() {
   const [limit, setLimit] = useState(PAGE_SIZE);
   const { play, addToQueue } = useAudioPlayer();
 
+  // Only show audio-ready posts on the Home (Podcast Feed) page
   const params = useMemo(
-    () => ({ sort: "newest", limit, offset: 0 }),
+    () => ({ sort: "newest", limit, offset: 0, audio_status: "ready" }),
     [limit]
   );
 
+  // Also fetch total posts count (all statuses) for the pending message
+  const allPostsParams = useMemo(
+    () => ({ sort: "newest", limit: 1, offset: 0 }),
+    []
+  );
+
   const { posts, total, loading, error } = usePosts(params);
+  const { total: totalAll, loading: loadingAll } = usePosts(allPostsParams);
+
+  const pendingCount = totalAll - total;
 
   function handleLoadMore() {
     setLimit((prev) => prev + PAGE_SIZE);
@@ -47,15 +57,11 @@ export default function Home() {
     addToQueue(post);
   }, [addToQueue]);
 
-  const handleGenerate = useCallback((post: Post) => {
-    triggerGenerate(post.id).catch(() => {});
-  }, []);
-
   const hasMore = posts.length < total;
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">Latest Episodes</h1>
+      <h1 className="text-3xl font-bold mb-6">Your Podcast Feed</h1>
 
       {error && (
         <div className="bg-red-900/30 border border-red-700/50 text-red-300 rounded-lg p-4 mb-6">
@@ -75,10 +81,13 @@ export default function Home() {
       {/* Empty state */}
       {!loading && posts.length === 0 && !error && (
         <div className="text-center py-16">
-          <p className="text-gray-400 text-lg mb-2">No episodes yet</p>
+          <p className="text-gray-400 text-lg mb-2">No episodes ready yet</p>
           <p className="text-gray-500 text-sm">
-            Your tech blog podcast feed will appear here. Run the crawler to get
-            started.
+            Posts with generated audio will appear here.{" "}
+            <Link href="/explore" className="text-blue-400 hover:text-blue-300 underline">
+              Browse all posts
+            </Link>{" "}
+            to discover content and generate podcasts.
           </p>
         </div>
       )}
@@ -88,7 +97,7 @@ export default function Home() {
         <>
           <div className="flex flex-col">
             {posts.map((post) => (
-              <PostListItem key={post.id} post={post} onPlay={handlePlay} onAddToQueue={handleAddToQueue} onGenerate={handleGenerate} />
+              <PostListItem key={post.id} post={post} onPlay={handlePlay} onAddToQueue={handleAddToQueue} />
             ))}
           </div>
 
@@ -105,6 +114,18 @@ export default function Home() {
             </div>
           )}
         </>
+      )}
+
+      {/* Pending posts link */}
+      {!loading && !loadingAll && pendingCount > 0 && (
+        <div className="text-center mt-8 py-4 border-t border-gray-800">
+          <p className="text-sm text-gray-500">
+            {pendingCount} more {pendingCount === 1 ? "post" : "posts"} pending audio generation.{" "}
+            <Link href="/explore" className="text-blue-400 hover:text-blue-300 underline">
+              View in Explore
+            </Link>
+          </p>
+        </div>
       )}
     </div>
   );

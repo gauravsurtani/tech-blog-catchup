@@ -337,6 +337,43 @@ def trigger_generate(request: Request, req: GenerateRequest, background_tasks: B
     """Trigger podcast generation. Returns immediately -- generation runs in background."""
     session = get_session()
     try:
+        # Guard: if a specific post is requested, check if audio already exists
+        if req.post_id:
+            post = session.query(Post).filter(Post.id == req.post_id).first()
+            if not post:
+                raise HTTPException(status_code=404, detail=f"Post {req.post_id} not found")
+            if post.audio_status == "ready":
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Post {req.post_id} already has audio generated",
+                )
+
+        # Guard: check for duplicate queued/running generate jobs
+        active_jobs = (
+            session.query(Job)
+            .filter(Job.job_type == "generate", Job.status.in_(["queued", "running"]))
+            .all()
+        )
+        for existing in active_jobs:
+            existing_params = json.loads(existing.params) if existing.params else {}
+            existing_post_id = existing_params.get("post_id")
+            if req.post_id:
+                # Specific post: match if an active job targets the same post_id
+                if existing_post_id == req.post_id:
+                    raise HTTPException(
+                        status_code=409,
+                        detail=f"Generation already in progress for post {req.post_id}",
+                        headers={"X-Existing-Job-Id": str(existing.id)},
+                    )
+            else:
+                # Batch job: match if another batch generate job is active
+                if existing_post_id is None:
+                    raise HTTPException(
+                        status_code=409,
+                        detail="A batch generation job is already queued or running",
+                        headers={"X-Existing-Job-Id": str(existing.id)},
+                    )
+
         job = Job(
             job_type="generate",
             status="queued",

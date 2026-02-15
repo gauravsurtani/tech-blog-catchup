@@ -4,7 +4,6 @@ import logging
 import xml.etree.ElementTree as ET
 
 import requests
-from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
 
@@ -128,8 +127,19 @@ def parse_sitemap(sitemap_url: str, url_pattern: str | None = None) -> list[str]
         # Direct urlset sitemap
         all_urls = _extract_urls_from_sitemap_xml(content, url_pattern)
 
-    logger.info("Parsed sitemap %s — found %d URLs", sitemap_url, len(all_urls))
-    return all_urls
+    # Deduplicate URLs (sitemaps often have duplicates across child sitemaps)
+    seen: set[str] = set()
+    deduped: list[str] = []
+    for url in all_urls:
+        normalized = url.rstrip("/")
+        if normalized not in seen:
+            seen.add(normalized)
+            deduped.append(url)
+    if len(deduped) < len(all_urls):
+        logger.info("Sitemap dedup: %d -> %d URLs", len(all_urls), len(deduped))
+
+    logger.info("Parsed sitemap %s — found %d URLs", sitemap_url, len(deduped))
+    return deduped
 
 
 def scrape_medium_archive_urls(base_url: str) -> list[str]:
@@ -149,7 +159,6 @@ def scrape_medium_archive_urls(base_url: str) -> list[str]:
         Deduplicated list of article URLs discovered across all years.
     """
     import asyncio
-    import time
     from datetime import datetime
     from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig
 
@@ -170,6 +179,18 @@ def scrape_medium_archive_urls(base_url: str) -> list[str]:
     seen: set[str] = set()
     all_urls: list[str] = []
 
+    scroll_js = """
+    (async () => {
+        let prev = 0;
+        for (let i = 0; i < 15; i++) {
+            window.scrollTo(0, document.body.scrollHeight);
+            await new Promise(r => setTimeout(r, 2000));
+            if (document.body.scrollHeight === prev) break;
+            prev = document.body.scrollHeight;
+        }
+    })();
+    """
+
     async def _scrape_all_years():
         async with AsyncWebCrawler(config=BrowserConfig(headless=True)) as crawler:
             for year in years:
@@ -178,7 +199,7 @@ def scrape_medium_archive_urls(base_url: str) -> list[str]:
                 try:
                     result = await crawler.arun(
                         url=archive_url,
-                        config=CrawlerRunConfig(),
+                        config=CrawlerRunConfig(js_code=scroll_js, wait_until="networkidle"),
                     )
                     if not result or not result.success or not result.markdown:
                         logger.warning("No content from %s", archive_url)

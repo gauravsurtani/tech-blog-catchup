@@ -76,6 +76,7 @@ class CrawlStatusItem(BaseModel):
     blog_url: str | None
     status: str  # "success", "error", "running", "never"
     post_count: int
+    total_discoverable: int | None = None
     last_crawl_at: datetime | None
     last_crawl_type: str | None
     posts_added_last: int | None

@@ -4,6 +4,7 @@ import json
 import logging
 import time
 from datetime import datetime
+from urllib.parse import urlparse
 
 from fastapi import APIRouter, Query, HTTPException, BackgroundTasks, Request
 from sqlalchemy import func, desc, asc
@@ -403,8 +404,15 @@ def crawl_status():
             .all()
         )
 
-        # Get latest CrawlLog per source using a subquery
-        from sqlalchemy import and_
+        # Get max URLs discovered per source (best discovery run)
+        max_discovered = dict(
+            session.query(CrawlLog.source_key, func.max(CrawlLog.urls_found))
+            .filter(CrawlLog.urls_found.isnot(None))
+            .group_by(CrawlLog.source_key)
+            .all()
+        )
+
+        # Get latest CrawlLog per source
         latest_logs: dict[str, CrawlLog] = {}
         for log in (
             session.query(CrawlLog)
@@ -423,7 +431,6 @@ def crawl_status():
                 status = "never"
 
             # Derive blog homepage from blog_page_url or feed URL
-            from urllib.parse import urlparse
             url_for_blog = source.blog_page_url or source.feed_url or ""
             if url_for_blog:
                 parsed = urlparse(url_for_blog)
@@ -439,6 +446,7 @@ def crawl_status():
                 blog_url=blog_url,
                 status=status,
                 post_count=post_counts.get(source.key, 0),
+                total_discoverable=max_discovered.get(source.key),
                 last_crawl_at=log.completed_at or log.started_at if log else None,
                 last_crawl_type=log.crawl_type if log else None,
                 posts_added_last=log.posts_added if log else None,

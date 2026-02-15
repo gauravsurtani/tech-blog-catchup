@@ -53,6 +53,7 @@ export interface CrawlStatusItem {
   blog_url: string | null;
   status: "success" | "error" | "running" | "never";
   post_count: number;
+  total_discoverable: number | null;
   last_crawl_at: string | null;
   last_crawl_type: string | null;
   posts_added_last: number | null;

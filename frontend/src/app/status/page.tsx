@@ -67,6 +67,27 @@ function statusColor(status: string): string {
   }
 }
 
+function ProgressIndicator({ scraped, total }: { scraped: number; total: number | null }) {
+  if (!total || total === 0) return <span>{scraped} posts</span>;
+  const pct = Math.min(100, Math.round((scraped / total) * 100));
+  return (
+    <div className="flex items-center gap-2">
+      <span>{scraped} / {total}</span>
+      <div
+        className="w-16 h-1.5 bg-gray-700 rounded-full overflow-hidden"
+        role="progressbar"
+        aria-valuenow={pct}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={`${pct}% scraped`}
+      >
+        <div className="h-full bg-blue-500 rounded-full" style={{ width: `${pct}%` }} />
+      </div>
+      <span className="text-gray-600">{pct}%</span>
+    </div>
+  );
+}
+
 export default function StatusPage() {
   const [sources, setSources] = useState<CrawlStatusItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -169,7 +190,7 @@ export default function StatusPage() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mb-8">
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
           <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
             Total Posts
@@ -193,6 +214,17 @@ export default function StatusPage() {
             Not Crawled
           </p>
           <p className="text-2xl font-bold text-gray-500">{neverCount}</p>
+        </div>
+        <div className="bg-gray-900 border border-blue-900/50 rounded-xl p-4">
+          <p className="text-xs text-blue-500 uppercase tracking-wide mb-1">
+            Discoverable
+          </p>
+          <p className="text-2xl font-bold text-blue-400">
+            {(() => {
+              const total = sources.reduce((sum, s) => sum + (s.total_discoverable ?? 0), 0);
+              return total > 0 ? total.toLocaleString() : "--";
+            })()}
+          </p>
         </div>
       </div>
 
@@ -272,7 +304,7 @@ export default function StatusPage() {
                       <Rss className="w-3 h-3" />
                       {source.source_key}
                     </a>
-                    <span>{source.post_count} posts</span>
+                    <ProgressIndicator scraped={source.post_count} total={source.total_discoverable} />
                     {source.last_crawl_at && (
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />

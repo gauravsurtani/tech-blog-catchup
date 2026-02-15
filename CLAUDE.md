@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Project Does
 
-Tech Blog Catchup scrapes 15 top tech engineering blogs, converts posts into NotebookLM-style conversational podcasts (two AI hosts via GPT-4o + OpenAI TTS), and serves a Spotify-like web player for browsing, filtering, and playlist management.
+Tech Blog Catchup scrapes 15 top tech engineering blogs, converts posts into NotebookLM-style conversational podcasts (two AI hosts via LLM + OpenAI TTS), and serves a Spotify-like web player for browsing, filtering, and playlist management.
 
 ## Build & Run Commands
 
@@ -23,6 +23,8 @@ python run.py crawl --max-posts 10        # smart crawl all sources, cap at 10 p
 python run.py generate --post-id 42       # podcast for one post
 python run.py reextract --source github --quality-below 40 --dry-run
 python run.py regenerate --source meta --dry-run
+python run.py discover                    # URL discovery report (all sources, no extraction)
+python run.py discover --source uber      # discover for one source only
 python run.py status                      # post counts, audio stats, tag distribution
 python run.py api --reload                # FastAPI on :8000 with hot-reload
 
@@ -53,7 +55,7 @@ docker-compose up --build              # frontend :3000, backend :8000, Swagger 
 ```
 config.yaml ──> Crawler (Crawl4AI + atoma RSS) ──> SQLite (SQLAlchemy ORM)
                 Auto-Tagger (keyword matching)          │
-                Podcast Generator (GPT-4o + TTS)        │
+                Podcast Generator (LLM + TTS)        │
                                                         v
                                                   FastAPI REST API (:8000)
                                                         │
@@ -67,8 +69,8 @@ config.yaml ──> Crawler (Crawl4AI + atoma RSS) ──> SQLite (SQLAlchemy OR
 - **`database.py`** — SQLAlchemy engine/session factory for SQLite at `data/techblog.db`. Module-level singletons (`_engine`, `_session_factory`). `reset_engine()` exists for testing.
 - **`models.py`** — Four ORM models: `Post` (the core entity), `Tag` (12 categories), `CrawlLog`, `Job` (async task tracking). Many-to-many `post_tags` association table links Post and Tag.
 - **`api/`** — FastAPI app with CORS (configurable via `CORS_ORIGINS` env var). Routes are prefixed `/api`. Rate limiting via `slowapi` in `rate_limit.py`. POST `/api/crawl` and `/api/generate` run as `BackgroundTasks` (non-blocking), returning a `job_id` for tracking via `/api/jobs/{id}`. Static audio served at `/audio/{filename}`.
-- **`crawler/`** — Unified smart-crawl via `crawl_manager.py`: discovers URLs (sitemap + Medium archive + blog page scrape + RSS), filters junk URLs, deduplicates against DB, extracts via pipeline. `circuit_breaker.py` provides per-domain failure tracking (CLOSED/OPEN/HALF_OPEN). `feed_discoverer.py` auto-discovers RSS/Atom feeds via HTML link tags + path probing.
-- **`podcast/`** — `manager.py` selects pending posts, `generator.py` produces script via GPT-4o then audio via OpenAI TTS. Output goes to `backend/audio/`.
+- **`crawler/`** — Unified smart-crawl via `crawl_manager.py`: discovers URLs (sitemap + Medium archive + blog page scrape with pagination + RSS), filters junk URLs, deduplicates against DB, extracts via pipeline. Blog page scraper supports `pagination_pattern` (e.g. `/page/{n}/` for Uber) to follow paginated listing pages. Medium archive scraper scrolls to load lazy content. `sitemap_parser.py` deduplicates across child sitemaps. `circuit_breaker.py` provides per-domain failure tracking (CLOSED/OPEN/HALF_OPEN). `feed_discoverer.py` auto-discovers RSS/Atom feeds via HTML link tags + path probing.
+- **`podcast/`** — `manager.py` selects pending posts, `generator.py` produces script via LLM then audio via OpenAI TTS. Output goes to `backend/audio/`.
 - **`tagger/auto_tagger.py`** — Keyword-matching against 12 tag categories defined in `config.yaml`.
 
 ### Frontend (`frontend/src/`)
@@ -86,6 +88,7 @@ config.yaml ──> Crawler (Crawl4AI + atoma RSS) ──> SQLite (SQLAlchemy OR
 - **Database** is SQLite, auto-created at `backend/data/techblog.db`. Both `data/` and `audio/` directories are gitignored.
 - **Post.audio_status** lifecycle: `pending` -> `processing` -> `ready` | `failed`.
 - **Crawl mode**: Unified "smart" crawl discovers via all methods (sitemap, Medium archive, blog page, RSS), deduplicates, filters junk URLs, extracts. Use `--max-posts N` to cap per source.
+- **Pagination**: `BlogSource.pagination_pattern` (e.g. `"/page/{n}/"`) enables multi-page blog scraping. Uber uses this to discover ~530 URLs across 44 pages.
 - **Junk URL filter**: `_filter_junk_urls()` in `crawl_manager.py` removes non-article URLs (images, signin, help, archive listings, etc.) before extraction. Extraction capped at 3x `max_posts` to save API credits.
 - **Quality gate**: Podcast generation only selects posts with `quality_score >= 60` or `NULL` (legacy).
 - **pytest** uses `asyncio_mode = "auto"` (configured in `pyproject.toml`).
@@ -105,6 +108,7 @@ config.yaml ──> Crawler (Crawl4AI + atoma RSS) ──> SQLite (SQLAlchemy OR
 | GET | `/api/playlist` | Posts with audio_status=ready only |
 | GET | `/api/status` | Dashboard summary |
 | GET | `/api/health` | Health check with uptime, DB status, version |
+| GET | `/api/crawl-status` | Per-source scrape status with total_discoverable |
 | GET | `/api/jobs` | List background jobs (filter: job_type, status) |
 | GET | `/api/jobs/{id}` | Single job detail |
 | POST | `/api/crawl` | Trigger crawl (rate limited: 5/min) |

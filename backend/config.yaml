@@ -5,6 +5,7 @@ sources:
     blog_page_url: "https://www.uber.com/en-US/blog/engineering/"
     sitemap_url: "https://www.uber.com/sitemap.xml"
     blog_url_pattern: "/blog/"
+    pagination_pattern: "/page/{n}/"
     needs_browser: true
     enabled: true
   airbnb:
@@ -263,7 +264,6 @@ tags:
       - "grpc"
 
 podcast:
-  llm_model: "gpt-4o"
   tts_model: "openai"
   conversation_style:
     - "engaging"

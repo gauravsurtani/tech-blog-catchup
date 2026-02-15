@@ -38,21 +38,27 @@ def _scrape_blog_page_urls(
     blog_page_url: str,
     blog_url_pattern: str | None = None,
     max_scrolls: int = 10,
+    pagination_pattern: str | None = None,
 ) -> list[str]:
     """Scrape a blog listing page for article URLs using Crawl4AI with scroll.
 
     Injects a scroll-to-bottom script to trigger lazy-loaded content, then
     extracts matching article URLs from the fully-rendered page.
 
+    If ``pagination_pattern`` is set (e.g. ``/page/{n}/``), follows pagination
+    links across multiple pages to discover all articles.
+
     Args:
         blog_page_url: The blog listing page URL.
         blog_url_pattern: Substring that article URLs must contain (e.g. ``/blog/``).
         max_scrolls: Maximum number of scroll iterations before stopping.
+        pagination_pattern: URL pattern for pagination (e.g. ``/page/{n}/``).
 
     Returns:
-        Deduplicated list of article URLs found on the page.
+        Deduplicated list of article URLs found across all page(s).
     """
     from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig
+    from urllib.parse import urlparse
 
     scroll_js = """
     (async () => {
@@ -66,35 +72,70 @@ def _scrape_blog_page_urls(
     })();
     """ % max_scrolls
 
+    # Validate pagination_pattern to prevent SSRF via crafted URL paths
+    if pagination_pattern and not re.match(r'^/[\w\-/{}.]+$', pagination_pattern):
+        logger.warning("Invalid pagination_pattern format: %s — ignoring", pagination_pattern)
+        pagination_pattern = None
+
+    parsed = urlparse(blog_page_url)
+    base_domain = f"{parsed.scheme}://{parsed.netloc}"
+    pattern = blog_url_pattern or "/blog/"
+
+    def _extract_urls_from_markdown(markdown: str) -> list[str]:
+        """Extract article URLs matching the blog pattern from rendered markdown."""
+        return re.findall(
+            rf'{re.escape(base_domain)}(?:/[a-z]{{2}}-[A-Z]{{2}})?{re.escape(pattern)}[a-z0-9][a-z0-9\-]+/?',
+            markdown,
+        )
+
     async def _scrape():
         try:
+            seen: set[str] = set()
+            urls: list[str] = []
+            run_config = CrawlerRunConfig(js_code=scroll_js, wait_until="networkidle")
+
             async with AsyncWebCrawler(config=BrowserConfig(headless=True)) as crawler:
-                result = await crawler.arun(
-                    url=blog_page_url,
-                    config=CrawlerRunConfig(js_code=scroll_js, wait_until="networkidle"),
-                )
-                if not result or not result.success or not result.markdown:
-                    return []
+                # Scrape page 1
+                result = await crawler.arun(url=blog_page_url, config=run_config)
+                if result and result.success and result.markdown:
+                    for raw_url in _extract_urls_from_markdown(result.markdown):
+                        clean_url = raw_url.rstrip("/")
+                        if clean_url not in seen:
+                            seen.add(clean_url)
+                            urls.append(clean_url)
 
-                from urllib.parse import urlparse
-                parsed = urlparse(blog_page_url)
-                base_domain = f"{parsed.scheme}://{parsed.netloc}"
-                pattern = blog_url_pattern or "/blog/"
+                logger.info("Page 1: %d URLs from %s", len(urls), blog_page_url)
 
-                # Find all URLs matching the blog pattern
-                raw_links = re.findall(
-                    rf'{re.escape(base_domain)}(?:/[a-z]{{2}}-[A-Z]{{2}})?{re.escape(pattern)}[a-z0-9][a-z0-9\-]+/?',
-                    result.markdown,
-                )
+                # Follow pagination if pattern is set
+                if pagination_pattern:
+                    base = blog_page_url.rstrip("/")
+                    for page_num in range(2, 101):  # Safety cap at 100 pages
+                        page_path = pagination_pattern.replace("{n}", str(page_num))
+                        page_url = base + page_path
 
-                # Deduplicate preserving order
-                seen: set[str] = set()
-                urls: list[str] = []
-                for url in raw_links:
-                    url = url.rstrip("/")
-                    if url not in seen:
-                        seen.add(url)
-                        urls.append(url)
+                        await asyncio.sleep(1.5)  # Polite delay between pages
+
+                        result = await crawler.arun(url=page_url, config=run_config)
+                        if not result or not result.success or not result.markdown:
+                            logger.info("Pagination ended at page %d (no content)", page_num)
+                            break
+
+                        new_on_page = 0
+                        for raw_url in _extract_urls_from_markdown(result.markdown):
+                            clean_url = raw_url.rstrip("/")
+                            if clean_url not in seen:
+                                seen.add(clean_url)
+                                urls.append(clean_url)
+                                new_on_page += 1
+
+                        if new_on_page == 0:
+                            logger.info("Pagination ended at page %d (0 new URLs)", page_num)
+                            break
+                        logger.info("Page %d: %d new URLs (total: %d)", page_num, new_on_page, len(urls))
+
+                    if page_num == 100:
+                        logger.warning("Reached pagination cap (100 pages) for %s", blog_page_url)
+
                 return urls
         except Exception as exc:
             logger.warning("Blog page scrape failed for %s: %s", blog_page_url, exc)
@@ -136,7 +177,7 @@ def _filter_junk_urls(urls: list[str]) -> list[str]:
     return clean
 
 
-def _filter_new_urls(session: Session, urls: list[str]) -> list[str]:
+def filter_new_urls(session: Session, urls: list[str]) -> list[str]:
     """Return only URLs not yet in the database (batch query, chunked)."""
     if not urls:
         return []
@@ -210,7 +251,10 @@ def discover_urls(source: BlogSource) -> tuple[list[str], dict[str, list[str]]]:
     if source.blog_page_url:
         try:
             console.print(f"  [dim]Blog page: {source.blog_page_url}[/dim]")
-            blog_urls = _scrape_blog_page_urls(source.blog_page_url, source.blog_url_pattern)
+            blog_urls = _scrape_blog_page_urls(
+                source.blog_page_url, source.blog_url_pattern,
+                pagination_pattern=source.pagination_pattern,
+            )
             _merge("blog_page", blog_urls)
             console.print(f"    blog_page → {len(blog_urls)} URLs")
         except Exception as exc:
@@ -340,7 +384,7 @@ def crawl_source(
     console.print(f"  Found [bold]{len(all_urls)}[/bold] total URLs (deduplicated)")
 
     # --- Filter new ---
-    new_urls = _filter_new_urls(session, all_urls)
+    new_urls = filter_new_urls(session, all_urls)
     console.print(f"  [bold]{len(new_urls)}[/bold] are new (not in DB)")
     if max_posts:
         console.print(f"  Will store up to [bold]{max_posts}[/bold] posts (--max-posts)")

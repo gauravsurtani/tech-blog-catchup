@@ -22,6 +22,7 @@ class BlogSource:
     needs_browser: bool = False
     article_selector: str | None = None
     strip_selectors: list[str] | None = None
+    pagination_pattern: str | None = None  # e.g. "/page/{n}/"
 
 
 @dataclass
@@ -73,6 +74,7 @@ def load_config(path: str | None = None) -> Config:
             needs_browser=data.get("needs_browser", False),
             article_selector=data.get("article_selector"),
             strip_selectors=data.get("strip_selectors"),
+            pagination_pattern=data.get("pagination_pattern"),
         ))
 
     tags = []

@@ -12,7 +12,7 @@ from src.database import Base
 from src.models import Post
 from src.config import BlogSource, Config
 from src.crawler.crawl_manager import (
-    _filter_new_urls,
+    filter_new_urls,
     discover_urls,
     crawl_source,
     crawl_all,
@@ -75,7 +75,7 @@ def minimal_config():
 class TestFilterNewUrls:
     def test_all_new(self, db_session):
         urls = ["https://a.com/1", "https://a.com/2", "https://a.com/3"]
-        result = _filter_new_urls(db_session, urls)
+        result = filter_new_urls(db_session, urls)
         assert result == urls
 
     def test_filters_existing(self, db_session):
@@ -88,11 +88,11 @@ class TestFilterNewUrls:
         db_session.commit()
 
         urls = ["https://a.com/1", "https://a.com/2"]
-        result = _filter_new_urls(db_session, urls)
+        result = filter_new_urls(db_session, urls)
         assert result == ["https://a.com/2"]
 
     def test_empty_list(self, db_session):
-        assert _filter_new_urls(db_session, []) == []
+        assert filter_new_urls(db_session, []) == []
 
     def test_all_existing(self, db_session):
         for i in range(3):
@@ -105,7 +105,7 @@ class TestFilterNewUrls:
         db_session.commit()
 
         urls = ["https://a.com/0", "https://a.com/1", "https://a.com/2"]
-        result = _filter_new_urls(db_session, urls)
+        result = filter_new_urls(db_session, urls)
         assert result == []
 
     def test_batch_chunking(self, db_session):
@@ -121,7 +121,7 @@ class TestFilterNewUrls:
             ))
         db_session.commit()
 
-        result = _filter_new_urls(db_session, urls)
+        result = filter_new_urls(db_session, urls)
         assert len(result) == 590
         assert "https://a.com/0" not in result
         assert "https://a.com/10" in result

@@ -76,8 +76,11 @@ config.yaml ──> Crawler (Crawl4AI + atoma RSS) ──> SQLite (SQLAlchemy OR
 ### Frontend (`frontend/src/`)
 
 - **App Router** (Next.js 16): pages at `app/page.tsx`, `app/explore/page.tsx`, `app/playlist/page.tsx`, `app/post/[id]/page.tsx`.
-- **Global audio player** — `AudioPlayerProvider` context in `hooks/useAudioPlayer.tsx` wraps the entire app via `layout.tsx`. Persistent `<audio>` element with queue/history/seek/volume/playbackRate state. The `AudioPlayer` component renders as a fixed bottom bar with speed control (0.5x-3x) and keyboard shortcuts (Space=play/pause, M=mute).
-- **API client** — `lib/api.ts` talks to `NEXT_PUBLIC_API_URL` (defaults to `http://localhost:8000`). Includes retry logic (3 attempts, exponential backoff), timeout (10s), and `ApiError` class. All types in `lib/types.ts`.
+- **Page differentiation**: Home (`/`) = "Your Podcast Feed" showing only `audio_status=ready` posts with a pending count footer linking to Explore. Explore (`/explore`) = all posts with search, source/tag filters, sort, pagination, and generate buttons for pending/failed posts.
+- **Global audio player** — `AudioPlayerProvider` context in `hooks/useAudioPlayer.tsx` wraps the entire app via `layout.tsx`. Persistent `<audio>` element with queue/history/seek/volume/playbackRate state. The `AudioPlayer` component renders as a fixed bottom bar with speed control (0.5x-3x) and keyboard shortcuts (Space=play/pause, M=mute, ArrowLeft/Right=seek, ArrowUp/Down=volume).
+- **Generation status** — `hooks/useGenerationStatus.ts` polls `/api/jobs?job_type=generate&status=running` every 5s. `GenerationBanner` component in `layout.tsx` shows a global indigo bar when a generate job is running. `usePosts` hook supports optional `refetchInterval` for auto-refresh during generation.
+- **Generate Podcast buttons** — Post detail, PostListItem (Home), and PostCard (Explore) all show "Generate Podcast" for posts with `audio_status` of `pending` or `failed`. User sees no distinction between pending and failed — just a post without audio and one action to create it.
+- **API client** — `lib/api.ts` talks to `NEXT_PUBLIC_API_URL` (defaults to `http://localhost:8000`). Includes retry logic (3 attempts, exponential backoff), timeout (10s), `ApiError` class, and `getJobs()` helper. All types in `lib/types.ts` (including `Job` interface).
 - **Standalone output** — `next.config.ts` sets `output: "standalone"` for Docker deployment.
 
 ## Key Conventions
@@ -94,6 +97,8 @@ config.yaml ──> Crawler (Crawl4AI + atoma RSS) ──> SQLite (SQLAlchemy OR
 - **pytest** uses `asyncio_mode = "auto"` (configured in `pyproject.toml`).
 - **Job.status** lifecycle: `queued` -> `running` -> `completed` | `failed`.
 - **Rate limiting**: 5 requests/minute on `/api/crawl` and `/api/generate` via `slowapi`.
+- **Duplicate job guard**: `POST /api/generate` returns 409 if the target post already has audio (`ready`), or if an identical job (same `post_id` or batch) is already `queued`/`running`.
+- **Generate batch limit**: Default `limit=10` posts per generate job. Frontend doesn't override this.
 - **E2E tests** use Playwright at `frontend/e2e/` with page object pattern. Run: `cd frontend && npx playwright test`.
 - **Keyboard shortcuts**: `Space` = play/pause, `M` = mute/unmute (when audio player is active).
 
@@ -112,4 +117,4 @@ config.yaml ──> Crawler (Crawl4AI + atoma RSS) ──> SQLite (SQLAlchemy OR
 | GET | `/api/jobs` | List background jobs (filter: job_type, status) |
 | GET | `/api/jobs/{id}` | Single job detail |
 | POST | `/api/crawl` | Trigger crawl (rate limited: 5/min) |
-| POST | `/api/generate` | Trigger podcast generation (rate limited: 5/min) |
+| POST | `/api/generate` | Trigger podcast generation (rate limited: 5/min, 409 on duplicate/existing audio) |

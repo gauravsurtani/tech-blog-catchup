@@ -103,6 +103,39 @@ def _scrape_blog_page_urls(
     return asyncio.run(_scrape())
 
 
+_JUNK_URL_PATTERNS = re.compile(
+    r"(?:"
+    r"miro\.medium\.com"                   # Medium CDN images
+    r"|/signin\b"                          # Login pages
+    r"|/register\b"                        # Registration pages
+    r"|/subpage/"                          # Medium subpage nav links
+    r"|/archive/\d{4}$"                    # Year archive listing pages
+    r"|\.(?:png|jpg|jpeg|gif|svg|ico|webp|woff2?|ttf|eot)\b"  # Static assets
+    r"|/tag/"                              # Tag listing pages
+    r"|/tagged/"                           # Medium tagged pages
+    r"|/about$"                            # About pages
+    r"|/newsletter"                        # Newsletter signups
+    r"|help\.medium\.com"                  # Medium help center
+    r"|/jobs-at-medium/"                   # Medium careers
+    r"|/sitemap/sitemap\.xml"              # Sitemap XML pages
+    r"|/all\?topic="                       # Medium topic listing pages
+    r"|medium\.com/m/"                     # Medium internal pages (signin, etc.)
+    r"|/creators$"                         # Medium creators page
+    r"|/membership$"                       # Medium membership page
+    r")",
+    re.IGNORECASE,
+)
+
+
+def _filter_junk_urls(urls: list[str]) -> list[str]:
+    """Remove URLs that are obviously not blog articles."""
+    clean = [u for u in urls if not _JUNK_URL_PATTERNS.search(u)]
+    removed = len(urls) - len(clean)
+    if removed:
+        logger.info("Filtered out %d junk URLs (images, signin, nav, etc.)", removed)
+    return clean
+
+
 def _filter_new_urls(session: Session, urls: list[str]) -> list[str]:
     """Return only URLs not yet in the database (batch query, chunked)."""
     if not urls:
@@ -194,6 +227,7 @@ def discover_urls(source: BlogSource) -> tuple[list[str], dict[str, list[str]]]:
         except Exception as exc:
             logger.warning("Feed parse failed for %s: %s", source.key, exc)
 
+    combined = _filter_junk_urls(combined)
     return combined, methods
 
 
@@ -333,8 +367,16 @@ def crawl_source(
         return 0
 
     # --- Extract ---
+    # Limit extraction attempts: try at most 3x max_posts to account for failures
+    urls_to_extract = new_urls
+    if max_posts:
+        extract_limit = max_posts * 3
+        urls_to_extract = new_urls[:extract_limit]
+        if len(new_urls) > extract_limit:
+            console.print(f"  Limiting extraction to first {extract_limit} URLs (3x max_posts)")
+
     extraction_results = asyncio.run(extract_articles_batch(
-        new_urls,
+        urls_to_extract,
         source_key=source.key,
         needs_browser=source.needs_browser,
         article_selector=source.article_selector,

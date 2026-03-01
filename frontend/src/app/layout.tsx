@@ -7,15 +7,28 @@ import { AudioPlayerProvider } from "@/hooks/useAudioPlayer";
 import AudioPlayer from "@/components/AudioPlayer";
 import GenerationBanner from "@/components/GenerationBanner";
 import Footer from "@/components/Footer";
+import SessionProvider from "@/components/SessionProvider";
 
 export const metadata: Metadata = {
-  title: "Tech Blog Catchup",
+  title: {
+    default: "Tech Blog Catchup",
+    template: "%s | Tech Blog Catchup",
+  },
   description: "Listen to tech engineering blogs as conversational podcasts",
   manifest: "/manifest.json",
+  openGraph: {
+    type: "website",
+    siteName: "Tech Blog Catchup",
+    title: "Tech Blog Catchup",
+    description: "Listen to tech engineering blogs as conversational podcasts",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Tech Blog Catchup",
+    description: "Listen to tech engineering blogs as conversational podcasts",
+  },
   icons: {
-    icon: [
-      { url: "/favicon.svg", type: "image/svg+xml" },
-    ],
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
   },
 };
 
@@ -28,6 +41,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className="bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] min-h-screen flex flex-col">
         <ThemeProvider>
+          <SessionProvider>
           <AudioPlayerProvider>
             <Navbar />
             <GenerationBanner />
@@ -40,6 +54,7 @@ export default function RootLayout({
             <Footer />
             <AudioPlayer />
           </AudioPlayerProvider>
+          </SessionProvider>
         </ThemeProvider>
       </body>
     </html>

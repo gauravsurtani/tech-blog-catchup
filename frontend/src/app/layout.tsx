@@ -8,6 +8,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import { AudioPlayerProvider } from "@/hooks/useAudioPlayer";
 import AudioPlayer from "@/components/AudioPlayer";
 import GenerationBanner from "@/components/GenerationBanner";
+import BottomTabs from "@/components/BottomTabs";
 import Footer from "@/components/Footer";
 import SessionProvider from "@/components/SessionProvider";
 
@@ -58,6 +59,7 @@ export default function RootLayout({
                 </main>
                 <Footer />
               </SidebarLayout>
+              <BottomTabs />
               <AudioPlayer />
             </AudioPlayerProvider>
           </SessionProvider>

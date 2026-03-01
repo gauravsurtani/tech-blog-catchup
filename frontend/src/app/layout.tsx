@@ -6,6 +6,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import { AudioPlayerProvider } from "@/hooks/useAudioPlayer";
 import AudioPlayer from "@/components/AudioPlayer";
 import GenerationBanner from "@/components/GenerationBanner";
+import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
   title: "Tech Blog Catchup",
@@ -30,6 +31,7 @@ export default function RootLayout({
             <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 pb-24">
               {children}
             </main>
+            <Footer />
             <AudioPlayer />
           </AudioPlayerProvider>
         </ThemeProvider>

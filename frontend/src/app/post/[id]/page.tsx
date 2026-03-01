@@ -12,9 +12,11 @@ import {
   User,
   Loader,
   Mic,
+  Heart,
 } from "lucide-react";
 import { getPost, triggerGenerate, ApiError } from "@/lib/api";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
+import { useFavorites } from "@/hooks/useFavorites";
 import TagBadge from "@/components/TagBadge";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import type { PostDetail } from "@/lib/types";
@@ -101,6 +103,7 @@ export default function PostDetailPage() {
   const [generating, setGenerating] = useState(false);
 
   const { play, addToQueue } = useAudioPlayer();
+  const { isFavorite, toggleFavorite } = useFavorites();
 
   async function handleGenerate() {
     if (!post) return;
@@ -210,9 +213,20 @@ export default function PostDetailPage() {
       </div>
 
       {/* Title */}
-      <h1 className="text-2xl sm:text-3xl font-bold text-gray-100 leading-tight mb-4">
-        {post.title}
-      </h1>
+      <div className="flex items-start gap-3 mb-4">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-100 leading-tight flex-1">
+          {post.title}
+        </h1>
+        <button
+          onClick={() => toggleFavorite(post.id)}
+          className="flex-shrink-0 mt-1 p-1.5 hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
+          title={isFavorite(post.id) ? "Remove from favorites" : "Add to favorites"}
+        >
+          <Heart
+            className={`w-5 h-5 ${isFavorite(post.id) ? "text-red-500 fill-red-500" : "text-gray-500 hover:text-gray-300"}`}
+          />
+        </button>
+      </div>
 
       {/* Author */}
       {post.author && (

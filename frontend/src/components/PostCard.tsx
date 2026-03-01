@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Play, Clock, User, ExternalLink, Plus, Loader, Mic } from "lucide-react";
+import { Play, Clock, User, ExternalLink, Plus, Loader, Mic, Heart } from "lucide-react";
 import type { Post } from "@/lib/types";
+import { useFavorites } from "@/hooks/useFavorites";
 import TagBadge from "./TagBadge";
 
 interface PostCardProps {
@@ -53,6 +54,9 @@ function formatWordCount(count: number | null): string {
 }
 
 export default function PostCard({ post, onPlay, onAddToQueue, onGenerate }: PostCardProps) {
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const favorited = isFavorite(post.id);
+
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 flex flex-col gap-3 hover:border-gray-700 transition-colors">
       {/* Source name */}
@@ -157,6 +161,15 @@ export default function PostCard({ post, onPlay, onAddToQueue, onGenerate }: Pos
         >
           <Plus className="w-4 h-4" />
           Add to queue
+        </button>
+        <button
+          onClick={() => toggleFavorite(post.id)}
+          className="p-1.5 hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
+          title={favorited ? "Remove from favorites" : "Add to favorites"}
+        >
+          <Heart
+            className={`w-4 h-4 ${favorited ? "text-red-500 fill-red-500" : "text-gray-500 hover:text-gray-300"}`}
+          />
         </button>
       </div>
     </div>

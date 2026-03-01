@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Play, Plus, Loader, Clock, User, Mic } from "lucide-react";
+import { Play, Plus, Loader, Clock, User, Mic, Heart } from "lucide-react";
 import type { Post } from "@/lib/types";
+import { useFavorites } from "@/hooks/useFavorites";
 
 interface PostListItemProps {
   post: Post;
@@ -39,6 +40,9 @@ export default function PostListItem({
   isPlaying = false,
   isQueued = false,
 }: PostListItemProps) {
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const favorited = isFavorite(post.id);
+
   return (
     <div
       className={`flex items-center gap-3 px-3 py-2.5 border-b border-gray-800/50 hover:bg-gray-800/50 transition-colors ${
@@ -108,6 +112,17 @@ export default function PostListItem({
           {formatDuration(post.audio_duration_secs)}
         </span>
       ) : null}
+
+      {/* Favorite button */}
+      <button
+        onClick={() => toggleFavorite(post.id)}
+        className="flex-shrink-0 p-1 hover:bg-gray-800 rounded transition-colors cursor-pointer"
+        title={favorited ? "Remove from favorites" : "Add to favorites"}
+      >
+        <Heart
+          className={`w-3.5 h-3.5 ${favorited ? "text-red-500 fill-red-500" : "text-gray-500 hover:text-gray-300"}`}
+        />
+      </button>
 
       {/* Queue button */}
       <div className="flex-shrink-0">

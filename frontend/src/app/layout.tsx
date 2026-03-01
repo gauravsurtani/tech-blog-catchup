@@ -7,6 +7,11 @@ import AudioPlayer from "@/components/AudioPlayer";
 export const metadata: Metadata = {
   title: "Tech Blog Catchup",
   description: "Listen to tech engineering blogs as conversational podcasts",
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+  },
 };
 
 export default function RootLayout({

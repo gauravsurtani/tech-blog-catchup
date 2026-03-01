@@ -14,15 +14,17 @@ export default function SidebarLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [collapsed, setCollapsed] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(STORAGE_KEY) === "true";
+  });
+  const [isDesktop, setIsDesktop] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia(`(min-width: ${MD_BREAKPOINT}px)`).matches;
+  });
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === "true") setCollapsed(true);
-
     const mq = window.matchMedia(`(min-width: ${MD_BREAKPOINT}px)`);
-    setIsDesktop(mq.matches);
     const onMq = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
     mq.addEventListener("change", onMq);
 

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Home,
   Compass,
@@ -26,15 +26,10 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === "true") setCollapsed(true);
-    setMounted(true);
-  }, []);
-
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(STORAGE_KEY) === "true";
+  });
   const toggle = () => {
     const next = !collapsed;
     setCollapsed(next);
@@ -46,7 +41,7 @@ export default function Sidebar() {
     <aside
       className="hidden md:flex flex-col fixed top-0 left-0 h-screen border-r border-[var(--color-border)] bg-[var(--color-bg-secondary)] transition-[width] duration-300 ease-in-out"
       style={{
-        width: mounted ? (collapsed ? 72 : 240) : 240,
+        width: collapsed ? 72 : 240,
         zIndex: "var(--z-nav)",
       }}
     >

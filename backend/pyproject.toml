@@ -24,6 +24,7 @@ dependencies = [
     "trafilatura>=2.0",
     "markdownify>=0.14",
     "httpx>=0.27",
+    "PyJWT>=2.8",
 ]
 
 [project.optional-dependencies]

@@ -19,6 +19,7 @@ import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import { useFavorites } from "@/hooks/useFavorites";
 import TagBadge from "@/components/TagBadge";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
+import ShareButton from "@/components/ShareButton";
 import type { PostDetail } from "@/lib/types";
 
 function formatDate(dateStr: string | null): string {
@@ -217,6 +218,7 @@ export default function PostDetailPage() {
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-100 leading-tight flex-1">
           {post.title}
         </h1>
+        <ShareButton postId={post.id} title={post.title} className="flex-shrink-0 mt-1" />
         <button
           onClick={() => toggleFavorite(post.id)}
           className="flex-shrink-0 mt-1 p-1.5 hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"

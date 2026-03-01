@@ -74,6 +74,8 @@ interface SearchDialogProps {
 export default function SearchDialog({ open, onClose }: SearchDialogProps) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Post[]>([]);
   const [loading, setLoading] = useState(false);
@@ -83,13 +85,51 @@ export default function SearchDialog({ open, onClose }: SearchDialogProps) {
 
   useEffect(() => {
     if (open) {
+      triggerRef.current = document.activeElement as HTMLElement;
       setQuery("");
       setResults([]);
       setSelectedIndex(0);
       setHasSearched(false);
       setRecentSearches(getRecentSearches());
       requestAnimationFrame(() => inputRef.current?.focus());
+    } else if (triggerRef.current) {
+      triggerRef.current.focus();
+      triggerRef.current = null;
     }
+  }, [open]);
+
+  // Focus trap: cycle Tab through dialog elements only
+  useEffect(() => {
+    if (!open) return;
+
+    const handleFocusTrap = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+      const dialog = dialogRef.current;
+      if (!dialog) return;
+
+      const focusable = dialog.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleFocusTrap);
+    return () => document.removeEventListener("keydown", handleFocusTrap);
   }, [open]);
 
   useEffect(() => {
@@ -176,9 +216,13 @@ export default function SearchDialog({ open, onClose }: SearchDialogProps) {
     <div
       className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh]"
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Search"
     >
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div
+        ref={dialogRef}
         className="relative w-full max-w-lg mx-4 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
@@ -198,6 +242,7 @@ export default function SearchDialog({ open, onClose }: SearchDialogProps) {
           )}
           <button
             onClick={onClose}
+            aria-label="Close search"
             className="shrink-0 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
           >
             <X size={16} />

@@ -45,6 +45,12 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] min-h-screen`}>
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-[var(--color-accent)] focus:text-[var(--color-accent-text)] focus:rounded-[var(--radius-md)]"
+        >
+          Skip to content
+        </a>
         <ThemeProvider>
           <SessionProvider>
             <AudioPlayerProvider>
@@ -54,7 +60,7 @@ export default function RootLayout({
                 <div className="fixed top-4 right-4 z-50">
                   <ThemeToggle />
                 </div>
-                <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 pb-24">
+                <main id="main-content" className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 pb-24">
                   {children}
                 </main>
                 <Footer />

@@ -65,6 +65,8 @@ export default function Sidebar() {
 
   return (
     <aside
+      role="navigation"
+      aria-label="Main navigation"
       className="hidden md:flex flex-col fixed top-0 left-0 h-screen border-r border-[var(--color-border)] bg-[var(--color-bg-secondary)] transition-[width] duration-300 ease-in-out"
       style={{
         width: mounted ? (collapsed ? 72 : 240) : 240,
@@ -86,6 +88,7 @@ export default function Sidebar() {
         <button
           onClick={() => setSearchOpen(true)}
           title={collapsed ? "Search (Cmd+K)" : undefined}
+          aria-label="Search posts"
           className="flex items-center gap-3 w-full rounded-[var(--radius-md)] px-3 py-2.5 text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors"
         >
           <Search size={20} className="shrink-0" />
@@ -104,7 +107,7 @@ export default function Sidebar() {
       </div>
 
       {/* Nav items */}
-      <nav className="flex-1 py-4 flex flex-col gap-1 px-3 overflow-y-auto">
+      <nav role="list" className="flex-1 py-4 flex flex-col gap-1 px-3 overflow-y-auto">
         {navItems.map(({ href, label, icon: Icon }) => {
           const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
           return (

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import ThemeProvider from "@/components/ThemeProvider";
@@ -7,6 +8,8 @@ import { AudioPlayerProvider } from "@/hooks/useAudioPlayer";
 import AudioPlayer from "@/components/AudioPlayer";
 import GenerationBanner from "@/components/GenerationBanner";
 import Footer from "@/components/Footer";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
   title: "Tech Blog Catchup",
@@ -26,7 +29,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] min-h-screen flex flex-col">
+      <body className={`${inter.variable} bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] min-h-screen flex flex-col`}>
         <ThemeProvider>
           <AudioPlayerProvider>
             <Navbar />

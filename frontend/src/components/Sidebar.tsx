@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Home,
   Compass,
@@ -12,9 +12,11 @@ import {
   BarChart3,
   ChevronLeft,
   ChevronRight,
+  Search,
 } from "lucide-react";
 import Logo from "./Logo";
 import UserMenu from "./UserMenu";
+import SearchDialog from "./SearchDialog";
 
 const STORAGE_KEY = "sidebar-collapsed";
 
@@ -31,12 +33,28 @@ export default function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored === "true") setCollapsed(true);
     setMounted(true);
   }, []);
+
+  const handleGlobalKeyDown = useCallback((e: KeyboardEvent) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+      e.preventDefault();
+      setSearchOpen((prev) => !prev);
+    }
+    if (e.key === "Escape") {
+      setSearchOpen(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleGlobalKeyDown);
+    return () => document.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [handleGlobalKeyDown]);
 
   const toggle = () => {
     const next = !collapsed;
@@ -61,6 +79,28 @@ export default function Sidebar() {
             className={collapsed ? "h-8 w-8" : "text-xl"}
           />
         </Link>
+      </div>
+
+      {/* Search button */}
+      <div className="px-3 pt-4 pb-1">
+        <button
+          onClick={() => setSearchOpen(true)}
+          title={collapsed ? "Search (Cmd+K)" : undefined}
+          className="flex items-center gap-3 w-full rounded-[var(--radius-md)] px-3 py-2.5 text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors"
+        >
+          <Search size={20} className="shrink-0" />
+          {!collapsed && (
+            <>
+              <span className="flex-1 text-left whitespace-nowrap">Search</span>
+              <kbd className="text-[10px] font-mono text-[var(--color-text-muted)] bg-[var(--color-bg-hover)] px-1.5 py-0.5 rounded">
+                {typeof navigator !== "undefined" && /Mac/.test(navigator.platform)
+                  ? "\u2318"
+                  : "Ctrl+"}
+                K
+              </kbd>
+            </>
+          )}
+        </button>
       </div>
 
       {/* Nav items */}
@@ -98,6 +138,8 @@ export default function Sidebar() {
       >
         {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
       </button>
+
+      <SearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} />
     </aside>
   );
 }

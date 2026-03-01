@@ -11,6 +11,7 @@ import Footer from "@/components/Footer";
 export const metadata: Metadata = {
   title: "Tech Blog Catchup",
   description: "Listen to tech engineering blogs as conversational podcasts",
+  manifest: "/manifest.json",
   icons: {
     icon: [
       { url: "/favicon.svg", type: "image/svg+xml" },

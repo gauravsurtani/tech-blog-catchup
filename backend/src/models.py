@@ -2,7 +2,10 @@
 
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, Table, ForeignKey
+from sqlalchemy import (
+    Boolean, Column, DateTime, Float, ForeignKey,
+    Integer, String, Table, Text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.database import Base
@@ -90,3 +93,36 @@ class Job(Base):
 
     def __repr__(self) -> str:
         return f"<Job(id={self.id}, type={self.job_type}, status={self.status})>"
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    email: Mapped[str] = mapped_column(String, unique=True, nullable=False, index=True)
+    name: Mapped[str | None] = mapped_column(String, nullable=True)
+    avatar_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    provider: Mapped[str] = mapped_column(String, nullable=False)  # 'google' | 'github'
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    preferences: Mapped["UserPreferences | None"] = relationship(
+        "UserPreferences", back_populates="user", uselist=False
+    )
+
+    def __repr__(self) -> str:
+        return f"<User(id={self.id}, email={self.email!r}, provider={self.provider})>"
+
+
+class UserPreferences(Base):
+    __tablename__ = "user_preferences"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+    theme: Mapped[str] = mapped_column(String, default="dark")
+    playback_speed: Mapped[float] = mapped_column(Float, default=1.0)
+    notifications: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    user: Mapped["User"] = relationship("User", back_populates="preferences")
+
+    def __repr__(self) -> str:
+        return f"<UserPreferences(id={self.id}, user_id={self.user_id})>"

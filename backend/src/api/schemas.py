@@ -96,3 +96,33 @@ class JobInfo(BaseModel):
     completed_at: datetime | None
 
     model_config = {"from_attributes": True}
+
+
+class UserInfo(BaseModel):
+    id: int
+    email: str
+    name: str | None
+    avatar_url: str | None
+    provider: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class UserPreferencesInfo(BaseModel):
+    theme: str = "dark"
+    playback_speed: float = 1.0
+    notifications: bool = True
+
+    model_config = {"from_attributes": True}
+
+
+class UserMeResponse(BaseModel):
+    user: UserInfo
+    preferences: UserPreferencesInfo
+
+
+class UpdatePreferencesRequest(BaseModel):
+    theme: str | None = None
+    playback_speed: float | None = None
+    notifications: bool | None = None

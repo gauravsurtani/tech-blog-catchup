@@ -2,24 +2,28 @@
 
 import json
 import logging
+import os
 import time
 from datetime import datetime
+from pathlib import Path
 from urllib.parse import urlparse
 
-from fastapi import APIRouter, Query, HTTPException, BackgroundTasks, Request
+from fastapi import APIRouter, Depends, Query, HTTPException, BackgroundTasks, Request
 from sqlalchemy import func, desc, asc
 from sqlalchemy.orm import joinedload
 
 logger = logging.getLogger(__name__)
 
 from src.database import get_session
-from src.models import Post, Tag, CrawlLog, post_tags, Job
+from src.models import Post, Tag, CrawlLog, post_tags, Job, User, UserPreferences
 from src.api.schemas import (
     PostSummary, PostDetail, TagInfo, SourceInfo,
     StatusInfo, PaginatedPosts, CrawlRequest, GenerateRequest,
     JobInfo, CrawlStatusItem,
+    UserMeResponse, UserInfo, UserPreferencesInfo, UpdatePreferencesRequest,
 )
 from src.api.rate_limit import limiter
+from src.api.auth_middleware import get_current_user
 
 router = APIRouter(prefix="/api")
 
@@ -518,4 +522,136 @@ def health():
         "total_posts": total_posts,
         "audio_ready_count": audio_ready,
         "version": "0.1.0",
+        "audio_base_url": os.getenv("AUDIO_BASE_URL", "/audio"),
     }
+
+
+@router.get("/config")
+def get_config_endpoint():
+    """Public configuration for clients (audio URL, version)."""
+    return {
+        "audio_base_url": os.getenv("AUDIO_BASE_URL", "/audio"),
+        "version": "0.1.0",
+    }
+
+
+@router.get("/audio-inventory")
+def audio_inventory():
+    """Compare posts with audio_status=ready against actual files on disk."""
+    audio_dir_env = os.getenv("AUDIO_DIR")
+    audio_dir = Path(audio_dir_env) if audio_dir_env else Path(__file__).parent.parent.parent / "audio"
+
+    session = get_session()
+    try:
+        ready_posts = (
+            session.query(Post)
+            .filter(Post.audio_status == "ready")
+            .all()
+        )
+
+        expected_files: dict[str, Post] = {}
+        missing = []
+        for post in ready_posts:
+            if not post.audio_path:
+                missing.append({
+                    "post_id": post.id,
+                    "title": post.title,
+                    "expected_path": None,
+                })
+                continue
+            filename = Path(post.audio_path).name
+            expected_files[filename] = post
+            full_path = audio_dir / filename
+            if not full_path.exists():
+                missing.append({
+                    "post_id": post.id,
+                    "title": post.title,
+                    "expected_path": str(full_path),
+                })
+
+        orphaned = []
+        if audio_dir.is_dir():
+            for entry in audio_dir.iterdir():
+                if entry.is_file() and entry.name not in expected_files:
+                    orphaned.append(entry.name)
+
+        files_on_disk = sum(
+            1 for post in ready_posts
+            if post.audio_path and (audio_dir / Path(post.audio_path).name).exists()
+        )
+
+        return {
+            "total_ready": len(ready_posts),
+            "files_on_disk": files_on_disk,
+            "missing": missing,
+            "orphaned": sorted(orphaned),
+            "audio_dir": str(audio_dir.resolve()),
+        }
+    finally:
+        session.close()
+
+
+# ---------- User endpoints ----------
+
+
+@router.get("/users/me", response_model=UserMeResponse)
+def get_me(current_user: User = Depends(get_current_user)):
+    """Return the authenticated user and their preferences."""
+    session = get_session()
+    try:
+        prefs = session.query(UserPreferences).filter(
+            UserPreferences.user_id == current_user.id
+        ).first()
+
+        prefs_info = UserPreferencesInfo(
+            theme=prefs.theme if prefs else "dark",
+            playback_speed=prefs.playback_speed if prefs else 1.0,
+            notifications=prefs.notifications if prefs else True,
+        )
+
+        return UserMeResponse(
+            user=UserInfo.model_validate(current_user),
+            preferences=prefs_info,
+        )
+    finally:
+        session.close()
+
+
+@router.patch("/users/me", response_model=UserMeResponse)
+def update_me(
+    req: UpdatePreferencesRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """Update the authenticated user's preferences."""
+    session = get_session()
+    try:
+        prefs = session.query(UserPreferences).filter(
+            UserPreferences.user_id == current_user.id
+        ).first()
+
+        if not prefs:
+            prefs = UserPreferences(user_id=current_user.id)
+            session.add(prefs)
+            session.flush()
+
+        if req.theme is not None:
+            prefs.theme = req.theme
+        if req.playback_speed is not None:
+            prefs.playback_speed = req.playback_speed
+        if req.notifications is not None:
+            prefs.notifications = req.notifications
+
+        session.commit()
+
+        prefs_info = UserPreferencesInfo(
+            theme=prefs.theme,
+            playback_speed=prefs.playback_speed,
+            notifications=prefs.notifications,
+        )
+
+        return UserMeResponse(
+            user=UserInfo.model_validate(current_user),
+            preferences=prefs_info,
+        )
+    finally:
+        session.close()

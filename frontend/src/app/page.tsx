@@ -6,6 +6,7 @@ import { usePosts } from "@/hooks/usePosts";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import PostListItem from "@/components/PostListItem";
 import HomeSections from "@/components/HomeSections";
+import ContinueListening from "@/components/ContinueListening";
 import type { Post } from "@/lib/types";
 
 const PAGE_SIZE = 12;
@@ -70,6 +71,7 @@ export default function Home() {
     <div>
       <h1 className="text-3xl font-bold mb-6">Your Podcast Feed</h1>
 
+      <ContinueListening />
       <HomeSections />
 
       {posts.length > 0 && (

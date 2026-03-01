@@ -96,7 +96,7 @@ export default function AudioPlayer() {
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-gray-900 border-t border-gray-800 h-20 select-none">
         <div className="h-full max-w-full mx-auto px-4 flex items-center gap-4">
           {/* Track info */}
-          <div className="flex flex-col min-w-0 w-56 shrink-0">
+          <div className="flex flex-col min-w-0 w-56 shrink-0" aria-live="polite">
             <span className="text-xs text-gray-400 truncate">
               {currentTrack.source_name}
             </span>
@@ -141,7 +141,11 @@ export default function AudioPlayer() {
           </div>
 
           {/* Waveform progress */}
-          <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div
+            className="flex items-center gap-3 flex-1 min-w-0"
+            role="group"
+            aria-label="Playback progress"
+          >
             <span className="text-xs text-gray-400 w-10 text-right tabular-nums shrink-0">
               {formatTime(currentTime)}
             </span>
@@ -168,6 +172,12 @@ export default function AudioPlayer() {
             </button>
             <div
               ref={volumeBarRef}
+              role="slider"
+              aria-label="Volume"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.round(volume * 100)}
+              tabIndex={0}
               className="w-24 h-1.5 bg-gray-700 rounded-full cursor-pointer group relative"
               onMouseDown={handleVolumeMouseDown}
             >

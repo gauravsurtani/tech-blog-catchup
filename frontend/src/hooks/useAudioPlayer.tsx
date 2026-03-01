@@ -17,6 +17,7 @@ interface AudioPlayerState {
   queue: Post[];
   history: Post[];
   isPlaying: boolean;
+  isExpanded: boolean;
   progress: number;
   currentTime: number;
   duration: number;
@@ -38,6 +39,7 @@ interface AudioPlayerActions {
   seek: (fraction: number) => void;
   clearQueue: () => void;
   setPlaybackRate: (rate: number) => void;
+  toggleExpanded: () => void;
 }
 
 type AudioPlayerContextType = AudioPlayerState & AudioPlayerActions;
@@ -156,6 +158,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   const [queue, setQueue] = useState<Post[]>(getStoredQueue);
   const [history, setHistory] = useState<Post[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -379,6 +382,10 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     playbackRateRef.current = rate;
   }, []);
 
+  const toggleExpanded = useCallback(() => {
+    setIsExpanded((prev) => !prev);
+  }, []);
+
   // Keyboard shortcuts
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -487,6 +494,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     queue,
     history,
     isPlaying,
+    isExpanded,
     progress,
     currentTime,
     duration,
@@ -505,6 +513,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     seek,
     clearQueue,
     setPlaybackRate,
+    toggleExpanded,
   };
 
   return (

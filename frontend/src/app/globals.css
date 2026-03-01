@@ -128,3 +128,17 @@ body {
   outline: 2px solid var(--color-info);
   outline-offset: 2px;
 }
+
+/* Full-screen player slide-up animation */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}

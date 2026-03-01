@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useCallback, useEffect } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import {
   Play,
   Pause,
@@ -10,9 +10,12 @@ import {
   VolumeX,
   ChevronDown,
   ListMusic,
+  FileText,
 } from "lucide-react";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
+import { getPost } from "@/lib/api";
 import WaveformBar from "./WaveformBar";
+import TranscriptPanel from "./TranscriptPanel";
 
 const SOURCE_GRADIENTS: Record<string, string> = {
   cloudflare: "from-orange-600 to-amber-800",
@@ -88,6 +91,50 @@ export default function FullScreenPlayer({
 
   const volumeBarRef = useRef<HTMLDivElement>(null);
   const prevVolumeRef = useRef(volume || 0.75);
+
+  // Transcript state
+  const [transcriptOpen, setTranscriptOpen] = useState(false);
+  const [fullText, setFullText] = useState<string | null>(null);
+  const [transcriptLoading, setTranscriptLoading] = useState(false);
+  const lastFetchedPostIdRef = useRef<number | null>(null);
+
+  // Fetch full text when transcript is toggled on
+  useEffect(() => {
+    if (!transcriptOpen || !currentTrack) return;
+    if (lastFetchedPostIdRef.current === currentTrack.id && fullText !== null) return;
+
+    let cancelled = false;
+    setTranscriptLoading(true);
+    getPost(currentTrack.id)
+      .then((detail) => {
+        if (!cancelled) {
+          setFullText(detail.full_text);
+          lastFetchedPostIdRef.current = detail.id;
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setFullText(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setTranscriptLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [transcriptOpen, currentTrack, fullText]);
+
+  // Reset full text cache when track changes
+  useEffect(() => {
+    if (currentTrack && lastFetchedPostIdRef.current !== currentTrack.id) {
+      setFullText(null);
+      lastFetchedPostIdRef.current = null;
+    }
+  }, [currentTrack]);
 
   // Close on Escape key
   useEffect(() => {
@@ -173,33 +220,75 @@ export default function FullScreenPlayer({
           <span className="text-xs text-gray-400 uppercase tracking-widest font-medium">
             Now Playing
           </span>
-          <button
-            onClick={onQueueToggle}
-            className={`relative p-2 -mr-2 rounded-md transition-colors ${
-              queueOpen
-                ? "text-green-400 bg-white/10"
-                : "text-gray-400 hover:text-white"
-            }`}
-            aria-label="Toggle queue"
-          >
-            <ListMusic size={24} />
-            {queue.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-green-500 text-black text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                {queue.length > 9 ? "9+" : queue.length}
-              </span>
-            )}
-          </button>
+          <div className="flex items-center gap-2 -mr-2">
+            <button
+              onClick={() => setTranscriptOpen((prev) => !prev)}
+              className={`p-2 rounded-md transition-colors ${
+                transcriptOpen
+                  ? "text-green-400 bg-white/10"
+                  : "text-gray-400 hover:text-white"
+              }`}
+              aria-label="Toggle transcript"
+            >
+              <FileText size={24} />
+            </button>
+            <button
+              onClick={onQueueToggle}
+              className={`relative p-2 rounded-md transition-colors ${
+                queueOpen
+                  ? "text-green-400 bg-white/10"
+                  : "text-gray-400 hover:text-white"
+              }`}
+              aria-label="Toggle queue"
+            >
+              <ListMusic size={24} />
+              {queue.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-green-500 text-black text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                  {queue.length > 9 ? "9+" : queue.length}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
 
-        {/* Artwork area */}
-        <div className="flex-1 flex items-center justify-center px-8">
-          <div
-            className={`w-64 h-64 sm:w-80 sm:h-80 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-2xl`}
-          >
-            <span className="text-8xl sm:text-9xl font-bold text-white/80 select-none">
-              {initial}
-            </span>
-          </div>
+        {/* Artwork area / Transcript panel */}
+        <div className="flex-1 flex items-center justify-center px-8 min-h-0">
+          {transcriptOpen ? (
+            <div
+              className="w-full max-w-2xl h-full rounded-2xl overflow-hidden"
+              style={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
+            >
+              {transcriptLoading ? (
+                <div className="flex items-center justify-center h-full">
+                  <div
+                    className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin"
+                    style={{ borderColor: "var(--color-text-muted)", borderTopColor: "transparent" }}
+                  />
+                </div>
+              ) : fullText ? (
+                <TranscriptPanel
+                  fullText={fullText}
+                  currentTime={currentTime}
+                  duration={duration}
+                />
+              ) : (
+                <div
+                  className="flex items-center justify-center h-full"
+                  style={{ color: "var(--color-text-muted)" }}
+                >
+                  <p className="text-sm">No transcript available.</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div
+              className={`w-64 h-64 sm:w-80 sm:h-80 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-2xl`}
+            >
+              <span className="text-8xl sm:text-9xl font-bold text-white/80 select-none">
+                {initial}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Track info */}

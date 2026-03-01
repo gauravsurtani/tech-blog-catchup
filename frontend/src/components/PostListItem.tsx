@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Play, Plus, Loader, Clock, User, Mic, Heart } from "lucide-react";
 import type { Post } from "@/lib/types";
 import { useFavorites } from "@/hooks/useFavorites";
+import ShareButton from "./ShareButton";
 
 interface PostListItemProps {
   post: Post;
@@ -112,6 +113,9 @@ export default function PostListItem({
           {formatDuration(post.audio_duration_secs)}
         </span>
       ) : null}
+
+      {/* Share button */}
+      <ShareButton postId={post.id} title={post.title} className="flex-shrink-0" />
 
       {/* Favorite button */}
       <button

@@ -5,6 +5,7 @@ import { Play, Clock, User, ExternalLink, Plus, Loader, Mic, Heart } from "lucid
 import type { Post } from "@/lib/types";
 import { useFavorites } from "@/hooks/useFavorites";
 import TagBadge from "./TagBadge";
+import ShareButton from "./ShareButton";
 
 interface PostCardProps {
   post: Post;
@@ -155,9 +156,10 @@ export default function PostCard({ post, onPlay, onAddToQueue, onGenerate }: Pos
             Generating...
           </span>
         )}
+        <ShareButton postId={post.id} title={post.title} className="ml-auto" />
         <button
           onClick={() => onAddToQueue?.(post)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm font-medium rounded-lg transition-colors ml-auto cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm font-medium rounded-lg transition-colors cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           Add to queue

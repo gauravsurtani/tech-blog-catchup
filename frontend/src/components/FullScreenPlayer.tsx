@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useRef, useCallback, useEffect } from "react";
 import {
   Play,
   Pause,
@@ -12,6 +12,7 @@ import {
   ListMusic,
 } from "lucide-react";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
+import WaveformBar from "./WaveformBar";
 
 const SOURCE_GRADIENTS: Record<string, string> = {
   cloudflare: "from-orange-600 to-amber-800",
@@ -85,8 +86,6 @@ export default function FullScreenPlayer({
     toggleExpanded,
   } = useAudioPlayer();
 
-  const [isDragging, setIsDragging] = useState(false);
-  const progressBarRef = useRef<HTMLDivElement>(null);
   const volumeBarRef = useRef<HTMLDivElement>(null);
   const prevVolumeRef = useRef(volume || 0.75);
 
@@ -101,42 +100,6 @@ export default function FullScreenPlayer({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isExpanded, toggleExpanded]);
-
-  const handleProgressClick = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      const bar = progressBarRef.current;
-      if (!bar) return;
-      const rect = bar.getBoundingClientRect();
-      const fraction = (e.clientX - rect.left) / rect.width;
-      seek(fraction);
-    },
-    [seek],
-  );
-
-  const handleProgressMouseDown = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      setIsDragging(true);
-      handleProgressClick(e);
-
-      const handleMouseMove = (ev: MouseEvent) => {
-        const bar = progressBarRef.current;
-        if (!bar) return;
-        const rect = bar.getBoundingClientRect();
-        const fraction = (ev.clientX - rect.left) / rect.width;
-        seek(Math.max(0, Math.min(1, fraction)));
-      };
-
-      const handleMouseUp = () => {
-        setIsDragging(false);
-        document.removeEventListener("mousemove", handleMouseMove);
-        document.removeEventListener("mouseup", handleMouseUp);
-      };
-
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
-    },
-    [handleProgressClick, seek],
-  );
 
   const handleVolumeClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
@@ -252,26 +215,16 @@ export default function FullScreenPlayer({
           </p>
         </div>
 
-        {/* Progress bar */}
+        {/* Waveform progress */}
         <div className="px-8 pb-2">
-          <div
-            ref={progressBarRef}
-            className="w-full h-2 bg-white/20 rounded-full cursor-pointer group relative"
-            onMouseDown={handleProgressMouseDown}
-          >
-            <div
-              className="h-full bg-white rounded-full relative transition-[width] duration-75"
-              style={{ width: `${progress * 100}%` }}
-            >
-              <div
-                className={`absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-md transition-opacity ${
-                  isDragging
-                    ? "opacity-100"
-                    : "opacity-0 group-hover:opacity-100"
-                }`}
-              />
-            </div>
-          </div>
+          <WaveformBar
+            postId={currentTrack.id}
+            progress={progress}
+            onSeek={seek}
+            height={32}
+            activeColor="rgba(255, 255, 255, 0.9)"
+            inactiveColor="rgba(255, 255, 255, 0.2)"
+          />
           <div className="flex justify-between mt-1">
             <span className="text-xs text-gray-400 tabular-nums">
               {formatTime(currentTime)}

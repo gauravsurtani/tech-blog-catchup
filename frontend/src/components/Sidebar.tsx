@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import {
   Home,
   Compass,
+  LayoutGrid,
   Library,
   ListMusic,
   BarChart3,
@@ -20,6 +21,7 @@ const STORAGE_KEY = "sidebar-collapsed";
 const navItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/explore", label: "Explore", icon: Compass },
+  { href: "/browse", label: "Browse", icon: LayoutGrid },
   { href: "/library", label: "Library", icon: Library },
   { href: "/playlist", label: "Playlist", icon: ListMusic },
   { href: "/status", label: "Status", icon: BarChart3 },

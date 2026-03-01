@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 
 const STORAGE_KEY = "tbc-favorites";
 
@@ -23,10 +23,6 @@ function saveFavorites(favs: Set<number>): void {
 
 export function useFavorites() {
   const [favoriteSet, setFavoriteSet] = useState<Set<number>>(() => loadFavorites());
-
-  useEffect(() => {
-    setFavoriteSet(loadFavorites());
-  }, []);
 
   const toggleFavorite = useCallback((postId: number) => {
     setFavoriteSet((prev) => {

@@ -61,7 +61,7 @@ export default function TranscriptPanel({
   const containerRef = useRef<HTMLDivElement>(null);
   const paragraphRefs = useRef<(HTMLParagraphElement | null)[]>([]);
   const [userScrolled, setUserScrolled] = useState(false);
-  const lastActiveIndexRef = useRef(-1);
+  const [prevActiveIndex, setPrevActiveIndex] = useState(-1);
   const isAutoScrollingRef = useRef(false);
 
   const rawParagraphs = splitIntoParagraphs(fullText);
@@ -74,13 +74,11 @@ export default function TranscriptPanel({
     setUserScrolled(true);
   }, []);
 
-  // Re-enable auto-scroll when active paragraph changes
-  useEffect(() => {
-    if (activeIndex !== lastActiveIndexRef.current) {
-      lastActiveIndexRef.current = activeIndex;
-      setUserScrolled(false);
-    }
-  }, [activeIndex]);
+  // Re-enable auto-scroll when active paragraph changes (adjust state during render)
+  if (activeIndex !== prevActiveIndex) {
+    setPrevActiveIndex(activeIndex);
+    setUserScrolled(false);
+  }
 
   // Auto-scroll to active paragraph
   useEffect(() => {

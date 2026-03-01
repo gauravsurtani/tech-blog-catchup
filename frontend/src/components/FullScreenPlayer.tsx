@@ -98,43 +98,48 @@ export default function FullScreenPlayer({
   const [transcriptLoading, setTranscriptLoading] = useState(false);
   const lastFetchedPostIdRef = useRef<number | null>(null);
 
+  // Reset full text cache when track changes (adjust state during render)
+  const [prevTrackId, setPrevTrackId] = useState<number | null>(null);
+  if (currentTrack && prevTrackId !== currentTrack.id) {
+    setPrevTrackId(currentTrack.id);
+    if (lastFetchedPostIdRef.current !== currentTrack.id) {
+      setFullText(null);
+      lastFetchedPostIdRef.current = null;
+    }
+  }
+
   // Fetch full text when transcript is toggled on
   useEffect(() => {
     if (!transcriptOpen || !currentTrack) return;
     if (lastFetchedPostIdRef.current === currentTrack.id && fullText !== null) return;
 
     let cancelled = false;
-    setTranscriptLoading(true);
-    getPost(currentTrack.id)
-      .then((detail) => {
+
+    const fetchData = async () => {
+      setTranscriptLoading(true);
+      try {
+        const detail = await getPost(currentTrack.id);
         if (!cancelled) {
           setFullText(detail.full_text);
           lastFetchedPostIdRef.current = detail.id;
         }
-      })
-      .catch(() => {
+      } catch {
         if (!cancelled) {
           setFullText(null);
         }
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) {
           setTranscriptLoading(false);
         }
-      });
+      }
+    };
+
+    fetchData();
 
     return () => {
       cancelled = true;
     };
   }, [transcriptOpen, currentTrack, fullText]);
-
-  // Reset full text cache when track changes
-  useEffect(() => {
-    if (currentTrack && lastFetchedPostIdRef.current !== currentTrack.id) {
-      setFullText(null);
-      lastFetchedPostIdRef.current = null;
-    }
-  }, [currentTrack]);
 
   // Close on Escape key
   useEffect(() => {

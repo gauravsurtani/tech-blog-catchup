@@ -8,14 +8,14 @@ const STORAGE_KEY_COMPLETED = "tbc-onboarding-completed";
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const [ready, setReady] = useState(false);
+  const [ready] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(STORAGE_KEY_COMPLETED) !== "true";
+  });
 
   useEffect(() => {
-    const completed = localStorage.getItem(STORAGE_KEY_COMPLETED);
-    if (completed === "true") {
+    if (localStorage.getItem(STORAGE_KEY_COMPLETED) === "true") {
       router.replace("/");
-    } else {
-      setReady(true);
     }
   }, [router]);
 

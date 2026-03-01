@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import {
   Heart,
@@ -9,7 +9,6 @@ import {
   Clock,
   Loader2,
   Play,
-  Plus,
   Library,
 } from "lucide-react";
 import { getPost } from "@/lib/api";
@@ -130,14 +129,13 @@ function FavoritesSection() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (favorites.length === 0) {
-      setPosts([]);
-      setLoading(false);
-      return;
-    }
+    if (favorites.length === 0) return;
 
     let cancelled = false;
-    setLoading(true);
+
+    Promise.resolve().then(() => {
+      if (!cancelled) setLoading(true);
+    });
 
     Promise.allSettled(favorites.map((id) => getPost(id))).then((results) => {
       if (cancelled) return;
@@ -153,6 +151,18 @@ function FavoritesSection() {
       cancelled = true;
     };
   }, [favorites]);
+
+  if (favorites.length === 0) {
+    return (
+      <EmptyState
+        icon={Heart}
+        title="No favorites yet"
+        description="Heart posts you love and they will appear here for quick access."
+        actionLabel="Browse Posts"
+        actionHref="/explore"
+      />
+    );
+  }
 
   if (loading) {
     return (
@@ -259,14 +269,13 @@ function HistorySection() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (historyEntries.length === 0) {
-      setPosts([]);
-      setLoading(false);
-      return;
-    }
+    if (historyEntries.length === 0) return;
 
     let cancelled = false;
-    setLoading(true);
+
+    Promise.resolve().then(() => {
+      if (!cancelled) setLoading(true);
+    });
 
     const ids = historyEntries.map((e) => e.postId);
     Promise.allSettled(ids.map((id) => getPost(id))).then((results) => {
@@ -298,16 +307,18 @@ function HistorySection() {
     );
   }
 
-  if (posts.length === 0) {
-    return (
-      <EmptyState
-        icon={History}
-        title="No listening history"
-        description="Posts you listen to will appear here so you can pick up where you left off."
-        actionLabel="Start Listening"
-        actionHref="/"
-      />
-    );
+  if (historyEntries.length === 0 || posts.length === 0) {
+    if (historyEntries.length === 0) {
+      return (
+        <EmptyState
+          icon={History}
+          title="No listening history"
+          description="Posts you listen to will appear here so you can pick up where you left off."
+          actionLabel="Start Listening"
+          actionHref="/"
+        />
+      );
+    }
   }
 
   return (

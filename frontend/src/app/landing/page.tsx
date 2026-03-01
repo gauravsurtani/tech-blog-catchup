@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Logo from "@/components/Logo";
+import HowItWorks from "@/components/landing/HowItWorks";
 
 const features = [
   {
@@ -125,6 +126,9 @@ export default function LandingPage() {
           </div>
         ))}
       </section>
+
+      {/* How It Works */}
+      <HowItWorks />
 
       {/* Social proof */}
       <section className="flex flex-col items-center gap-[var(--space-4)] pb-12">

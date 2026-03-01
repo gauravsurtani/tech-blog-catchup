@@ -47,6 +47,68 @@ const AudioPlayerContext = createContext<AudioPlayerContextType | null>(null);
 const VOLUME_KEY = "audio-player-volume";
 const QUEUE_KEY = "audio-player-queue";
 const CURRENT_TRACK_KEY = "audio-player-current-track";
+const PLAYBACK_POSITIONS_KEY = "tbc-playback-positions";
+const POSITION_SAVE_INTERVAL_MS = 5000;
+const POSITION_MAX_AGE_DAYS = 30;
+
+interface PlaybackPosition {
+  position: number;
+  duration: number;
+  updatedAt: string;
+}
+
+type PlaybackPositions = Record<string, PlaybackPosition>;
+
+function getStoredPositions(): PlaybackPositions {
+  if (typeof window === "undefined") return {};
+  try {
+    const stored = localStorage.getItem(PLAYBACK_POSITIONS_KEY);
+    if (stored) return JSON.parse(stored);
+  } catch {
+    // ignore
+  }
+  return {};
+}
+
+function savePositions(positions: PlaybackPositions): void {
+  try {
+    localStorage.setItem(PLAYBACK_POSITIONS_KEY, JSON.stringify(positions));
+  } catch {
+    // ignore
+  }
+}
+
+function cleanOldPositions(positions: PlaybackPositions): PlaybackPositions {
+  const cutoff = Date.now() - POSITION_MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
+  const cleaned: PlaybackPositions = {};
+  for (const [id, entry] of Object.entries(positions)) {
+    if (new Date(entry.updatedAt).getTime() > cutoff) {
+      cleaned[id] = entry;
+    }
+  }
+  return cleaned;
+}
+
+function savePosition(postId: number, position: number, duration: number): void {
+  const positions = cleanOldPositions(getStoredPositions());
+  positions[String(postId)] = {
+    position,
+    duration,
+    updatedAt: new Date().toISOString(),
+  };
+  savePositions(positions);
+}
+
+function clearPosition(postId: number): void {
+  const positions = getStoredPositions();
+  delete positions[String(postId)];
+  savePositions(positions);
+}
+
+function getPosition(postId: number): PlaybackPosition | null {
+  const positions = getStoredPositions();
+  return positions[String(postId)] ?? null;
+}
 
 function getStoredVolume(): number {
   if (typeof window === "undefined") return 0.75;
@@ -88,6 +150,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playbackRateRef = useRef(1);
   const prevVolumeForMuteRef = useRef(0.75);
+  const pendingRestoreRef = useRef<number | null>(null);
 
   const [currentTrack, setCurrentTrack] = useState<Post | null>(getStoredCurrentTrack);
   const [queue, setQueue] = useState<Post[]>(getStoredQueue);
@@ -146,9 +209,43 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     return () => clearTimeout(timer);
   }, [currentTrack]);
 
-  const loadAndPlay = useCallback((post: Post) => {
+  // Debounced playback position save (every 5s while playing)
+  useEffect(() => {
+    if (!isPlaying || !currentTrack) return;
+
+    const timer = setInterval(() => {
+      const audio = audioRef.current;
+      if (audio && audio.currentTime > 0 && isFinite(audio.duration)) {
+        savePosition(currentTrack.id, audio.currentTime, audio.duration);
+      }
+    }, POSITION_SAVE_INTERVAL_MS);
+
+    return () => clearInterval(timer);
+  }, [isPlaying, currentTrack]);
+
+  // Clean up old positions on mount
+  useEffect(() => {
+    const positions = getStoredPositions();
+    const cleaned = cleanOldPositions(positions);
+    if (Object.keys(cleaned).length !== Object.keys(positions).length) {
+      savePositions(cleaned);
+    }
+  }, []);
+
+  const loadAndPlay = useCallback((post: Post, restorePosition = true) => {
     const audio = audioRef.current;
     if (!audio || !post.audio_path) return;
+
+    if (restorePosition) {
+      const saved = getPosition(post.id);
+      if (saved && saved.position > 0) {
+        pendingRestoreRef.current = saved.position;
+      } else {
+        pendingRestoreRef.current = null;
+      }
+    } else {
+      pendingRestoreRef.current = null;
+    }
 
     audio.src = getAudioUrl(post.audio_path);
     audio.load();
@@ -173,9 +270,16 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   );
 
   const pause = useCallback(() => {
-    audioRef.current?.pause();
+    const audio = audioRef.current;
+    if (audio) {
+      audio.pause();
+      // Save position immediately on pause
+      if (currentTrack && audio.currentTime > 0 && isFinite(audio.duration)) {
+        savePosition(currentTrack.id, audio.currentTime, audio.duration);
+      }
+    }
     setIsPlaying(false);
-  }, []);
+  }, [currentTrack]);
 
   const resume = useCallback(() => {
     audioRef.current?.play().catch(() => {});
@@ -344,9 +448,23 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     if (isFinite(audio.duration)) {
       setDuration(audio.duration);
     }
+    // Restore saved playback position
+    if (pendingRestoreRef.current !== null) {
+      const pos = pendingRestoreRef.current;
+      pendingRestoreRef.current = null;
+      if (isFinite(audio.duration) && pos < audio.duration) {
+        audio.currentTime = pos;
+        setCurrentTime(pos);
+        setProgress(pos / audio.duration);
+      }
+    }
   }, []);
 
   const handleEnded = useCallback(() => {
+    // Clear saved position when track finishes naturally
+    if (currentTrack) {
+      clearPosition(currentTrack.id);
+    }
     if (queue.length > 0) {
       next();
     } else {
@@ -354,7 +472,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       setProgress(0);
       setCurrentTime(0);
     }
-  }, [queue.length, next]);
+  }, [queue.length, next, currentTrack]);
 
   const handlePlay = useCallback(() => {
     setIsPlaying(true);

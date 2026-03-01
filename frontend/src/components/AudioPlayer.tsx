@@ -14,6 +14,7 @@ import {
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import PlaylistQueue from "./PlaylistQueue";
 import FullScreenPlayer from "./FullScreenPlayer";
+import WaveformBar from "./WaveformBar";
 
 function formatTime(seconds: number): string {
   if (!seconds || !isFinite(seconds)) return "0:00";
@@ -42,46 +43,8 @@ export default function AudioPlayer() {
   } = useAudioPlayer();
 
   const [queueOpen, setQueueOpen] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const progressBarRef = useRef<HTMLDivElement>(null);
   const volumeBarRef = useRef<HTMLDivElement>(null);
   const prevVolumeRef = useRef(volume || 0.75);
-
-  const handleProgressClick = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      const bar = progressBarRef.current;
-      if (!bar) return;
-      const rect = bar.getBoundingClientRect();
-      const fraction = (e.clientX - rect.left) / rect.width;
-      seek(fraction);
-    },
-    [seek]
-  );
-
-  const handleProgressMouseDown = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      setIsDragging(true);
-      handleProgressClick(e);
-
-      const handleMouseMove = (ev: MouseEvent) => {
-        const bar = progressBarRef.current;
-        if (!bar) return;
-        const rect = bar.getBoundingClientRect();
-        const fraction = (ev.clientX - rect.left) / rect.width;
-        seek(Math.max(0, Math.min(1, fraction)));
-      };
-
-      const handleMouseUp = () => {
-        setIsDragging(false);
-        document.removeEventListener("mousemove", handleMouseMove);
-        document.removeEventListener("mouseup", handleMouseUp);
-      };
-
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
-    },
-    [handleProgressClick, seek]
-  );
 
   const handleVolumeClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
@@ -91,7 +54,7 @@ export default function AudioPlayer() {
       const fraction = (e.clientX - rect.left) / rect.width;
       setVolume(Math.max(0, Math.min(1, fraction)));
     },
-    [setVolume]
+    [setVolume],
   );
 
   const handleVolumeMouseDown = useCallback(
@@ -114,7 +77,7 @@ export default function AudioPlayer() {
       document.addEventListener("mousemove", handleMouseMove);
       document.addEventListener("mouseup", handleMouseUp);
     },
-    [handleVolumeClick, setVolume]
+    [handleVolumeClick, setVolume],
   );
 
   const toggleMute = useCallback(() => {
@@ -161,7 +124,11 @@ export default function AudioPlayer() {
               className="bg-white text-black rounded-full p-2 hover:scale-105 transition-transform"
               aria-label={isPlaying ? "Pause" : "Play"}
             >
-              {isPlaying ? <Pause size={22} /> : <Play size={22} className="ml-0.5" />}
+              {isPlaying ? (
+                <Pause size={22} />
+              ) : (
+                <Play size={22} className="ml-0.5" />
+              )}
             </button>
             <button
               onClick={next}
@@ -173,27 +140,18 @@ export default function AudioPlayer() {
             </button>
           </div>
 
-          {/* Progress bar */}
+          {/* Waveform progress */}
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <span className="text-xs text-gray-400 w-10 text-right tabular-nums shrink-0">
               {formatTime(currentTime)}
             </span>
-            <div
-              ref={progressBarRef}
-              className="flex-1 h-1.5 bg-gray-700 rounded-full cursor-pointer group relative"
-              onMouseDown={handleProgressMouseDown}
-            >
-              <div
-                className="h-full bg-green-500 rounded-full relative transition-[width] duration-75"
-                style={{ width: `${progress * 100}%` }}
-              >
-                <div
-                  className={`absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-md transition-opacity ${
-                    isDragging ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                  }`}
-                />
-              </div>
-            </div>
+            <WaveformBar
+              postId={currentTrack.id}
+              progress={progress}
+              onSeek={seek}
+              height={24}
+              className="flex-1"
+            />
             <span className="text-xs text-gray-400 w-10 tabular-nums shrink-0">
               {formatTime(duration)}
             </span>

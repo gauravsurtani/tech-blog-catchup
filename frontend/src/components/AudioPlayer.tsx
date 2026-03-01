@@ -9,9 +9,11 @@ import {
   Volume2,
   VolumeX,
   ListMusic,
+  ChevronUp,
 } from "lucide-react";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import PlaylistQueue from "./PlaylistQueue";
+import FullScreenPlayer from "./FullScreenPlayer";
 
 function formatTime(seconds: number): string {
   if (!seconds || !isFinite(seconds)) return "0:00";
@@ -36,6 +38,7 @@ export default function AudioPlayer() {
     seek,
     playbackRate,
     setPlaybackRate,
+    toggleExpanded,
   } = useAudioPlayer();
 
   const [queueOpen, setQueueOpen] = useState(false);
@@ -233,6 +236,15 @@ export default function AudioPlayer() {
             {playbackRate}x
           </button>
 
+          {/* Expand button */}
+          <button
+            onClick={toggleExpanded}
+            className="text-gray-400 hover:text-white transition-colors p-1 shrink-0"
+            aria-label="Expand player"
+          >
+            <ChevronUp size={20} />
+          </button>
+
           {/* Queue button */}
           <button
             onClick={() => setQueueOpen((o) => !o)}
@@ -253,6 +265,10 @@ export default function AudioPlayer() {
         </div>
       </div>
 
+      <FullScreenPlayer
+        onQueueToggle={() => setQueueOpen((o) => !o)}
+        queueOpen={queueOpen}
+      />
       <PlaylistQueue isOpen={queueOpen} onClose={() => setQueueOpen(false)} />
     </>
   );

@@ -70,7 +70,7 @@ export default function OnboardingFlow() {
               <Logo variant="icon" className="w-16 h-16 text-[var(--primary)]" />
               <div>
                 <h1 className="text-2xl font-extrabold text-[var(--text-1)] mb-3">
-                  Welcome to Tech Blog Catchup
+                  Welcome to Catchup
                 </h1>
                 <p className="text-[var(--text-2)] leading-relaxed max-w-md">
                   Stay on top of engineering blogs from the world&apos;s best tech companies.

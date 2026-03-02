@@ -18,7 +18,6 @@ import Logo from "./Logo";
 import UserMenu from "./UserMenu";
 import SearchDialog from "./SearchDialog";
 import { useAuthEnabled } from "@/hooks/useRequireAuth";
-import ThemeToggle from "./ThemeToggle";
 
 const STORAGE_KEY = "sidebar-collapsed";
 
@@ -72,14 +71,22 @@ export default function Sidebar() {
         zIndex: "var(--z-nav)",
       }}
     >
-      {/* Logo */}
-      <div className="flex items-center h-16 px-4 border-b border-[var(--border-color)]">
+      {/* Logo + Collapse toggle */}
+      <div className="flex items-center justify-between h-16 px-4 border-b border-[var(--border-color)]">
         <Link href="/" className="text-[var(--text-1)] text-xl">
           <Logo
             variant={collapsed ? "icon" : "full"}
             className={collapsed ? "h-8 w-8" : "text-xl"}
           />
         </Link>
+        <button
+          onClick={toggle}
+          className="nb-hover flex items-center justify-center w-8 h-8 rounded-[var(--radius)] text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--bg-hover)] transition-colors"
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+        </button>
       </div>
 
       {/* Search button */}
@@ -133,20 +140,6 @@ export default function Sidebar() {
           <UserMenu collapsed={collapsed} />
         </div>
       )}
-
-      {/* Theme toggle */}
-      <div className="px-3 py-2 border-t border-[var(--border-color)]">
-        <ThemeToggle />
-      </div>
-
-      {/* Collapse toggle */}
-      <button
-        onClick={toggle}
-        className="nb-hover flex items-center justify-center h-12 border-t border-[var(--border-color)] border-[var(--border-w)] rounded-[var(--radius)] text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--bg-hover)] transition-colors"
-        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-      >
-        {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-      </button>
 
       <SearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} />
     </aside>

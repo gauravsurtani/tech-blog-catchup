@@ -19,7 +19,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-8">
             <Link href="/" className="text-xl font-bold text-[var(--text-1)]">
-              Tech Blog Catchup
+              Catchup
             </Link>
             <div className="flex space-x-4">
               {navItems.map((item) => (

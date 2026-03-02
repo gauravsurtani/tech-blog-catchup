@@ -88,7 +88,7 @@ export default function LandingPage() {
       <section className="flex flex-col items-center text-center gap-[var(--space-6)] pt-12 sm:pt-20 max-w-3xl">
         <Logo variant="icon" className="w-16 h-16 text-[var(--primary)]" />
         <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-[var(--text-1)]">
-          Tech Blog Catchup
+          Catchup
         </h1>
         <p className="text-lg sm:text-xl text-[var(--text-2)] max-w-2xl leading-relaxed">
           Listen to the best tech engineering blogs as conversational podcasts.

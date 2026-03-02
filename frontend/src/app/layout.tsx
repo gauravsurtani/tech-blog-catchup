@@ -10,6 +10,7 @@ import GenerationBanner from "@/components/GenerationBanner";
 import BottomTabs from "@/components/BottomTabs";
 import Footer from "@/components/Footer";
 import SessionProvider from "@/components/SessionProvider";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -19,20 +20,20 @@ const dmSans = DM_Sans({
 
 export const metadata: Metadata = {
   title: {
-    default: "Tech Blog Catchup",
-    template: "%s | Tech Blog Catchup",
+    default: "Catchup",
+    template: "%s | Catchup",
   },
   description: "Listen to tech engineering blogs as conversational podcasts",
   manifest: "/manifest.json",
   openGraph: {
     type: "website",
-    siteName: "Tech Blog Catchup",
-    title: "Tech Blog Catchup",
+    siteName: "Catchup",
+    title: "Catchup",
     description: "Listen to tech engineering blogs as conversational podcasts",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Tech Blog Catchup",
+    title: "Catchup",
     description: "Listen to tech engineering blogs as conversational podcasts",
   },
   icons: {
@@ -57,6 +58,9 @@ export default function RootLayout({
         <ThemeProvider>
           <SessionProvider>
             <AudioPlayerProvider>
+              <div className="fixed top-4 right-4 z-[var(--z-nav)] hidden md:block">
+                <ThemeToggle />
+              </div>
               <Sidebar />
               <SidebarLayout>
                 <GenerationBanner />

@@ -6,7 +6,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-[var(--text-4)]">
-            &copy; {new Date().getFullYear()} Tech Blog Catchup
+            &copy; {new Date().getFullYear()} Catchup
           </p>
           <nav className="flex items-center gap-6">
             <Link

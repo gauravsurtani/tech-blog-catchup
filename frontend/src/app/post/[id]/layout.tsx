@@ -44,7 +44,7 @@ export async function generateMetadata({
     description,
     openGraph: {
       type: "article",
-      siteName: "Tech Blog Catchup",
+      siteName: "Catchup",
       title: post.title,
       description,
       url: `${SITE_URL}/post/${post.id}`,

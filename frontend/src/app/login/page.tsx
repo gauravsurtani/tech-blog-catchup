@@ -34,7 +34,7 @@ function LoginContent() {
               Welcome back
             </h1>
             <p className="text-sm text-[var(--text-2)]">
-              Sign in to Tech Blog Catchup
+              Sign in to Catchup
             </p>
           </div>
 

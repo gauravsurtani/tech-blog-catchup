@@ -14,7 +14,7 @@ export default function TermsPage() {
             1. Acceptance of Terms
           </h2>
           <p>
-            By accessing or using Tech Blog Catchup (&quot;the Service&quot;),
+            By accessing or using Catchup (&quot;the Service&quot;),
             you agree to be bound by these Terms of Service. If you do not agree
             to these terms, please do not use the Service.
           </p>
@@ -25,7 +25,7 @@ export default function TermsPage() {
             2. Description of Service
           </h2>
           <p>
-            Tech Blog Catchup aggregates publicly available content from tech
+            Catchup aggregates publicly available content from tech
             engineering blogs and generates AI-produced conversational podcast
             summaries. The Service is provided for informational and educational
             purposes.
@@ -88,7 +88,7 @@ export default function TermsPage() {
             6. Limitation of Liability
           </h2>
           <p>
-            To the fullest extent permitted by law, Tech Blog Catchup and its
+            To the fullest extent permitted by law, Catchup and its
             maintainers shall not be liable for any indirect, incidental,
             special, or consequential damages arising out of your use of the
             Service.

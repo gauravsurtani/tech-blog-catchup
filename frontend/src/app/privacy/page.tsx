@@ -14,7 +14,7 @@ export default function PrivacyPage() {
             1. Overview
           </h2>
           <p>
-            Tech Blog Catchup is committed to protecting your privacy. This
+            Catchup is committed to protecting your privacy. This
             policy explains what data we collect, how we use it, and your rights
             regarding that data.
           </p>
@@ -25,7 +25,7 @@ export default function PrivacyPage() {
             2. Data We Collect
           </h2>
           <p>
-            Tech Blog Catchup does not require user accounts and collects
+            Catchup does not require user accounts and collects
             minimal data:
           </p>
           <ul className="list-disc list-inside space-y-1 text-[var(--text-2)]">
@@ -58,7 +58,7 @@ export default function PrivacyPage() {
             3. Cookies
           </h2>
           <p>
-            Tech Blog Catchup does not set cookies. All client-side state is
+            Catchup does not set cookies. All client-side state is
             managed through browser localStorage, which is not transmitted to
             our servers.
           </p>

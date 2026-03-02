@@ -2,7 +2,7 @@ export default function AboutPage() {
   return (
     <div className="max-w-3xl mx-auto py-8 px-4">
       <h1 className="text-2xl font-extrabold text-[var(--text-1)] mb-2">
-        About Tech Blog Catchup
+        About Catchup
       </h1>
       <p className="text-sm text-[var(--text-3)] mb-8">
         Last updated: February 2026
@@ -11,10 +11,10 @@ export default function AboutPage() {
       <div className="bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-8 prose dark:prose-invert max-w-none space-y-6 text-[var(--text-2)]">
         <section>
           <h2 className="text-xl font-bold text-[var(--text-1)]">
-            What is Tech Blog Catchup?
+            What is Catchup?
           </h2>
           <p>
-            Tech Blog Catchup scrapes 15 of the top tech engineering blogs,
+            Catchup scrapes 15 of the top tech engineering blogs,
             extracts their articles, and converts them into NotebookLM-style
             conversational podcasts featuring two AI hosts. The result is a
             Spotify-like web player where you can browse, filter, and listen to
@@ -30,7 +30,7 @@ export default function AboutPage() {
           <p>
             Engineering blogs are some of the best sources of real-world
             technical knowledge, but keeping up with all of them is
-            time-consuming. Tech Blog Catchup turns long-form posts into
+            time-consuming. Catchup turns long-form posts into
             bite-sized audio you can listen to during a commute, workout, or
             coffee break — so you never fall behind on what top engineering
             teams are building.
@@ -84,7 +84,7 @@ export default function AboutPage() {
             Built by
           </h2>
           <p>
-            Tech Blog Catchup is a personal project by Gaurav Surtani, built to
+            Catchup is a personal project by Gaurav Surtani, built to
             make engineering knowledge more accessible. Contributions and
             feedback are welcome on{" "}
             <a

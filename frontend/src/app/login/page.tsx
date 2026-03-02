@@ -40,7 +40,7 @@ function LoginContent() {
 
           {/* Error message */}
           {error && (
-            <div className="rounded-[var(--radius)] border-[var(--border-w)] border-red-400 px-4 py-3 text-sm text-red-400 bg-red-400/10 text-center">
+            <div className="rounded-[var(--radius)] border-[var(--border-w)] border-[var(--error)] px-4 py-3 text-sm text-[var(--error)] bg-[var(--error-bg)] text-center">
               {error === "OAuthSignin" ? "Error starting sign in. Try again." :
                error === "OAuthCallback" ? "Error completing sign in. Try again." :
                error === "Callback" ? "Sign in error. Try again." :

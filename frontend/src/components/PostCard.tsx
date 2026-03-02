@@ -146,7 +146,7 @@ export default function PostCard({ post, onPlay, onAddToQueue, onGenerate }: Pos
           </button>
         )}
         {post.audio_status === "processing" && (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-yellow-900/40 text-yellow-400 text-sm font-bold rounded-[var(--radius)] border-[var(--border-w)] border-yellow-700/40">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--orange-bg)] text-[var(--orange)] text-sm font-bold rounded-[var(--radius)] border-[var(--border-w)] border-[var(--border-color)]">
             <Loader className="w-3.5 h-3.5 animate-spin" />
             Generating...
           </span>
@@ -165,7 +165,7 @@ export default function PostCard({ post, onPlay, onAddToQueue, onGenerate }: Pos
           title={favorited ? "Remove from favorites" : "Add to favorites"}
         >
           <Heart
-            className={`w-4 h-4 ${favorited ? "text-red-500 fill-red-500" : "text-[var(--text-3)] hover:text-[var(--primary)]"}`}
+            className={`w-4 h-4 ${favorited ? "text-[var(--error)] fill-[var(--error)]" : "text-[var(--text-3)] hover:text-[var(--primary)]"}`}
           />
         </button>
       </div>

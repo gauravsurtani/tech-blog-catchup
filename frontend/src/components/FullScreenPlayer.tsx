@@ -17,6 +17,7 @@ import { getPost } from "@/lib/api";
 import WaveformBar from "./WaveformBar";
 import TranscriptPanel from "./TranscriptPanel";
 
+// Brand colors are intentional — these match company brand palettes, not the app theme.
 const SOURCE_GRADIENTS: Record<string, string> = {
   cloudflare: "from-orange-600 to-amber-800",
   github: "from-gray-700 to-gray-900",

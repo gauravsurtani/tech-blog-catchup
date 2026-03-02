@@ -61,7 +61,7 @@ export default function PostListItem({
           </button>
         ) : post.audio_status === "processing" ? (
           <div className="w-[42px] h-[42px] flex items-center justify-center">
-            <Loader className="w-4 h-4 text-yellow-400 animate-spin" />
+            <Loader className="w-4 h-4 text-[var(--orange)] animate-spin" />
           </div>
         ) : onGenerate && (post.audio_status === "pending" || post.audio_status === "failed") ? (
           <button
@@ -124,7 +124,7 @@ export default function PostListItem({
         title={favorited ? "Remove from favorites" : "Add to favorites"}
       >
         <Heart
-          className={`w-3.5 h-3.5 ${favorited ? "text-red-500 fill-red-500" : "text-[var(--text-3)] hover:text-[var(--primary)]"}`}
+          className={`w-3.5 h-3.5 ${favorited ? "text-[var(--error)] fill-[var(--error)]" : "text-[var(--text-3)] hover:text-[var(--primary)]"}`}
         />
       </button>
 

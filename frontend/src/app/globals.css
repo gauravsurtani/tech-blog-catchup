@@ -91,25 +91,6 @@
   --purple-bg: #F9F0FF;
   --cyan-bg: #E6FFFB;
   --error-bg: #FFF1F0;
-
-  /* ── Backward-compatible aliases (remove after Wave 4) ── */
-  --color-bg-primary: var(--bg);
-  --color-bg-secondary: var(--bg-elevated);
-  --color-bg-tertiary: var(--tag-bg);
-  --color-bg-hover: var(--bg-hover);
-  --color-text-primary: var(--text-1);
-  --color-text-secondary: var(--text-2);
-  --color-text-muted: var(--text-3);
-  --color-border: var(--border-color);
-  --color-border-hover: var(--border-color);
-  --color-accent: var(--primary);
-  --color-accent-hover: var(--primary-hover);
-  --color-accent-text: var(--primary-text);
-  --color-info: var(--blue);
-  --color-warning: var(--warning);
-  --color-error: var(--error);
-  --radius-sm: 8px;
-  --radius-md: var(--radius);
 }
 
 /* ── DARK THEME ── */
@@ -139,25 +120,6 @@
   --purple-bg: rgba(114, 46, 209, 0.15);
   --cyan-bg: rgba(19, 194, 194, 0.12);
   --error-bg: rgba(255, 77, 79, 0.12);
-
-  /* ── Backward-compatible aliases (remove after Wave 4) ── */
-  --color-bg-primary: var(--bg);
-  --color-bg-secondary: var(--bg-elevated);
-  --color-bg-tertiary: var(--tag-bg);
-  --color-bg-hover: var(--bg-hover);
-  --color-text-primary: var(--text-1);
-  --color-text-secondary: var(--text-2);
-  --color-text-muted: var(--text-3);
-  --color-border: var(--border-color);
-  --color-border-hover: var(--border-color);
-  --color-accent: var(--primary);
-  --color-accent-hover: var(--primary-hover);
-  --color-accent-text: var(--primary-text);
-  --color-info: var(--blue);
-  --color-warning: var(--warning);
-  --color-error: var(--error);
-  --radius-sm: 8px;
-  --radius-md: var(--radius);
 }
 
 /* ═══════ BASE STYLES ═══════ */

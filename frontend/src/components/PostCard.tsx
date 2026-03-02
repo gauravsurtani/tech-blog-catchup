@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Play, Clock, User, ExternalLink, Plus, Loader, Mic, Heart } from "lucide-react";
 import type { Post } from "@/lib/types";
 import { useFavorites } from "@/hooks/useFavorites";
@@ -40,12 +41,6 @@ function formatDuration(seconds: number | null): string {
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
-function truncateSummary(summary: string | null, maxLen: number = 150): string {
-  if (!summary) return "";
-  if (summary.length <= maxLen) return summary;
-  return summary.slice(0, maxLen).trimEnd() + "...";
-}
-
 function formatWordCount(count: number | null): string {
   if (!count) return "";
   if (count >= 1000) {
@@ -55,6 +50,7 @@ function formatWordCount(count: number | null): string {
 }
 
 export default function PostCard({ post, onPlay, onAddToQueue, onGenerate }: PostCardProps) {
+  const router = useRouter();
   const { isFavorite, toggleFavorite } = useFavorites();
   const favorited = isFavorite(post.id);
 
@@ -103,8 +99,8 @@ export default function PostCard({ post, onPlay, onAddToQueue, onGenerate }: Pos
 
       {/* Summary */}
       {post.summary && (
-        <p className="text-sm text-[var(--text-2)] leading-relaxed">
-          {truncateSummary(post.summary)}
+        <p className="text-sm text-[var(--text-2)] leading-relaxed line-clamp-3">
+          {post.summary}
         </p>
       )}
 
@@ -125,7 +121,7 @@ export default function PostCard({ post, onPlay, onAddToQueue, onGenerate }: Pos
       {post.tags.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {post.tags.map((tag) => (
-            <TagBadge key={tag} name={tag} />
+            <TagBadge key={tag} name={tag} onClick={() => router.push(`/explore?tag=${encodeURIComponent(tag)}`)} />
           ))}
         </div>
       )}

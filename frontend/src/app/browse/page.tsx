@@ -14,6 +14,13 @@ function SourceCardSkeleton() {
   );
 }
 
+function sourceColor(key: string): string {
+  const colors = ['#FF6B6B', '#1677FF', '#FA8C16', '#722ED1', '#13C2C2', '#52C41A', '#EB2F96', '#FAAD14'];
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) hash = key.charCodeAt(i) + ((hash << 5) - hash);
+  return colors[Math.abs(hash) % colors.length];
+}
+
 function TagCardSkeleton() {
   return (
     <div className="h-10 w-24 bg-[var(--bg-hover)] rounded-full animate-pulse" />
@@ -88,6 +95,7 @@ export default function BrowsePage() {
                 key={source.key}
                 href={`/explore?source=${encodeURIComponent(source.key)}`}
                 className="nb-hover group bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius-xl)] p-5 shadow-[var(--shadow-lg)] hover:border-[var(--primary)] hover:bg-[var(--bg-hover)] transition-colors"
+                style={{ borderTopColor: sourceColor(source.key), borderTopWidth: '4px' }}
               >
                 <h3 className="text-base font-semibold text-[var(--text-1)] group-hover:text-[var(--primary)] transition-colors mb-1">
                   {source.name}

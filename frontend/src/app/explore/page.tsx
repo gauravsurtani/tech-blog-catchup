@@ -268,6 +268,65 @@ export default function ExplorePage() {
           </select>
         </div>
 
+        {/* Active filter chips */}
+        {(selectedSources.length > 0 || selectedTags.length > 0) && (
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            {selectedSources.map((sourceKey) => {
+              const source = sources.find((s) => s.key === sourceKey);
+              return (
+                <span
+                  key={`source-${sourceKey}`}
+                  className="inline-flex items-center gap-1.5 bg-[var(--primary-bg)] text-[var(--text-1)] border border-[var(--border-color)] rounded-[var(--radius-full)] px-3 py-1 text-xs font-bold"
+                >
+                  {source?.name ?? sourceKey}
+                  <button
+                    onClick={() =>
+                      handleSourceChange(
+                        selectedSources.filter((s) => s !== sourceKey)
+                      )
+                    }
+                    className="ml-0.5 hover:text-[var(--error)] transition-colors cursor-pointer"
+                    aria-label={`Remove ${source?.name ?? sourceKey} filter`}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              );
+            })}
+            {selectedTags.map((tagSlug) => {
+              const tag = tags.find((t) => t.slug === tagSlug);
+              return (
+                <span
+                  key={`tag-${tagSlug}`}
+                  className="inline-flex items-center gap-1.5 bg-[var(--primary-bg)] text-[var(--text-1)] border border-[var(--border-color)] rounded-[var(--radius-full)] px-3 py-1 text-xs font-bold"
+                >
+                  {tag?.name ?? tagSlug}
+                  <button
+                    onClick={() =>
+                      handleTagChange(
+                        selectedTags.filter((t) => t !== tagSlug)
+                      )
+                    }
+                    className="ml-0.5 hover:text-[var(--error)] transition-colors cursor-pointer"
+                    aria-label={`Remove ${tag?.name ?? tagSlug} filter`}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              );
+            })}
+            <button
+              onClick={() => {
+                handleSourceChange([]);
+                handleTagChange([]);
+              }}
+              className="text-xs font-medium text-[var(--text-3)] hover:text-[var(--text-1)] transition-colors cursor-pointer underline underline-offset-2"
+            >
+              Clear all
+            </button>
+          </div>
+        )}
+
         {/* Results info */}
         {!loading && total > 0 && (
           <p className="text-sm text-[var(--text-3)] mb-4">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Play,
@@ -96,6 +96,7 @@ function PostDetailSkeleton() {
 
 export default function PostDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const postId = Number(params.id);
 
   const [post, setPost] = useState<PostDetail | null>(null);
@@ -244,7 +245,7 @@ export default function PostDetailPage() {
         {post.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-6">
             {post.tags.map((tag) => (
-              <TagBadge key={tag} name={tag} />
+              <TagBadge key={tag} name={tag} onClick={() => router.push(`/explore?tag=${encodeURIComponent(tag)}`)} />
             ))}
           </div>
         )}

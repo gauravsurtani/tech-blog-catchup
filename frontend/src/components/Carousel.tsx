@@ -100,6 +100,11 @@ export default function Carousel({ title, seeAllHref, children }: CarouselProps)
           `}</style>
           {children}
         </div>
+
+        {/* Mobile scroll hint gradient */}
+        {canScrollRight && (
+          <div className="absolute right-0 top-0 bottom-0 w-12 pointer-events-none bg-gradient-to-l from-[var(--bg)] to-transparent md:hidden" />
+        )}
       </div>
     </section>
   );

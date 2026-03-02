@@ -57,6 +57,33 @@ export default function AudioPlayer() {
     [setVolume],
   );
 
+  const handleVolumeKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      let newVolume: number | null = null;
+      switch (e.key) {
+        case "ArrowRight":
+        case "ArrowUp":
+          newVolume = Math.min(1, volume + 0.05);
+          break;
+        case "ArrowLeft":
+        case "ArrowDown":
+          newVolume = Math.max(0, volume - 0.05);
+          break;
+        case "Home":
+          newVolume = 0;
+          break;
+        case "End":
+          newVolume = 1;
+          break;
+        default:
+          return;
+      }
+      e.preventDefault();
+      setVolume(newVolume);
+    },
+    [volume, setVolume],
+  );
+
   const handleVolumeMouseDown = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       handleVolumeClick(e);
@@ -186,6 +213,7 @@ export default function AudioPlayer() {
               tabIndex={0}
               className="w-24 h-1.5 bg-[var(--tag-bg)] rounded-full cursor-pointer group relative border-[1.5px] border-[var(--border-color)] p-[2px]"
               onMouseDown={handleVolumeMouseDown}
+              onKeyDown={handleVolumeKeyDown}
             >
               <div
                 className="h-full bg-[var(--primary)] rounded-full relative"

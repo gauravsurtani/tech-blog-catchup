@@ -9,7 +9,7 @@ export default function ThemeProvider({
 }) {
   return (
     <NextThemesProvider
-      attribute="class"
+      attribute="data-theme"
       defaultTheme="dark"
       enableSystem={false}
     >

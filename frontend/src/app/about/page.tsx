@@ -1,16 +1,16 @@
 export default function AboutPage() {
   return (
     <div className="max-w-3xl mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold text-[var(--color-text-primary)] mb-2">
+      <h1 className="text-2xl font-extrabold text-[var(--text-1)] mb-2">
         About Tech Blog Catchup
       </h1>
-      <p className="text-sm text-[var(--color-text-muted)] mb-8">
+      <p className="text-sm text-[var(--text-3)] mb-8">
         Last updated: February 2026
       </p>
 
-      <div className="prose prose-invert max-w-none space-y-6 text-[var(--color-text-secondary)]">
+      <div className="bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-8 prose dark:prose-invert max-w-none space-y-6 text-[var(--text-2)]">
         <section>
-          <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">
+          <h2 className="text-xl font-bold text-[var(--text-1)]">
             What is Tech Blog Catchup?
           </h2>
           <p>
@@ -24,7 +24,7 @@ export default function AboutPage() {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">
+          <h2 className="text-xl font-bold text-[var(--text-1)]">
             Why?
           </h2>
           <p>
@@ -38,27 +38,27 @@ export default function AboutPage() {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">
+          <h2 className="text-xl font-bold text-[var(--text-1)]">
             How it works
           </h2>
-          <ol className="list-decimal list-inside space-y-2 text-[var(--color-text-secondary)]">
+          <ol className="list-decimal list-inside space-y-2 text-[var(--text-2)]">
             <li>
-              <strong className="text-[var(--color-text-primary)]">Discover & Crawl</strong>{" "}
+              <strong className="text-[var(--text-1)]">Discover & Crawl</strong>{" "}
               — Sitemaps, RSS feeds, and blog page scraping find new posts
               across all sources.
             </li>
             <li>
-              <strong className="text-[var(--color-text-primary)]">Extract & Tag</strong>{" "}
+              <strong className="text-[var(--text-1)]">Extract & Tag</strong>{" "}
               — Content is extracted with quality scoring, then auto-tagged into
               12 categories (infrastructure, AI/ML, security, and more).
             </li>
             <li>
-              <strong className="text-[var(--color-text-primary)]">Generate Podcasts</strong>{" "}
+              <strong className="text-[var(--text-1)]">Generate Podcasts</strong>{" "}
               — An LLM writes a two-host conversational script, then
               text-to-speech produces the final audio.
             </li>
             <li>
-              <strong className="text-[var(--color-text-primary)]">Listen</strong>{" "}
+              <strong className="text-[var(--text-1)]">Listen</strong>{" "}
               — Browse the web player, filter by source or tag, build playlists,
               and hit play.
             </li>
@@ -66,10 +66,10 @@ export default function AboutPage() {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">
+          <h2 className="text-xl font-bold text-[var(--text-1)]">
             Tech highlights
           </h2>
-          <ul className="list-disc list-inside space-y-1 text-[var(--color-text-secondary)]">
+          <ul className="list-disc list-inside space-y-1 text-[var(--text-2)]">
             <li>Crawl4AI + RSS + sitemap discovery for broad coverage</li>
             <li>Multi-strategy content extraction with quality gating</li>
             <li>OpenAI TTS for natural-sounding conversational audio</li>
@@ -80,7 +80,7 @@ export default function AboutPage() {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">
+          <h2 className="text-xl font-bold text-[var(--text-1)]">
             Built by
           </h2>
           <p>
@@ -91,7 +91,7 @@ export default function AboutPage() {
               href="https://github.com/gauravsurtani/tech-blog-catchup"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[var(--color-accent)] hover:underline"
+              className="text-[var(--blue)] hover:underline"
             >
               GitHub
             </a>

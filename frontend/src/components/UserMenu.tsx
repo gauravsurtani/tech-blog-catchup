@@ -31,7 +31,7 @@ export default function UserMenu({ collapsed = false }: UserMenuProps) {
     return (
       <Link
         href="/login"
-        className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] rounded-[var(--radius-md)] transition-colors"
+        className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-[var(--text-2)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-1)] rounded-[var(--radius)] transition-colors"
         title={collapsed ? "Sign In" : undefined}
       >
         <LogIn size={20} className="shrink-0" />
@@ -52,7 +52,7 @@ export default function UserMenu({ collapsed = false }: UserMenuProps) {
     <div ref={menuRef} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-3 w-full px-3 py-2.5 rounded-[var(--radius-md)] text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors"
+        className="flex items-center gap-3 w-full px-3 py-2.5 rounded-[var(--radius)] text-sm font-medium text-[var(--text-2)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-1)] transition-colors"
         title={collapsed ? user.name || "Account" : undefined}
         aria-label="User menu"
       >
@@ -62,12 +62,12 @@ export default function UserMenu({ collapsed = false }: UserMenuProps) {
             alt={user.name || "User avatar"}
             width={28}
             height={28}
-            className="rounded-full shrink-0 object-cover"
+            className="rounded-[var(--radius-full)] shrink-0 object-cover border-[var(--border-w)] border-[var(--border-color)]"
             referrerPolicy="no-referrer"
             unoptimized
           />
         ) : (
-          <span className="w-7 h-7 rounded-full shrink-0 bg-[var(--color-accent)] text-[var(--color-accent-text)] flex items-center justify-center text-xs font-bold">
+          <span className="w-7 h-7 rounded-[var(--radius-full)] shrink-0 bg-[var(--primary)] text-[var(--primary-text)] flex items-center justify-center text-xs font-bold border-[var(--border-w)] border-[var(--border-color)]">
             {initials}
           </span>
         )}
@@ -77,11 +77,11 @@ export default function UserMenu({ collapsed = false }: UserMenuProps) {
       </button>
 
       {open && (
-        <div className="absolute bottom-full left-0 mb-2 w-48 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg-secondary)] shadow-lg py-1 z-50">
+        <div className="absolute bottom-full left-0 mb-2 w-48 rounded-[var(--radius)] border-[var(--border-w)] border-[var(--border-color)] bg-[var(--bg-elevated)] shadow-[var(--shadow)] py-1 z-50">
           <Link
             href="/profile"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors"
+            className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--text-1)] hover:bg-[var(--bg-hover)] transition-colors"
           >
             <User size={16} />
             Profile
@@ -89,15 +89,15 @@ export default function UserMenu({ collapsed = false }: UserMenuProps) {
           <Link
             href="/settings"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors"
+            className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--text-1)] hover:bg-[var(--bg-hover)] transition-colors"
           >
             <Settings size={16} />
             Settings
           </Link>
-          <div className="border-t border-[var(--color-border)] my-1" />
+          <div className="border-t border-[var(--split)] my-1" />
           <button
             onClick={() => signOut()}
-            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors"
+            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-[var(--text-1)] hover:bg-[var(--bg-hover)] transition-colors"
           >
             <LogOut size={16} />
             Sign Out

@@ -90,31 +90,18 @@ function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center justify-center py-16">
-      <div
-        className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
-        style={{ backgroundColor: "var(--color-bg-tertiary)" }}
-      >
-        <Icon className="w-8 h-8" style={{ color: "var(--color-text-muted)" }} />
+      <div className="w-16 h-16 rounded-full bg-[var(--tag-bg)] flex items-center justify-center mb-4">
+        <Icon className="w-8 h-8 text-[var(--text-3)]" />
       </div>
-      <p
-        className="text-lg font-medium mb-1"
-        style={{ color: "var(--color-text-secondary)" }}
-      >
+      <p className="text-lg font-medium mb-1 text-[var(--text-2)]">
         {title}
       </p>
-      <p
-        className="text-sm mb-4 text-center max-w-xs"
-        style={{ color: "var(--color-text-muted)" }}
-      >
+      <p className="text-sm mb-4 text-center max-w-xs text-[var(--text-3)]">
         {description}
       </p>
       <Link
         href={actionHref}
-        className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
-        style={{
-          backgroundColor: "var(--color-accent)",
-          color: "var(--color-accent-text)",
-        }}
+        className="nb-hover inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-[var(--radius)] bg-[var(--primary)] text-[var(--primary-text)] border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-sm)] transition-colors"
       >
         {actionLabel}
       </Link>
@@ -167,8 +154,8 @@ function FavoritesSection() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-16">
-        <Loader2 className="w-8 h-8 animate-spin mb-3" style={{ color: "var(--color-text-muted)" }} />
-        <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
+        <Loader2 className="w-8 h-8 animate-spin mb-3 text-[var(--text-3)]" />
+        <p className="text-sm text-[var(--text-3)]">
           Loading favorites...
         </p>
       </div>
@@ -222,40 +209,28 @@ function PlaylistsSection() {
         <Link
           key={pl.id}
           href={`/playlist/${pl.id}`}
-          className="flex items-center gap-4 p-4 rounded-xl transition-colors"
-          style={{
-            backgroundColor: "var(--color-bg-secondary)",
-            borderWidth: 1,
-            borderStyle: "solid",
-            borderColor: "var(--color-border)",
-          }}
+          className="flex items-center gap-4 p-4 rounded-[var(--radius-xl)] bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] hover:bg-[var(--bg-hover)] shadow-[var(--shadow-sm)] transition-colors"
         >
           <div
-            className="w-12 h-12 rounded-lg flex items-center justify-center text-white text-lg font-bold shrink-0"
+            className="w-12 h-12 rounded-[var(--radius)] flex items-center justify-center text-[var(--primary-text)] text-lg font-bold shrink-0"
             style={{ backgroundColor: pl.color }}
           >
             {pl.name.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
-            <p
-              className="text-sm font-semibold truncate"
-              style={{ color: "var(--color-text-primary)" }}
-            >
+            <p className="text-sm font-semibold truncate text-[var(--text-1)]">
               {pl.name}
             </p>
-            <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+            <p className="text-xs text-[var(--text-3)]">
               {pl.postIds.length} {pl.postIds.length === 1 ? "episode" : "episodes"}
             </p>
             {pl.description && (
-              <p
-                className="text-xs truncate mt-0.5"
-                style={{ color: "var(--color-text-muted)" }}
-              >
+              <p className="text-xs truncate mt-0.5 text-[var(--text-3)]">
                 {pl.description}
               </p>
             )}
           </div>
-          <Play className="w-4 h-4 shrink-0" style={{ color: "var(--color-text-muted)" }} />
+          <Play className="w-4 h-4 shrink-0 text-[var(--text-3)]" />
         </Link>
       ))}
     </div>
@@ -299,8 +274,8 @@ function HistorySection() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-16">
-        <Loader2 className="w-8 h-8 animate-spin mb-3" style={{ color: "var(--color-text-muted)" }} />
-        <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
+        <Loader2 className="w-8 h-8 animate-spin mb-3 text-[var(--text-3)]" />
+        <p className="text-sm text-[var(--text-3)]">
           Loading history...
         </p>
       </div>
@@ -331,46 +306,31 @@ function HistorySection() {
         return (
           <div
             key={post.id}
-            className="flex items-center gap-4 p-3 rounded-lg transition-colors group"
-            style={{ backgroundColor: "transparent" }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.backgroundColor = "var(--color-bg-secondary)")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = "transparent")
-            }
+            className="flex items-center gap-4 p-3 rounded-[var(--radius)] transition-colors group hover:bg-[var(--bg-elevated)]"
           >
             {/* Play button */}
             <button
               onClick={() => post.audio_status === "ready" && play(post)}
               disabled={post.audio_status !== "ready"}
-              className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-default"
-              style={{ backgroundColor: "var(--color-bg-tertiary)" }}
+              className="w-10 h-10 rounded-full bg-[var(--tag-bg)] flex items-center justify-center shrink-0 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-default"
             >
-              <Play className="w-4 h-4" style={{ color: "var(--color-text-primary)" }} />
+              <Play className="w-4 h-4 text-[var(--text-1)]" />
             </button>
 
             {/* Info */}
             <div className="flex-1 min-w-0">
               <Link
                 href={`/post/${post.id}`}
-                className="text-sm font-medium truncate block hover:underline"
-                style={{ color: "var(--color-text-primary)" }}
+                className="text-sm font-medium truncate block hover:underline text-[var(--text-1)]"
               >
                 {post.title}
               </Link>
               <div className="flex items-center gap-3 mt-0.5">
-                <span
-                  className="text-xs"
-                  style={{ color: "var(--color-text-muted)" }}
-                >
+                <span className="text-xs text-[var(--text-3)]">
                   {post.source_name}
                 </span>
                 {entry && (
-                  <span
-                    className="text-xs flex items-center gap-1"
-                    style={{ color: "var(--color-text-muted)" }}
-                  >
+                  <span className="text-xs flex items-center gap-1 text-[var(--text-3)]">
                     <Clock className="w-3 h-3" />
                     {formatTimeAgo(entry.updatedAt)}
                   </span>
@@ -379,18 +339,12 @@ function HistorySection() {
               {/* Progress bar */}
               {progressPct > 0 && progressPct < 100 && (
                 <div
-                  className="mt-1.5 h-1 rounded-full overflow-hidden"
-                  style={{
-                    backgroundColor: "var(--color-bg-tertiary)",
-                    maxWidth: "12rem",
-                  }}
+                  className="mt-1.5 h-1 rounded-full overflow-hidden bg-[var(--tag-bg)]"
+                  style={{ maxWidth: "12rem" }}
                 >
                   <div
-                    className="h-full rounded-full"
-                    style={{
-                      backgroundColor: "var(--color-accent)",
-                      width: `${progressPct}%`,
-                    }}
+                    className="h-full rounded-full bg-[var(--primary)]"
+                    style={{ width: `${progressPct}%` }}
                   />
                 </div>
               )}
@@ -399,18 +353,12 @@ function HistorySection() {
             {/* Duration / progress label */}
             <div className="text-right shrink-0">
               {entry && entry.duration > 0 && (
-                <span
-                  className="text-xs"
-                  style={{ color: "var(--color-text-muted)" }}
-                >
+                <span className="text-xs text-[var(--text-3)]">
                   {formatDuration(entry.position)} / {formatDuration(entry.duration)}
                 </span>
               )}
               {progressPct >= 100 && (
-                <span
-                  className="text-xs font-medium"
-                  style={{ color: "var(--color-accent)" }}
-                >
+                <span className="text-xs font-medium text-[var(--primary)]">
                   Completed
                 </span>
               )}
@@ -442,11 +390,8 @@ export default function LibraryPage() {
     <div>
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <Library className="w-7 h-7" style={{ color: "var(--color-accent)" }} />
-        <h1
-          className="text-2xl font-bold"
-          style={{ color: "var(--color-text-primary)" }}
-        >
+        <Library className="w-7 h-7 text-[var(--primary)]" />
+        <h1 className="text-2xl font-extrabold text-[var(--text-1)]">
           Your Library
         </h1>
       </div>

@@ -20,25 +20,25 @@ const SORT_OPTIONS = [
 
 function PostCardSkeleton() {
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 flex flex-col gap-3 animate-pulse">
+    <div className="bg-[var(--bg)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius-xl)] p-5 flex flex-col gap-3 animate-pulse">
       <div className="flex items-center justify-between">
-        <div className="h-3 w-20 bg-gray-800 rounded" />
-        <div className="h-3 w-16 bg-gray-800 rounded" />
+        <div className="h-3 w-20 bg-[var(--bg-elevated)] rounded" />
+        <div className="h-3 w-16 bg-[var(--bg-elevated)] rounded" />
       </div>
-      <div className="h-5 w-full bg-gray-800 rounded" />
-      <div className="h-5 w-3/4 bg-gray-800 rounded" />
-      <div className="h-3 w-24 bg-gray-800 rounded" />
+      <div className="h-5 w-full bg-[var(--bg-elevated)] rounded" />
+      <div className="h-5 w-3/4 bg-[var(--bg-elevated)] rounded" />
+      <div className="h-3 w-24 bg-[var(--bg-elevated)] rounded" />
       <div className="space-y-2">
-        <div className="h-3 w-full bg-gray-800 rounded" />
-        <div className="h-3 w-5/6 bg-gray-800 rounded" />
+        <div className="h-3 w-full bg-[var(--bg-elevated)] rounded" />
+        <div className="h-3 w-5/6 bg-[var(--bg-elevated)] rounded" />
       </div>
       <div className="flex gap-1.5">
-        <div className="h-5 w-14 bg-gray-800 rounded-full" />
-        <div className="h-5 w-18 bg-gray-800 rounded-full" />
+        <div className="h-5 w-14 bg-[var(--bg-elevated)] rounded-full" />
+        <div className="h-5 w-18 bg-[var(--bg-elevated)] rounded-full" />
       </div>
-      <div className="flex items-center gap-2 pt-2 border-t border-gray-800">
-        <div className="h-8 w-16 bg-gray-800 rounded-lg" />
-        <div className="h-8 w-28 bg-gray-800 rounded-lg ml-auto" />
+      <div className="flex items-center gap-2 pt-2 border-t border-[var(--border-color)]">
+        <div className="h-8 w-16 bg-[var(--bg-elevated)] rounded-lg" />
+        <div className="h-8 w-28 bg-[var(--bg-elevated)] rounded-lg ml-auto" />
       </div>
     </div>
   );
@@ -167,7 +167,7 @@ export default function ExplorePage() {
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 h-full w-72 bg-gray-950 border-r border-gray-800 z-50
+          fixed top-0 left-0 h-full w-72 bg-[var(--bg)] border-r border-[var(--border-color)] z-50
           transform transition-transform duration-200 ease-in-out overflow-y-auto
           lg:static lg:transform-none lg:z-auto lg:h-auto lg:border-r-0 lg:w-64 lg:flex-shrink-0
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
@@ -176,10 +176,10 @@ export default function ExplorePage() {
         <div className="p-4 lg:p-0 lg:sticky lg:top-24 space-y-6">
           {/* Mobile close button */}
           <div className="flex items-center justify-between lg:hidden">
-            <h2 className="text-lg font-semibold">Filters</h2>
+            <h2 className="text-lg font-semibold text-[var(--text-1)]">Filters</h2>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="p-1 text-gray-400 hover:text-gray-200 cursor-pointer"
+              className="p-1 text-[var(--text-3)] hover:text-[var(--text-1)] cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -187,14 +187,14 @@ export default function ExplorePage() {
 
           {filtersLoading ? (
             <div className="space-y-4 animate-pulse">
-              <div className="h-4 w-20 bg-gray-800 rounded" />
+              <div className="h-4 w-20 bg-[var(--bg-elevated)] rounded" />
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-6 w-full bg-gray-800 rounded" />
+                <div key={i} className="h-6 w-full bg-[var(--bg-elevated)] rounded" />
               ))}
-              <div className="h-4 w-16 bg-gray-800 rounded mt-6" />
+              <div className="h-4 w-16 bg-[var(--bg-elevated)] rounded mt-6" />
               <div className="flex flex-wrap gap-2">
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="h-7 w-16 bg-gray-800 rounded-full" />
+                  <div key={i} className="h-7 w-16 bg-[var(--bg-elevated)] rounded-full" />
                 ))}
               </div>
             </div>
@@ -205,7 +205,7 @@ export default function ExplorePage() {
                 selected={selectedSources}
                 onChange={handleSourceChange}
               />
-              <div className="border-t border-gray-800" />
+              <div className="border-t border-[var(--border-color)]" />
               <TagFilter
                 tags={tags}
                 selected={selectedTags}
@@ -223,12 +223,12 @@ export default function ExplorePage() {
           {/* Mobile filter toggle */}
           <button
             onClick={() => setSidebarOpen(true)}
-            className="lg:hidden inline-flex items-center gap-2 px-4 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-200 text-sm font-medium rounded-lg transition-colors cursor-pointer"
+            className="lg:hidden inline-flex items-center gap-2 px-4 py-2.5 bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] text-[var(--text-2)] text-sm font-medium rounded-[var(--radius)] border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-sm)] transition-colors cursor-pointer"
           >
             <SlidersHorizontal className="w-4 h-4" />
             Filters
             {activeFilterCount > 0 && (
-              <span className="bg-blue-600 text-white text-xs px-1.5 py-0.5 rounded-full">
+              <span className="bg-[var(--primary)] text-[var(--primary-text)] text-xs px-1.5 py-0.5 rounded-full font-bold">
                 {activeFilterCount}
               </span>
             )}
@@ -236,18 +236,18 @@ export default function ExplorePage() {
 
           {/* Search bar */}
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-3)]" />
             <input
               type="text"
               placeholder="Search posts..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-900 border border-gray-700 rounded-lg text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-colors"
+              className="w-full pl-10 pr-4 py-2.5 bg-[var(--bg)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius)] text-sm text-[var(--text-1)] placeholder-[var(--text-3)] shadow-[var(--shadow-sm)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] transition-colors"
             />
             {search && (
               <button
                 onClick={() => setSearch("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-3)] hover:text-[var(--text-1)] cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -258,7 +258,7 @@ export default function ExplorePage() {
           <select
             value={sort}
             onChange={(e) => handleSortChange(e.target.value)}
-            className="px-4 py-2.5 bg-gray-900 border border-gray-700 rounded-lg text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-colors cursor-pointer"
+            className="px-4 py-2.5 bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius)] text-sm text-[var(--text-1)] shadow-[var(--shadow-sm)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 focus:border-[var(--primary)] transition-colors cursor-pointer"
           >
             {SORT_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -270,7 +270,7 @@ export default function ExplorePage() {
 
         {/* Results info */}
         {!loading && total > 0 && (
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-sm text-[var(--text-3)] mb-4">
             Showing {offset + 1}-{Math.min(offset + PAGE_SIZE, total)} of{" "}
             {total} posts
           </p>
@@ -278,7 +278,7 @@ export default function ExplorePage() {
 
         {/* Error state */}
         {error && (
-          <div className="bg-red-900/30 border border-red-700/50 text-red-300 rounded-lg p-4 mb-6">
+          <div className="bg-[var(--error-bg)] border border-[var(--error)] text-[var(--error)] rounded-lg p-4 mb-6">
             <p className="text-sm">Failed to load posts: {error}</p>
           </div>
         )}
@@ -295,8 +295,8 @@ export default function ExplorePage() {
         {/* Empty state */}
         {!loading && posts.length === 0 && !error && (
           <div className="text-center py-16">
-            <p className="text-gray-400 text-lg mb-2">No posts found</p>
-            <p className="text-gray-500 text-sm">
+            <p className="text-[var(--text-2)] text-lg mb-2">No posts found</p>
+            <p className="text-[var(--text-3)] text-sm">
               {debouncedSearch || selectedSources.length > 0 || selectedTags.length > 0
                 ? "Try adjusting your filters or search terms."
                 : "No posts available yet. Run the crawler to get started."}
@@ -319,7 +319,7 @@ export default function ExplorePage() {
             <button
               onClick={() => goToPage(currentPage - 1)}
               disabled={currentPage <= 1}
-              className="inline-flex items-center gap-1 px-3 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              className="nb-hover inline-flex items-center gap-1 px-3 py-2 bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] text-[var(--text-2)] text-sm rounded-[var(--radius)] shadow-[var(--shadow-sm)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >
               <ChevronLeft className="w-4 h-4" />
               Prev
@@ -331,7 +331,7 @@ export default function ExplorePage() {
                 page === "..." ? (
                   <span
                     key={`ellipsis-${i}`}
-                    className="px-2 py-2 text-sm text-gray-500"
+                    className="px-2 py-2 text-sm text-[var(--text-3)]"
                   >
                     ...
                   </span>
@@ -339,10 +339,10 @@ export default function ExplorePage() {
                   <button
                     key={page}
                     onClick={() => goToPage(page as number)}
-                    className={`px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer ${
+                    className={`px-3 py-2 text-sm rounded-[var(--radius)] border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-sm)] transition-colors cursor-pointer ${
                       page === currentPage
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-800 hover:bg-gray-700 text-gray-300"
+                        ? "bg-[var(--primary)] text-[var(--primary-text)] font-bold"
+                        : "bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] text-[var(--text-2)]"
                     }`}
                   >
                     {page}
@@ -354,7 +354,7 @@ export default function ExplorePage() {
             <button
               onClick={() => goToPage(currentPage + 1)}
               disabled={currentPage >= totalPages}
-              className="inline-flex items-center gap-1 px-3 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              className="nb-hover inline-flex items-center gap-1 px-3 py-2 bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] text-[var(--text-2)] text-sm rounded-[var(--radius)] shadow-[var(--shadow-sm)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >
               Next
               <ChevronRight className="w-4 h-4" />

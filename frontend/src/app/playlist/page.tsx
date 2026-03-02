@@ -92,7 +92,7 @@ export default function PlaylistPage() {
       {/* Named Playlists Section */}
       <div className="mb-10">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-[var(--color-text-primary)]">Your Playlists</h2>
+          <h2 className="text-xl font-extrabold text-[var(--text-1)]">Your Playlists</h2>
           {showCreate ? (
             <form
               onSubmit={(e: React.FormEvent) => {
@@ -107,12 +107,12 @@ export default function PlaylistPage() {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewName(e.target.value)}
                 placeholder="Playlist name"
                 autoFocus
-                className="bg-[var(--color-bg-tertiary)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent w-48"
+                className="bg-[var(--tag-bg)] border-[var(--border-w)] border-[var(--border-color)] text-[var(--text-1)] text-sm rounded-[var(--radius)] px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent w-48"
               />
               <button
                 type="submit"
                 disabled={!newName.trim()}
-                className="px-3 py-1.5 bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm rounded-lg transition-colors"
+                className="nb-hover px-3 py-1.5 bg-[var(--primary)] hover:bg-[var(--primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed text-[var(--primary-text)] text-sm rounded-[var(--radius)] border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-sm)] transition-colors"
               >
                 Create
               </button>
@@ -122,7 +122,7 @@ export default function PlaylistPage() {
                   setShowCreate(false);
                   setNewName("");
                 }}
-                className="px-3 py-1.5 bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)] text-[var(--color-text-secondary)] text-sm rounded-lg transition-colors"
+                className="px-3 py-1.5 bg-[var(--tag-bg)] hover:bg-[var(--bg-hover)] text-[var(--text-2)] text-sm rounded-[var(--radius)] border-[var(--border-w)] border-[var(--border-color)] transition-colors"
               >
                 Cancel
               </button>
@@ -130,7 +130,7 @@ export default function PlaylistPage() {
           ) : (
             <button
               onClick={() => setShowCreate(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)] text-[var(--color-text-secondary)] text-sm rounded-lg transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--tag-bg)] hover:bg-[var(--bg-hover)] text-[var(--text-2)] text-sm rounded-[var(--radius)] border-[var(--border-w)] border-[var(--border-color)] transition-colors"
             >
               <Plus size={14} />
               New Playlist
@@ -139,9 +139,9 @@ export default function PlaylistPage() {
         </div>
 
         {playlists.length === 0 ? (
-          <div className="flex flex-col items-center py-8 border border-dashed border-[var(--color-border)] rounded-xl">
-            <ListMusic size={32} className="text-[var(--color-text-muted)] mb-2 opacity-50" />
-            <p className="text-sm text-[var(--color-text-muted)]">
+          <div className="flex flex-col items-center py-8 border-[var(--border-w)] border-dashed border-[var(--border-color)] rounded-[var(--radius-xl)]">
+            <ListMusic size={32} className="text-[var(--text-3)] mb-2 opacity-50" />
+            <p className="text-sm text-[var(--text-3)]">
               No playlists yet. Create one to organize your favorite episodes.
             </p>
           </div>
@@ -151,19 +151,19 @@ export default function PlaylistPage() {
               <Link
                 key={pl.id}
                 href={`/playlist/${pl.id}`}
-                className="flex items-center gap-3 p-4 rounded-xl bg-[var(--color-bg-secondary)] border border-[var(--color-border)] hover:bg-[var(--color-bg-hover)] transition-colors"
+                className="flex items-center gap-3 p-4 rounded-[var(--radius-xl)] bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] hover:bg-[var(--bg-hover)] shadow-[var(--shadow-sm)] transition-colors"
               >
                 <div
-                  className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-lg font-bold shrink-0"
+                  className="w-10 h-10 rounded-[var(--radius)] flex items-center justify-center text-[var(--primary-text)] text-lg font-bold shrink-0"
                   style={{ backgroundColor: pl.color }}
                 >
                   {pl.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
+                  <p className="text-sm font-medium text-[var(--text-1)] truncate">
                     {pl.name}
                   </p>
-                  <p className="text-xs text-[var(--color-text-muted)]">
+                  <p className="text-xs text-[var(--text-3)]">
                     {pl.postIds.length} {pl.postIds.length === 1 ? "post" : "posts"}
                   </p>
                 </div>
@@ -176,15 +176,15 @@ export default function PlaylistPage() {
       {/* Audio Queue Section */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
-          <h2 className="text-xl font-bold text-[var(--color-text-primary)]">Audio Queue</h2>
-          <p className="text-[var(--color-text-muted)] mt-1 text-sm">
+          <h2 className="text-xl font-extrabold text-[var(--text-1)]">Audio Queue</h2>
+          <p className="text-[var(--text-3)] mt-1 text-sm">
             Browse and listen to posts with audio ready
           </p>
         </div>
         {posts.length > 0 && (
           <button
             onClick={handlePlayAll}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-600 hover:bg-green-500 text-white font-medium rounded-full transition-colors shrink-0"
+            className="nb-hover inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-[var(--primary-text)] font-medium rounded-[var(--radius-full)] border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-sm)] transition-colors shrink-0"
           >
             <Play size={18} />
             Play All
@@ -194,11 +194,11 @@ export default function PlaylistPage() {
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3 mb-6">
-        <Filter size={16} className="text-[var(--color-text-muted)]" />
+        <Filter size={16} className="text-[var(--text-3)]" />
         <select
           value={selectedSource}
           onChange={(e) => setSelectedSource(e.target.value)}
-          className="bg-[var(--color-bg-tertiary)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          className="bg-[var(--tag-bg)] border-[var(--border-w)] border-[var(--border-color)] text-[var(--text-1)] text-sm rounded-[var(--radius)] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
         >
           <option value="">All Sources</option>
           {sources.map((source) => (
@@ -210,7 +210,7 @@ export default function PlaylistPage() {
         <select
           value={selectedTag}
           onChange={(e) => setSelectedTag(e.target.value)}
-          className="bg-[var(--color-bg-tertiary)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          className="bg-[var(--tag-bg)] border-[var(--border-w)] border-[var(--border-color)] text-[var(--text-1)] text-sm rounded-[var(--radius)] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
         >
           <option value="">All Tags</option>
           {tags.map((tag) => (
@@ -225,7 +225,7 @@ export default function PlaylistPage() {
               setSelectedSource("");
               setSelectedTag("");
             }}
-            className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors px-2 py-1"
+            className="text-xs text-[var(--text-3)] hover:text-[var(--text-1)] transition-colors px-2 py-1"
           >
             Clear filters
           </button>
@@ -235,24 +235,24 @@ export default function PlaylistPage() {
       {/* Content */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20">
-          <Loader2 size={32} className="text-[var(--color-text-muted)] animate-spin mb-3" />
-          <p className="text-[var(--color-text-muted)]">Loading playlist...</p>
+          <Loader2 size={32} className="text-[var(--text-3)] animate-spin mb-3" />
+          <p className="text-[var(--text-3)]">Loading playlist...</p>
         </div>
       ) : error ? (
         <div className="flex flex-col items-center justify-center py-20">
-          <p className="text-red-400 mb-3">{error}</p>
+          <p className="text-[var(--error)] mb-3">{error}</p>
           <button
             onClick={fetchPosts}
-            className="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] underline"
+            className="text-sm text-[var(--text-2)] hover:text-[var(--text-1)] underline"
           >
             Try again
           </button>
         </div>
       ) : posts.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20">
-          <Music size={48} className="text-[var(--color-text-muted)] mb-4 opacity-50" />
-          <p className="text-[var(--color-text-secondary)] text-lg mb-1">No audio tracks found</p>
-          <p className="text-[var(--color-text-muted)] text-sm">
+          <Music size={48} className="text-[var(--text-3)] mb-4 opacity-50" />
+          <p className="text-[var(--text-2)] text-lg mb-1">No audio tracks found</p>
+          <p className="text-[var(--text-3)] text-sm">
             {selectedSource || selectedTag
               ? "Try adjusting your filters."
               : "Run the audio generator to create podcast episodes from blog posts."}

@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { DM_Sans } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 import SidebarLayout from "@/components/SidebarLayout";
 import ThemeProvider from "@/components/ThemeProvider";
-import ThemeToggle from "@/components/ThemeToggle";
 import { AudioPlayerProvider } from "@/hooks/useAudioPlayer";
 import AudioPlayer from "@/components/AudioPlayer";
 import GenerationBanner from "@/components/GenerationBanner";
@@ -12,7 +11,11 @@ import BottomTabs from "@/components/BottomTabs";
 import Footer from "@/components/Footer";
 import SessionProvider from "@/components/SessionProvider";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-dm-sans",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -44,10 +47,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] min-h-screen`}>
+      <body className={`${dmSans.variable} font-[var(--font)] bg-[var(--bg)] text-[var(--text-1)] min-h-screen`}>
         <a
           href="#main-content"
-          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-[var(--color-accent)] focus:text-[var(--color-accent-text)] focus:rounded-[var(--radius-md)]"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-[var(--primary)] focus:text-[var(--primary-text)] focus:rounded-[var(--radius)] focus:border-[var(--border-w)] focus:border-[var(--border-color)]"
         >
           Skip to content
         </a>
@@ -57,10 +60,7 @@ export default function RootLayout({
               <Sidebar />
               <SidebarLayout>
                 <GenerationBanner />
-                <div className="fixed top-4 right-4 z-50">
-                  <ThemeToggle />
-                </div>
-                <main id="main-content" className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 pb-24">
+                <main id="main-content" className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 pb-36 md:pb-24">
                   {children}
                 </main>
                 <Footer />

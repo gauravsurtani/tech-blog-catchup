@@ -54,7 +54,7 @@ function HighlightedText({ text, query }: { text: string; query: string }) {
         regex.test(part) ? (
           <mark
             key={i}
-            className="bg-[var(--color-accent)]/25 text-inherit rounded-sm px-0.5"
+            className="bg-[var(--primary)] text-[var(--primary-text)] px-0.5"
           >
             {part}
           </mark>
@@ -220,14 +220,14 @@ export default function SearchDialog({ open, onClose }: SearchDialogProps) {
       aria-modal="true"
       aria-label="Search"
     >
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/50" />
       <div
         ref={dialogRef}
-        className="relative w-full max-w-lg mx-4 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] shadow-2xl overflow-hidden"
+        className="relative w-full max-w-lg mx-4 bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center gap-3 px-4 border-b border-[var(--color-border)]">
-          <Search size={18} className="shrink-0 text-[var(--color-text-muted)]" />
+        <div className="flex items-center gap-3 px-4 border-b border-[var(--border-color)]">
+          <Search size={18} className="shrink-0 text-[var(--text-3)]" />
           <input
             ref={inputRef}
             type="text"
@@ -235,15 +235,15 @@ export default function SearchDialog({ open, onClose }: SearchDialogProps) {
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Search posts..."
-            className="flex-1 py-3.5 bg-transparent text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] outline-none text-sm"
+            className="flex-1 py-3.5 bg-transparent text-[var(--text-1)] placeholder:text-[var(--text-3)] outline-none text-sm border-none shadow-none"
           />
           {loading && (
-            <Loader2 size={16} className="shrink-0 text-[var(--color-text-muted)] animate-spin" />
+            <Loader2 size={16} className="shrink-0 text-[var(--text-3)] animate-spin" />
           )}
           <button
             onClick={onClose}
             aria-label="Close search"
-            className="shrink-0 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
+            className="shrink-0 text-[var(--text-3)] hover:text-[var(--text-1)] transition-colors"
           >
             <X size={16} />
           </button>
@@ -252,12 +252,12 @@ export default function SearchDialog({ open, onClose }: SearchDialogProps) {
         {showRecentSearches && (
           <div className="py-2">
             <div className="flex items-center justify-between px-4 py-1.5">
-              <span className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">
+              <span className="text-xs font-medium text-[var(--text-3)] uppercase tracking-wider">
                 Recent Searches
               </span>
               <button
                 onClick={handleClearAll}
-                className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-error)] transition-colors"
+                className="text-xs text-[var(--primary)] hover:text-[var(--primary-hover)] transition-colors"
               >
                 Clear all
               </button>
@@ -270,12 +270,12 @@ export default function SearchDialog({ open, onClose }: SearchDialogProps) {
                     onMouseEnter={() => setSelectedIndex(i)}
                     className={`w-full text-left px-4 py-2 flex items-center gap-3 transition-colors ${
                       i === selectedIndex
-                        ? "bg-[var(--color-bg-hover)]"
-                        : "hover:bg-[var(--color-bg-hover)]"
+                        ? "bg-[var(--bg-hover)]"
+                        : "hover:bg-[var(--bg-hover)]"
                     }`}
                   >
-                    <Clock size={14} className="shrink-0 text-[var(--color-text-muted)]" />
-                    <span className="flex-1 text-sm text-[var(--color-text-primary)] truncate">
+                    <Clock size={14} className="shrink-0 text-[var(--text-3)]" />
+                    <span className="flex-1 text-sm text-[var(--text-1)] truncate">
                       {term}
                     </span>
                     <span
@@ -290,7 +290,7 @@ export default function SearchDialog({ open, onClose }: SearchDialogProps) {
                           setSelectedIndex(0);
                         }
                       }}
-                      className="shrink-0 text-[var(--color-text-muted)] hover:text-[var(--color-error)] transition-colors p-0.5 rounded"
+                      className="shrink-0 text-[var(--text-3)] hover:text-[var(--error)] transition-colors p-0.5 rounded-[var(--radius)]"
                     >
                       <Trash2 size={12} />
                     </span>
@@ -304,14 +304,14 @@ export default function SearchDialog({ open, onClose }: SearchDialogProps) {
         {results.length > 0 && (
           <ul className="max-h-80 overflow-y-auto py-2">
             {results.map((post, i) => (
-              <li key={post.id}>
+              <li key={post.id} className="border-b-[1px] border-[var(--split)] last:border-b-0">
                 <button
                   onClick={() => navigateToResult(post)}
                   onMouseEnter={() => setSelectedIndex(i)}
                   className={`w-full text-left px-4 py-2.5 flex flex-col gap-0.5 transition-colors ${
                     i === selectedIndex
-                      ? "bg-[var(--color-accent)] text-[var(--color-accent-text)]"
-                      : "text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)]"
+                      ? "bg-[var(--primary)] text-[var(--primary-text)]"
+                      : "text-[var(--text-1)] hover:bg-[var(--bg-hover)]"
                   }`}
                 >
                   <span className="text-sm font-medium line-clamp-1">
@@ -320,8 +320,8 @@ export default function SearchDialog({ open, onClose }: SearchDialogProps) {
                   <span
                     className={`text-xs ${
                       i === selectedIndex
-                        ? "text-[var(--color-accent-text)]/70"
-                        : "text-[var(--color-text-muted)]"
+                        ? "text-[var(--primary-text)]/70"
+                        : "text-[var(--text-3)]"
                     }`}
                   >
                     {post.source_name}
@@ -334,20 +334,20 @@ export default function SearchDialog({ open, onClose }: SearchDialogProps) {
 
         {showNoResults && (
           <div className="px-4 py-8 flex flex-col items-center gap-2 text-center">
-            <SearchX size={32} className="text-[var(--color-text-muted)]" />
-            <p className="text-sm font-medium text-[var(--color-text-primary)]">
+            <SearchX size={32} className="text-[var(--text-3)]" />
+            <p className="text-sm font-medium text-[var(--text-1)]">
               No results found for &ldquo;{query}&rdquo;
             </p>
-            <p className="text-xs text-[var(--color-text-muted)]">
+            <p className="text-xs text-[var(--text-3)]">
               Try different keywords or check spelling
             </p>
           </div>
         )}
 
-        <div className="px-4 py-2 border-t border-[var(--color-border)] flex items-center gap-4 text-xs text-[var(--color-text-muted)]">
-          <span><kbd className="px-1.5 py-0.5 bg-[var(--color-bg-hover)] rounded text-[10px] font-mono">Esc</kbd> to close</span>
-          <span><kbd className="px-1.5 py-0.5 bg-[var(--color-bg-hover)] rounded text-[10px] font-mono">&uarr;&darr;</kbd> to navigate</span>
-          <span><kbd className="px-1.5 py-0.5 bg-[var(--color-bg-hover)] rounded text-[10px] font-mono">Enter</kbd> to open</span>
+        <div className="px-4 py-2 border-t border-[var(--border-color)] flex items-center gap-4 text-xs text-[var(--text-3)]">
+          <span><kbd className="border-[1.5px] border-[var(--border-color)] rounded-[6px] bg-[var(--tag-bg)] text-[var(--text-3)] text-xs px-1.5 py-0.5 font-mono">Esc</kbd> to close</span>
+          <span><kbd className="border-[1.5px] border-[var(--border-color)] rounded-[6px] bg-[var(--tag-bg)] text-[var(--text-3)] text-xs px-1.5 py-0.5 font-mono">&uarr;&darr;</kbd> to navigate</span>
+          <span><kbd className="border-[1.5px] border-[var(--border-color)] rounded-[6px] bg-[var(--tag-bg)] text-[var(--text-3)] text-xs px-1.5 py-0.5 font-mono">Enter</kbd> to open</span>
         </div>
       </div>
     </div>

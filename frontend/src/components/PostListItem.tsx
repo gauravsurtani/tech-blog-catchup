@@ -46,33 +46,33 @@ export default function PostListItem({
 
   return (
     <div
-      className={`flex items-center gap-3 px-3 py-2.5 border-b border-gray-800/50 hover:bg-gray-800/50 transition-colors ${
-        isPlaying ? "border-l-2 border-l-green-500 bg-green-500/5" : ""
+      className={`flex items-center gap-3 px-3 py-2.5 border-b-[1.5px] border-[var(--split)] hover:bg-[var(--bg-hover)] transition-colors ${
+        isPlaying ? "border-l-4 border-l-[var(--primary)] bg-[var(--primary)]/5" : ""
       }`}
     >
       {/* Play / Status icon */}
-      <div className="flex-shrink-0 w-8">
+      <div className="flex-shrink-0 w-10">
         {post.audio_status === "ready" ? (
           <button
             onClick={() => onPlay?.(post)}
-            className="w-7 h-7 flex items-center justify-center bg-green-600 hover:bg-green-500 text-white rounded-full transition-colors cursor-pointer"
+            className="w-[42px] h-[42px] flex items-center justify-center bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-[var(--primary-text)] rounded-full border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-sm)] nb-hover transition-all cursor-pointer"
           >
             <Play className="w-3.5 h-3.5" fill="currentColor" />
           </button>
         ) : post.audio_status === "processing" ? (
-          <div className="w-7 h-7 flex items-center justify-center">
+          <div className="w-[42px] h-[42px] flex items-center justify-center">
             <Loader className="w-4 h-4 text-yellow-400 animate-spin" />
           </div>
         ) : onGenerate && (post.audio_status === "pending" || post.audio_status === "failed") ? (
           <button
             onClick={() => onGenerate(post)}
-            className="w-7 h-7 flex items-center justify-center bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-full transition-colors cursor-pointer"
+            className="w-[42px] h-[42px] flex items-center justify-center bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] text-[var(--text-2)] rounded-full border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-sm)] nb-hover transition-all cursor-pointer"
             title="Generate podcast"
           >
             <Mic className="w-3.5 h-3.5" />
           </button>
         ) : (
-          <div className="w-7 h-7" />
+          <div className="w-[42px] h-[42px]" />
         )}
       </div>
 
@@ -81,26 +81,26 @@ export default function PostListItem({
         <div className="flex items-center gap-2">
           <Link
             href={`/post/${post.id}`}
-            className="text-sm font-medium text-gray-100 hover:text-white hover:underline transition-colors truncate"
+            className="text-sm font-bold text-[var(--text-1)] hover:text-[var(--primary)] hover:underline transition-colors truncate"
           >
             {post.title}
           </Link>
         </div>
         {post.summary && (
-          <p className="text-xs text-gray-500 truncate mt-0.5">
+          <p className="text-xs text-[var(--text-3)] truncate mt-0.5">
             {truncateSummary(post.summary)}
           </p>
         )}
       </div>
 
       {/* Source badge */}
-      <span className="flex-shrink-0 text-xs text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded-full hidden sm:inline-block">
+      <span className="flex-shrink-0 text-xs font-bold text-[var(--primary)] bg-[var(--primary)]/10 px-2 py-0.5 rounded-[var(--radius-full)] border-[1.5px] border-[var(--border-color)] hidden sm:inline-block">
         {post.source_name}
       </span>
 
       {/* Author */}
       {post.author && (
-        <span className="flex-shrink-0 hidden md:flex items-center gap-1 text-xs text-gray-500">
+        <span className="flex-shrink-0 hidden md:flex items-center gap-1 text-xs text-[var(--text-3)]">
           <User className="w-3 h-3" />
           <span className="max-w-[100px] truncate">{post.author}</span>
         </span>
@@ -108,7 +108,7 @@ export default function PostListItem({
 
       {/* Duration */}
       {post.audio_duration_secs ? (
-        <span className="flex-shrink-0 hidden sm:flex items-center gap-1 text-xs text-gray-500">
+        <span className="flex-shrink-0 hidden sm:flex items-center gap-1 text-xs text-[var(--text-3)]">
           <Clock className="w-3 h-3" />
           {formatDuration(post.audio_duration_secs)}
         </span>
@@ -120,22 +120,22 @@ export default function PostListItem({
       {/* Favorite button */}
       <button
         onClick={() => toggleFavorite(post.id)}
-        className="flex-shrink-0 p-1 hover:bg-gray-800 rounded transition-colors cursor-pointer"
+        className="flex-shrink-0 p-1 hover:bg-[var(--bg-hover)] rounded-[var(--radius)] transition-colors cursor-pointer"
         title={favorited ? "Remove from favorites" : "Add to favorites"}
       >
         <Heart
-          className={`w-3.5 h-3.5 ${favorited ? "text-red-500 fill-red-500" : "text-gray-500 hover:text-gray-300"}`}
+          className={`w-3.5 h-3.5 ${favorited ? "text-red-500 fill-red-500" : "text-[var(--text-3)] hover:text-[var(--primary)]"}`}
         />
       </button>
 
       {/* Queue button */}
       <div className="flex-shrink-0">
         {isQueued ? (
-          <span className="text-xs text-green-400 px-2 py-1">In Queue</span>
+          <span className="text-xs font-bold text-[var(--primary)] px-2 py-1">In Queue</span>
         ) : (
           <button
             onClick={() => onAddToQueue?.(post)}
-            className="w-7 h-7 flex items-center justify-center bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-md transition-colors cursor-pointer"
+            className="w-8 h-8 flex items-center justify-center bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] text-[var(--text-2)] rounded-[var(--radius)] border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-sm)] transition-all cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
           </button>

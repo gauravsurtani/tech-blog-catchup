@@ -101,7 +101,7 @@ export default function TranscriptPanel({
     return (
       <div
         className="flex items-center justify-center h-full"
-        style={{ color: "var(--color-text-muted)" }}
+        style={{ color: "var(--text-3)" }}
       >
         <p className="text-sm">No transcript available for this post.</p>
       </div>
@@ -112,25 +112,27 @@ export default function TranscriptPanel({
     <div
       ref={containerRef}
       onScroll={handleScroll}
-      className="overflow-y-auto h-full px-6 py-4 space-y-4"
+      className="overflow-y-auto h-full px-6 py-4 space-y-0 bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)]"
       style={{ scrollbarWidth: "thin" }}
     >
       {paragraphs.map((para, i) => {
         const isActive = i === activeIndex;
+        const isLast = i === paragraphs.length - 1;
         return (
           <p
             key={i}
             ref={(el) => {
               paragraphRefs.current[i] = el;
             }}
-            className="text-sm leading-relaxed transition-all duration-300 ease-in-out rounded-lg px-3 py-2"
+            className={`text-sm leading-relaxed transition-all duration-300 ease-in-out px-3 py-3 ${
+              !isLast ? "border-b-[1px] border-[var(--split)]" : ""
+            } ${
+              isActive ? "bg-[var(--primary-bg)] border-l-[3px] border-l-[var(--primary)]" : ""
+            }`}
             style={{
               color: isActive
-                ? "var(--color-text-primary)"
-                : "var(--color-text-muted)",
-              backgroundColor: isActive
-                ? "rgba(255, 255, 255, 0.08)"
-                : "transparent",
+                ? "var(--text-1)"
+                : "var(--text-3)",
               fontWeight: isActive ? 500 : 400,
             }}
           >

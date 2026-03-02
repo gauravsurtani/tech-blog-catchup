@@ -80,31 +80,31 @@ export default function ShareButton({ postId, title, className = "" }: ShareButt
     <div ref={ref} className={`relative ${className}`}>
       <button
         onClick={handleShare}
-        className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-200 hover:bg-gray-700 rounded-md transition-colors cursor-pointer"
+        className="nb-hover w-7 h-7 flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text-1)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius)] shadow-[var(--shadow-sm)] bg-[var(--bg-elevated)] transition-colors cursor-pointer"
         title="Share"
       >
         <Share2 className="w-3.5 h-3.5" />
       </button>
 
       {open && (
-        <div className="absolute right-0 bottom-full mb-1 w-44 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50 py-1">
+        <div className="absolute right-0 bottom-full mb-1 w-44 bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius)] shadow-[var(--shadow)] z-50 py-1">
           <button
             onClick={handleCopyLink}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors cursor-pointer"
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--text-1)] hover:bg-[var(--bg-hover)] transition-colors cursor-pointer"
           >
             <Link2 className="w-3.5 h-3.5" />
             {copied ? "Copied!" : "Copy Link"}
           </button>
           <button
             onClick={handleTwitter}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors cursor-pointer"
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--text-1)] hover:bg-[var(--bg-hover)] transition-colors cursor-pointer"
           >
             <ExternalLink className="w-3.5 h-3.5" />
             Share on X
           </button>
           <button
             onClick={handleLinkedIn}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors cursor-pointer"
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--text-1)] hover:bg-[var(--bg-hover)] transition-colors cursor-pointer"
           >
             <ExternalLink className="w-3.5 h-3.5" />
             Share on LinkedIn

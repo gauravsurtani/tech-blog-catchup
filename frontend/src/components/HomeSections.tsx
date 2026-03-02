@@ -15,18 +15,18 @@ interface SectionData {
 
 function CardSkeleton() {
   return (
-    <div className="flex-shrink-0 w-48 sm:w-56 snap-start bg-gray-900 border border-gray-800 rounded-xl p-4 flex flex-col gap-2.5 animate-pulse">
+    <div className="flex-shrink-0 w-48 sm:w-56 snap-start bg-[var(--bg)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius-xl)] p-4 flex flex-col gap-2.5 animate-pulse shadow-[var(--shadow)]">
       <div className="flex items-center gap-2">
-        <div className="w-3.5 h-3.5 bg-gray-800 rounded-full" />
-        <div className="h-3 w-16 bg-gray-800 rounded" />
+        <div className="w-3.5 h-3.5 bg-[var(--bg-elevated)] rounded-full" />
+        <div className="h-3 w-16 bg-[var(--bg-elevated)] rounded" />
       </div>
       <div className="space-y-1.5">
-        <div className="h-4 w-full bg-gray-800 rounded" />
-        <div className="h-4 w-2/3 bg-gray-800 rounded" />
+        <div className="h-4 w-full bg-[var(--bg-elevated)] rounded" />
+        <div className="h-4 w-2/3 bg-[var(--bg-elevated)] rounded" />
       </div>
       <div className="mt-auto flex items-center justify-between">
-        <div className="h-3 w-12 bg-gray-800 rounded" />
-        <div className="h-3 w-10 bg-gray-800 rounded" />
+        <div className="h-3 w-12 bg-[var(--bg-elevated)] rounded" />
+        <div className="h-3 w-10 bg-[var(--bg-elevated)] rounded" />
       </div>
     </div>
   );
@@ -35,7 +35,7 @@ function CardSkeleton() {
 function SectionSkeleton() {
   return (
     <div className="space-y-4">
-      <div className="h-6 w-40 bg-gray-800 rounded animate-pulse" />
+      <div className="h-6 w-40 bg-[var(--bg-elevated)] rounded animate-pulse" />
       <div className="flex gap-4 overflow-hidden">
         {Array.from({ length: 5 }).map((_, i) => (
           <CardSkeleton key={i} />

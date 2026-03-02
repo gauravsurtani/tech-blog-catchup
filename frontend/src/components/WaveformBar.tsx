@@ -32,8 +32,8 @@ export default function WaveformBar({
   progress,
   onSeek,
   height = 24,
-  activeColor = "rgb(34 197 94)",
-  inactiveColor = "rgb(55 65 81)",
+  activeColor = "var(--primary)",
+  inactiveColor = "var(--tag-bg)",
   className = "",
 }: WaveformBarProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -104,6 +104,8 @@ export default function WaveformBar({
               height={barH}
               rx={1.5}
               fill={filled ? activeColor : inactiveColor}
+              stroke="var(--border-color)"
+              strokeWidth={0.5}
               style={{
                 transition: isDragging ? "none" : "fill 0.1s ease",
               }}

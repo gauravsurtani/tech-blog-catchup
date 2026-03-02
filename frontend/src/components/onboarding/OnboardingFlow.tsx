@@ -45,34 +45,34 @@ export default function OnboardingFlow() {
   }, [step, finish]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 bg-[var(--color-bg-primary)]">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 bg-[var(--bg)]">
       <div className="w-full max-w-lg flex flex-col items-center">
         {/* Progress dots */}
         <div className="flex items-center gap-2 mb-10">
           {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
             <span
               key={i}
-              className={`w-2.5 h-2.5 rounded-full transition-colors ${
+              className={`w-2.5 h-2.5 rounded-full transition-colors border-[var(--border-w)] ${
                 i === step
-                  ? "bg-[var(--color-accent)]"
+                  ? "bg-[var(--primary)] border-[var(--border-color)]"
                   : i < step
-                    ? "bg-[var(--color-accent)]/40"
-                    : "bg-[var(--color-bg-tertiary)]"
+                    ? "bg-[var(--primary)]/40 border-[var(--border-color)]"
+                    : "bg-[var(--tag-bg)] border-[1.5px] border-[var(--border-color)]"
               }`}
             />
           ))}
         </div>
 
-        {/* Step content */}
-        <div className="w-full min-h-[340px] flex flex-col items-center">
+        {/* Wizard card */}
+        <div className="w-full min-h-[340px] flex flex-col items-center bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] p-8">
           {step === 0 && (
             <div className="flex flex-col items-center text-center gap-6">
-              <Logo variant="icon" className="w-16 h-16 text-[var(--color-accent)]" />
+              <Logo variant="icon" className="w-16 h-16 text-[var(--primary)]" />
               <div>
-                <h1 className="text-2xl font-bold text-[var(--color-text-primary)] mb-3">
+                <h1 className="text-2xl font-extrabold text-[var(--text-1)] mb-3">
                   Welcome to Tech Blog Catchup
                 </h1>
-                <p className="text-[var(--color-text-secondary)] leading-relaxed max-w-md">
+                <p className="text-[var(--text-2)] leading-relaxed max-w-md">
                   Stay on top of engineering blogs from the world&apos;s best tech companies.
                   We turn long-form articles into bite-sized conversational podcasts so you
                   can listen on the go.
@@ -80,7 +80,7 @@ export default function OnboardingFlow() {
               </div>
               <button
                 onClick={next}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-[var(--color-accent-text)] font-semibold rounded-[var(--radius-lg)] transition-colors cursor-pointer"
+                className="nb-hover inline-flex items-center gap-2 px-6 py-3 bg-[var(--primary)] text-[var(--primary-text)] font-semibold rounded-[var(--radius)] border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-sm)] transition-colors cursor-pointer"
               >
                 Get Started
                 <ArrowRight className="w-4 h-4" />
@@ -99,17 +99,17 @@ export default function OnboardingFlow() {
 
         {/* Bottom navigation (steps 1 and 2 only) */}
         {step > 0 && (
-          <div className="w-full flex items-center justify-between mt-8 pt-6 border-t border-[var(--color-border)]">
+          <div className="w-full flex items-center justify-between mt-8 pt-6 border-t border-[var(--split)]">
             <button
               onClick={skip}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm text-[var(--text-3)] hover:text-[var(--text-2)] transition-colors cursor-pointer"
             >
               <SkipForward className="w-4 h-4" />
               Skip
             </button>
             <button
               onClick={next}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-[var(--color-accent-text)] font-medium rounded-[var(--radius-lg)] transition-colors cursor-pointer"
+              className="nb-hover inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--primary)] text-[var(--primary-text)] font-medium rounded-[var(--radius)] border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-sm)] transition-colors cursor-pointer"
             >
               {step === TOTAL_STEPS - 1 ? "Finish" : "Continue"}
               <ArrowRight className="w-4 h-4" />
@@ -121,7 +121,7 @@ export default function OnboardingFlow() {
         {step === 0 && (
           <button
             onClick={skip}
-            className="mt-6 inline-flex items-center gap-1.5 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] transition-colors cursor-pointer"
+            className="mt-6 inline-flex items-center gap-1.5 text-sm text-[var(--text-3)] hover:text-[var(--text-2)] transition-colors cursor-pointer"
           >
             <SkipForward className="w-4 h-4" />
             Skip setup

@@ -52,11 +52,11 @@ export default function Carousel({ title, seeAllHref, children }: CarouselProps)
     <section className="relative">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-gray-100">{title}</h2>
+        <h2 className="text-lg font-bold text-[var(--text-1)]">{title}</h2>
         {seeAllHref && (
           <Link
             href={seeAllHref}
-            className="text-sm text-gray-400 hover:text-white transition-colors"
+            className="text-sm text-[var(--text-2)] hover:text-[var(--primary)] transition-colors"
           >
             See all
           </Link>
@@ -64,12 +64,12 @@ export default function Carousel({ title, seeAllHref, children }: CarouselProps)
       </div>
 
       {/* Scroll container */}
-      <div className="relative group">
+      <div className="relative">
         {/* Left arrow */}
         {canScrollLeft && (
           <button
             onClick={() => scroll("left")}
-            className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 z-10 w-9 h-9 items-center justify-center rounded-full bg-gray-800 border border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors shadow-lg cursor-pointer"
+            className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 z-10 w-9 h-9 items-center justify-center rounded-[var(--radius)] bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] text-[var(--text-2)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-1)] shadow-[var(--shadow-sm)] nb-hover transition-all cursor-pointer"
             aria-label="Scroll left"
           >
             <ChevronLeft className="w-5 h-5" />
@@ -80,7 +80,7 @@ export default function Carousel({ title, seeAllHref, children }: CarouselProps)
         {canScrollRight && (
           <button
             onClick={() => scroll("right")}
-            className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 z-10 w-9 h-9 items-center justify-center rounded-full bg-gray-800 border border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors shadow-lg cursor-pointer"
+            className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 z-10 w-9 h-9 items-center justify-center rounded-[var(--radius)] bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] text-[var(--text-2)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-1)] shadow-[var(--shadow-sm)] nb-hover transition-all cursor-pointer"
             aria-label="Scroll right"
           >
             <ChevronRight className="w-5 h-5" />

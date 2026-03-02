@@ -93,18 +93,24 @@ export default function AudioPlayer() {
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-gray-900 border-t border-gray-800 h-20 select-none">
+      <div
+        className="fixed bottom-0 left-0 right-0 z-50 h-[76px] select-none border-t-[var(--border-w)] border-[var(--border-color)]"
+        style={{
+          backgroundColor: "var(--player-bg)",
+          boxShadow: "var(--player-shadow)",
+        }}
+      >
         <div className="h-full max-w-full mx-auto px-4 flex items-center gap-4">
           {/* Track info */}
           <div className="flex flex-col min-w-0 w-56 shrink-0" aria-live="polite">
-            <span className="text-xs text-gray-400 truncate">
+            <span className="text-xs text-[var(--text-2)] truncate">
               {currentTrack.source_name}
             </span>
-            <span className="text-sm font-medium text-gray-100 truncate">
+            <span className="text-sm font-medium text-[var(--text-1)] truncate">
               {currentTrack.title}
             </span>
             {currentTrack.author && (
-              <span className="text-xs text-gray-500 truncate">
+              <span className="text-xs text-[var(--text-3)] truncate">
                 {currentTrack.author}
               </span>
             )}
@@ -114,14 +120,14 @@ export default function AudioPlayer() {
           <div className="flex items-center gap-3 shrink-0">
             <button
               onClick={previous}
-              className="text-gray-400 hover:text-white transition-colors p-1"
+              className="text-[var(--text-2)] hover:text-[var(--text-1)] transition-colors p-1 nb-hover"
               aria-label="Previous track"
             >
               <SkipBack size={20} />
             </button>
             <button
               onClick={togglePlay}
-              className="bg-white text-black rounded-full p-2 hover:scale-105 transition-transform"
+              className="w-11 h-11 flex items-center justify-center bg-[var(--primary)] text-[var(--primary-text)] rounded-full border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-sm)] nb-hover"
               aria-label={isPlaying ? "Pause" : "Play"}
             >
               {isPlaying ? (
@@ -133,7 +139,7 @@ export default function AudioPlayer() {
             <button
               onClick={next}
               disabled={queue.length === 0}
-              className="text-gray-400 hover:text-white transition-colors p-1 disabled:opacity-30 disabled:cursor-not-allowed"
+              className="text-[var(--text-2)] hover:text-[var(--text-1)] transition-colors p-1 disabled:opacity-30 disabled:cursor-not-allowed nb-hover"
               aria-label="Next track"
             >
               <SkipForward size={20} />
@@ -146,7 +152,7 @@ export default function AudioPlayer() {
             role="group"
             aria-label="Playback progress"
           >
-            <span className="text-xs text-gray-400 w-10 text-right tabular-nums shrink-0">
+            <span className="text-xs text-[var(--text-2)] w-10 text-right tabular-nums shrink-0">
               {formatTime(currentTime)}
             </span>
             <WaveformBar
@@ -156,7 +162,7 @@ export default function AudioPlayer() {
               height={24}
               className="flex-1"
             />
-            <span className="text-xs text-gray-400 w-10 tabular-nums shrink-0">
+            <span className="text-xs text-[var(--text-2)] w-10 tabular-nums shrink-0">
               {formatTime(duration)}
             </span>
           </div>
@@ -165,7 +171,7 @@ export default function AudioPlayer() {
           <div className="hidden sm:flex items-center gap-2 shrink-0">
             <button
               onClick={toggleMute}
-              className="text-gray-400 hover:text-white transition-colors p-1"
+              className="text-[var(--text-2)] hover:text-[var(--text-1)] transition-colors p-1 nb-hover"
               aria-label={volume === 0 ? "Unmute" : "Mute"}
             >
               {volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
@@ -178,14 +184,14 @@ export default function AudioPlayer() {
               aria-valuemax={100}
               aria-valuenow={Math.round(volume * 100)}
               tabIndex={0}
-              className="w-24 h-1.5 bg-gray-700 rounded-full cursor-pointer group relative"
+              className="w-24 h-1.5 bg-[var(--tag-bg)] rounded-full cursor-pointer group relative border-[1.5px] border-[var(--border-color)] p-[2px]"
               onMouseDown={handleVolumeMouseDown}
             >
               <div
-                className="h-full bg-gray-300 rounded-full relative"
+                className="h-full bg-[var(--primary)] rounded-full relative"
                 style={{ width: `${volume * 100}%` }}
               >
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-[var(--text-1)] rounded-full shadow-[var(--shadow-sm)] opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
             </div>
           </div>
@@ -198,7 +204,7 @@ export default function AudioPlayer() {
               const nextIndex = (currentIndex + 1) % speeds.length;
               setPlaybackRate(speeds[nextIndex]);
             }}
-            className="text-xs font-medium px-2 py-1 rounded-md bg-gray-800 hover:bg-gray-700 text-gray-300 transition-colors shrink-0 min-w-[3rem] text-center cursor-pointer"
+            className="text-xs font-medium px-2 py-1 rounded-[var(--radius-full)] border-[var(--border-w)] border-[var(--border-color)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] text-[var(--text-2)] shadow-[var(--shadow-sm)] transition-colors shrink-0 min-w-[3rem] text-center cursor-pointer nb-hover"
             aria-label={`Playback speed: ${playbackRate}x`}
           >
             {playbackRate}x
@@ -207,7 +213,7 @@ export default function AudioPlayer() {
           {/* Expand button */}
           <button
             onClick={toggleExpanded}
-            className="text-gray-400 hover:text-white transition-colors p-1 shrink-0"
+            className="text-[var(--text-2)] hover:text-[var(--text-1)] transition-colors p-1 shrink-0 nb-hover"
             aria-label="Expand player"
           >
             <ChevronUp size={20} />
@@ -216,16 +222,16 @@ export default function AudioPlayer() {
           {/* Queue button */}
           <button
             onClick={() => setQueueOpen((o) => !o)}
-            className={`relative p-2 rounded-md transition-colors shrink-0 ${
+            className={`relative p-2 rounded-[var(--radius)] transition-colors shrink-0 nb-hover ${
               queueOpen
-                ? "text-green-400 bg-gray-800"
-                : "text-gray-400 hover:text-white"
+                ? "text-[var(--primary)] bg-[var(--bg-elevated)]"
+                : "text-[var(--text-2)] hover:text-[var(--text-1)]"
             }`}
             aria-label="Toggle queue"
           >
             <ListMusic size={20} />
             {queue.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-green-500 text-black text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 bg-[var(--primary)] text-[var(--primary-text)] text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center border-[var(--border-w)] border-[var(--border-color)]">
                 {queue.length > 9 ? "9+" : queue.length}
               </span>
             )}

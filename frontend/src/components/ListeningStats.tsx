@@ -56,12 +56,12 @@ function StatCard({
   value: string;
 }) {
   return (
-    <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-5 flex flex-col gap-2">
-      <div className="flex items-center gap-2 text-[var(--color-text-muted)]">
+    <div className="bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] p-5 flex flex-col gap-2">
+      <div className="flex items-center gap-2 text-[var(--text-3)]">
         {icon}
         <span className="text-xs font-medium uppercase tracking-wide">{label}</span>
       </div>
-      <span className="text-2xl font-bold text-[var(--color-text-primary)]">{value}</span>
+      <span className="text-2xl font-extrabold text-[var(--text-1)]">{value}</span>
     </div>
   );
 }
@@ -78,16 +78,16 @@ function SourceBar({
   const pct = maxCount > 0 ? Math.round((count / maxCount) * 100) : 0;
   return (
     <div className="flex items-center gap-3">
-      <span className="text-sm text-[var(--color-text-secondary)] w-24 truncate shrink-0">
+      <span className="text-sm text-[var(--text-2)] w-24 truncate shrink-0">
         {name}
       </span>
-      <div className="flex-1 h-5 bg-[var(--color-bg-tertiary)] rounded-[var(--radius-sm)] overflow-hidden">
+      <div className="flex-1 h-5 bg-[var(--tag-bg)] rounded-[var(--radius)] overflow-hidden border-[1.5px] border-[var(--border-color)]">
         <div
-          className="h-full bg-[var(--color-accent)] rounded-[var(--radius-sm)] transition-all"
+          className="h-full bg-[var(--primary)] rounded-[var(--radius)] transition-all"
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span className="text-sm font-medium text-[var(--color-text-primary)] w-8 text-right shrink-0">
+      <span className="text-sm font-medium text-[var(--text-1)] w-8 text-right shrink-0">
         {count}
       </span>
     </div>
@@ -211,7 +211,7 @@ export default function ListeningStats() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[var(--color-text-tertiary)] border-t-[var(--color-accent)]" />
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[var(--text-3)] border-t-[var(--primary)]" />
       </div>
     );
   }
@@ -243,10 +243,10 @@ export default function ListeningStats() {
 
       {/* Top Sources */}
       {data.topSources.length > 0 && (
-        <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-5">
+        <div className="bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] p-5">
           <div className="flex items-center gap-2 mb-4">
-            <BarChart3 size={16} className="text-[var(--color-text-muted)]" />
-            <h3 className="text-sm font-semibold text-[var(--color-text-primary)] uppercase tracking-wide">
+            <BarChart3 size={16} className="text-[var(--text-3)]" />
+            <h3 className="text-sm font-bold text-[var(--text-1)] uppercase tracking-wide">
               Top Sources
             </h3>
           </div>
@@ -265,32 +265,32 @@ export default function ListeningStats() {
 
       {/* Recently Completed */}
       {data.recentlyCompleted.length > 0 && (
-        <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-5">
+        <div className="bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] p-5">
           <div className="flex items-center gap-2 mb-4">
-            <History size={16} className="text-[var(--color-text-muted)]" />
-            <h3 className="text-sm font-semibold text-[var(--color-text-primary)] uppercase tracking-wide">
+            <History size={16} className="text-[var(--text-3)]" />
+            <h3 className="text-sm font-bold text-[var(--text-1)] uppercase tracking-wide">
               Recently Completed
             </h3>
           </div>
-          <div className="divide-y divide-[var(--color-border)]">
+          <div className="divide-y divide-[var(--split)]">
             {data.recentlyCompleted.map((post) => (
               <Link
                 key={post.id}
                 href={`/post/${post.id}`}
-                className="flex items-center justify-between py-3 first:pt-0 last:pb-0 hover:bg-[var(--color-bg-hover)] -mx-2 px-2 rounded-[var(--radius-sm)] transition-colors"
+                className="flex items-center justify-between py-3 first:pt-0 last:pb-0 hover:bg-[var(--bg-hover)] -mx-2 px-2 rounded-[var(--radius)] transition-colors"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
+                  <p className="text-sm font-medium text-[var(--text-1)] truncate">
                     {post.title}
                   </p>
-                  <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+                  <p className="text-xs text-[var(--text-3)] mt-0.5">
                     {post.source_name}
                     {post.audio_duration_secs
                       ? ` \u00b7 ${formatDuration(post.audio_duration_secs)}`
                       : ""}
                   </p>
                 </div>
-                <span className="text-xs text-[var(--color-accent)] font-medium ml-3 shrink-0">
+                <span className="text-xs text-[var(--primary)] font-medium ml-3 shrink-0">
                   Completed
                 </span>
               </Link>
@@ -302,8 +302,8 @@ export default function ListeningStats() {
       {/* Empty state */}
       {data.totalPosts === 0 && (
         <div className="text-center py-12">
-          <Headphones size={48} className="mx-auto text-[var(--color-text-muted)] mb-4" />
-          <p className="text-[var(--color-text-secondary)] text-sm">
+          <Headphones size={48} className="mx-auto text-[var(--text-3)] mb-4" />
+          <p className="text-[var(--text-2)] text-sm">
             No listening history yet. Start playing some podcasts!
           </p>
         </div>

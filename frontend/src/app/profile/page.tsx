@@ -50,12 +50,12 @@ export default function ProfilePage() {
       <div className="px-4 py-8 sm:px-6 lg:px-8 max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">
-          <User className="w-6 h-6 text-[var(--color-text-muted)]" />
-          <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">Profile</h1>
+          <User className="w-6 h-6 text-[var(--text-3)]" />
+          <h1 className="text-2xl font-extrabold text-[var(--text-1)]">Profile</h1>
         </div>
 
         {/* User Info Card */}
-        <div className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-6 mb-8">
+        <div className="bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] p-6 mb-8">
           <div className="flex items-center gap-5">
             {/* Avatar */}
             {user?.image ? (
@@ -64,12 +64,12 @@ export default function ProfilePage() {
                 alt={user.name || "User avatar"}
                 width={72}
                 height={72}
-                className="rounded-full object-cover shrink-0"
+                className="rounded-[var(--radius-full)] border-[var(--border-w)] border-[var(--border-color)] object-cover shrink-0"
                 referrerPolicy="no-referrer"
                 unoptimized
               />
             ) : (
-              <span className="w-[72px] h-[72px] rounded-full shrink-0 bg-[var(--color-accent)] text-[var(--color-accent-text)] flex items-center justify-center text-2xl font-bold">
+              <span className="w-[72px] h-[72px] rounded-[var(--radius-full)] border-[var(--border-w)] border-[var(--border-color)] shrink-0 bg-[var(--primary)] text-[var(--primary-text)] flex items-center justify-center text-2xl font-bold">
                 {initials}
               </span>
             )}
@@ -77,17 +77,17 @@ export default function ProfilePage() {
             {/* Name / Email / Member since */}
             <div className="min-w-0 flex-1">
               {user?.name && (
-                <h2 className="text-xl font-semibold text-[var(--color-text-primary)] truncate">
+                <h2 className="text-xl font-semibold text-[var(--text-1)] truncate">
                   {user.name}
                 </h2>
               )}
               {user?.email && (
-                <p className="text-sm text-[var(--color-text-secondary)] truncate mt-0.5">
+                <p className="text-sm text-[var(--text-2)] truncate mt-0.5">
                   {user.email}
                 </p>
               )}
               {memberSince && (
-                <p className="text-xs text-[var(--color-text-muted)] mt-2 flex items-center gap-1.5">
+                <p className="text-xs text-[var(--text-3)] mt-2 flex items-center gap-1.5">
                   <Calendar size={12} />
                   Member since {memberSince}
                 </p>

@@ -86,17 +86,17 @@ export default function LandingPage() {
     <div className="flex flex-col items-center gap-[var(--space-12)]">
       {/* Hero */}
       <section className="flex flex-col items-center text-center gap-[var(--space-6)] pt-12 sm:pt-20 max-w-3xl">
-        <Logo variant="icon" className="w-16 h-16 text-[var(--color-accent)]" />
-        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-[var(--color-text-primary)]">
+        <Logo variant="icon" className="w-16 h-16 text-[var(--primary)]" />
+        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-[var(--text-1)]">
           Tech Blog Catchup
         </h1>
-        <p className="text-lg sm:text-xl text-[var(--color-text-secondary)] max-w-2xl leading-relaxed">
+        <p className="text-lg sm:text-xl text-[var(--text-2)] max-w-2xl leading-relaxed">
           Listen to the best tech engineering blogs as conversational podcasts.
           Two AI hosts break down every post so you can learn on the go.
         </p>
         <Link
           href="/explore"
-          className="inline-flex items-center gap-2 px-8 py-3 rounded-[var(--radius-lg)] bg-[var(--color-accent)] text-[var(--color-accent-text)] font-semibold text-lg transition-colors hover:bg-[var(--color-accent-hover)]"
+          className="nb-hover inline-flex items-center gap-2 px-8 py-3 rounded-[var(--radius)] bg-[var(--primary)] text-[var(--primary-text)] border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow)] font-bold text-lg transition-all"
         >
           Start Listening
           <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5" aria-hidden="true">
@@ -114,13 +114,13 @@ export default function LandingPage() {
         {features.map((f) => (
           <div
             key={f.title}
-            className="flex flex-col items-center text-center gap-[var(--space-4)] p-[var(--space-8)] rounded-[var(--radius-xl)] bg-[var(--color-bg-secondary)] border border-[var(--color-border)] transition-shadow hover:shadow-[var(--shadow-md)]"
+            className="nb-hover flex flex-col items-center text-center gap-[var(--space-4)] p-[var(--space-8)] rounded-[var(--radius-xl)] bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-lg)] transition-all"
           >
-            <div className="text-[var(--color-accent)]">{f.icon}</div>
-            <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">
+            <div className="text-[var(--primary)]">{f.icon}</div>
+            <h2 className="text-xl font-bold text-[var(--text-1)]">
               {f.title}
             </h2>
-            <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
+            <p className="text-sm text-[var(--text-2)] leading-relaxed">
               {f.description}
             </p>
           </div>
@@ -132,14 +132,14 @@ export default function LandingPage() {
 
       {/* Social proof */}
       <section className="flex flex-col items-center gap-[var(--space-4)] pb-12">
-        <p className="text-sm text-[var(--color-text-muted)] uppercase tracking-wider font-medium">
+        <p className="text-sm text-[var(--text-3)] uppercase tracking-wider font-medium">
           Sources include
         </p>
         <div className="flex flex-wrap justify-center gap-x-[var(--space-6)] gap-y-[var(--space-2)]">
           {sources.map((s) => (
             <span
               key={s}
-              className="text-[var(--color-text-secondary)] font-medium"
+              className="text-[var(--text-2)] font-medium"
             >
               {s}
             </span>

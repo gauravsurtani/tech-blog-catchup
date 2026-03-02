@@ -3,30 +3,27 @@ import { SearchX } from "lucide-react";
 
 export default function NotFound() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4 bg-[var(--bg)]">
       <SearchX
         size={64}
-        className="mb-6"
-        style={{ color: "var(--color-text-muted)" }}
+        className="mb-6 text-[var(--text-3)]"
       />
 
-      <h1
-        className="text-3xl font-bold mb-3"
-        style={{ color: "var(--color-text-primary)" }}
-      >
-        Page not found
+      <h1 className="text-6xl font-extrabold mb-3 text-[var(--text-1)]">
+        404
       </h1>
 
-      <p
-        className="text-lg mb-8 max-w-md"
-        style={{ color: "var(--color-text-secondary)" }}
-      >
+      <p className="text-lg mb-2 font-bold text-[var(--text-1)]">
+        Page not found
+      </p>
+
+      <p className="text-base mb-8 max-w-md text-[var(--text-2)]">
         The page you&apos;re looking for doesn&apos;t exist or has been moved.
       </p>
 
       <Link
         href="/"
-        className="inline-flex items-center gap-2 px-6 py-3 font-medium rounded-lg bg-green-500 hover:bg-green-600 text-white transition-colors"
+        className="nb-hover inline-flex items-center gap-2 px-8 py-3 font-bold rounded-[var(--radius)] bg-[var(--primary)] text-[var(--primary-text)] border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow)] transition-all"
       >
         Go Home
       </Link>

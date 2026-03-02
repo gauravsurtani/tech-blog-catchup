@@ -17,7 +17,8 @@ export default function BottomTabs() {
 
   return (
     <nav
-      className="fixed left-0 right-0 flex md:hidden items-center justify-around border-t border-[var(--color-border)] bg-[var(--color-bg-secondary)]"
+      aria-label="Mobile navigation"
+      className="fixed left-0 right-0 flex md:hidden items-center justify-around border-t-[var(--border-w)] border-[var(--border-color)] bg-[var(--nav-bg)] backdrop-blur-[12px]"
       style={{
         bottom: "var(--player-height)",
         zIndex: "var(--z-nav)",
@@ -25,18 +26,26 @@ export default function BottomTabs() {
       }}
     >
       {tabs.map(({ href, label, icon: Icon }) => {
-        const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
+        const active = href === "/" ? (pathname === "/" || pathname.startsWith("/post/")) : pathname.startsWith(href);
         return (
           <Link
             key={href}
             href={href}
-            className={`flex flex-col items-center justify-center flex-1 h-full gap-0.5 text-[10px] font-medium transition-colors ${
+            className={`nb-hover flex flex-col items-center justify-center flex-1 h-full gap-0.5 text-[10px] font-semibold transition-colors ${
               active
-                ? "text-[var(--color-accent)]"
-                : "text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+                ? "text-[var(--primary-text)]"
+                : "text-[var(--text-3)] hover:text-[var(--text-1)]"
             }`}
           >
-            <Icon size={20} />
+            <span
+              className={`flex items-center justify-center w-10 h-7 rounded-[var(--radius)] transition-colors ${
+                active
+                  ? "bg-[var(--primary)] border-[1.5px] border-[var(--border-color)] shadow-[var(--shadow-sm)]"
+                  : ""
+              }`}
+            >
+              <Icon size={20} />
+            </span>
             <span>{label}</span>
           </Link>
         );

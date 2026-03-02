@@ -17,8 +17,8 @@ const THEME_OPTIONS: { value: Settings["theme"]; label: string; icon: React.Reac
 function SectionHeader({ title }: { title: string }) {
   return (
     <div className="mb-4">
-      <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">{title}</h2>
-      <div className="mt-2 h-px bg-[var(--color-border)]" />
+      <h2 className="text-lg font-bold text-[var(--text-1)]">{title}</h2>
+      <div className="mt-2 h-px bg-[var(--split)]" />
     </div>
   );
 }
@@ -35,7 +35,7 @@ export default function SettingsForm() {
   return (
     <div className="max-w-2xl space-y-8">
       {/* Theme Section */}
-      <section>
+      <section className="bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] p-6">
         <SectionHeader title="Appearance" />
         <div className="grid grid-cols-3 gap-3">
           {THEME_OPTIONS.map((option) => {
@@ -44,10 +44,10 @@ export default function SettingsForm() {
               <button
                 key={option.value}
                 onClick={() => updateSetting("theme", option.value)}
-                className={`flex flex-col items-center gap-2 p-4 rounded-[var(--radius-lg)] border transition-colors cursor-pointer ${
+                className={`flex flex-col items-center gap-2 p-4 rounded-[var(--radius-lg)] border-[var(--border-w)] transition-colors cursor-pointer ${
                   selected
-                    ? "border-[var(--color-accent)] bg-[var(--color-accent)]/10 text-[var(--color-accent)]"
-                    : "border-[var(--color-border)] bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-hover)] hover:bg-[var(--color-bg-hover)]"
+                    ? "border-[var(--primary)] bg-[var(--primary)]/10 text-[var(--primary)] shadow-[var(--shadow)]"
+                    : "border-[var(--border-color)] bg-[var(--bg-elevated)] text-[var(--text-2)] hover:bg-[var(--bg-hover)]"
                 }`}
                 aria-pressed={selected}
               >
@@ -60,21 +60,21 @@ export default function SettingsForm() {
       </section>
 
       {/* Playback Section */}
-      <section>
+      <section className="bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] p-6">
         <SectionHeader title="Playback" />
         <div className="space-y-5">
           {/* Default Speed */}
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-[var(--color-text-primary)]">Default Speed</p>
-              <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+              <p className="text-sm font-medium text-[var(--text-1)]">Default Speed</p>
+              <p className="text-xs text-[var(--text-3)] mt-0.5">
                 Applied when starting a new podcast
               </p>
             </div>
             <select
               value={settings.defaultSpeed}
               onChange={(e) => updateSetting("defaultSpeed", parseFloat(e.target.value))}
-              className="px-3 py-1.5 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] text-sm focus:outline-none focus:border-[var(--color-accent)] cursor-pointer"
+              className="px-3 py-1.5 rounded-[var(--radius)] border-[var(--border-w)] border-[var(--border-color)] bg-[var(--bg)] text-[var(--text-1)] text-sm shadow-[var(--shadow-sm)] focus:outline-none focus:border-[var(--primary)] cursor-pointer"
             >
               {SPEED_OPTIONS.map((speed) => (
                 <option key={speed} value={speed}>
@@ -87,10 +87,10 @@ export default function SettingsForm() {
           {/* Auto-play next */}
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-[var(--color-text-primary)]">
+              <p className="text-sm font-medium text-[var(--text-1)]">
                 Auto-play Next
               </p>
-              <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+              <p className="text-xs text-[var(--text-3)] mt-0.5">
                 Automatically play the next podcast in queue
               </p>
             </div>
@@ -98,10 +98,10 @@ export default function SettingsForm() {
               role="switch"
               aria-checked={settings.autoPlayNext}
               onClick={() => updateSetting("autoPlayNext", !settings.autoPlayNext)}
-              className={`relative w-11 h-6 rounded-full transition-colors cursor-pointer ${
+              className={`relative w-11 h-6 rounded-full transition-colors cursor-pointer border-[var(--border-w)] border-[var(--border-color)] ${
                 settings.autoPlayNext
-                  ? "bg-[var(--color-accent)]"
-                  : "bg-[var(--color-bg-tertiary)]"
+                  ? "bg-[var(--primary)]"
+                  : "bg-[var(--tag-bg)]"
               }`}
             >
               <span
@@ -115,19 +115,19 @@ export default function SettingsForm() {
       </section>
 
       {/* Notifications Section */}
-      <section>
+      <section className="bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] p-6">
         <SectionHeader title="Notifications" />
         <div className="flex items-center justify-between">
           <div className="flex items-start gap-3">
-            <Bell className="w-5 h-5 text-[var(--color-text-muted)] mt-0.5 shrink-0" />
+            <Bell className="w-5 h-5 text-[var(--text-3)] mt-0.5 shrink-0" />
             <div>
-              <p className="text-sm font-medium text-[var(--color-text-primary)]">
+              <p className="text-sm font-medium text-[var(--text-1)]">
                 Email Digest
               </p>
-              <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+              <p className="text-xs text-[var(--text-3)] mt-0.5">
                 Weekly summary of new podcasts
               </p>
-              <span className="inline-block mt-1 px-2 py-0.5 text-[10px] font-medium rounded-[var(--radius-sm)] bg-[var(--color-bg-tertiary)] text-[var(--color-text-muted)]">
+              <span className="inline-block mt-1 px-2 py-0.5 text-[10px] font-medium rounded-[var(--radius)] bg-[var(--tag-bg)] text-[var(--text-3)] border-[1.5px] border-[var(--border-color)]">
                 Coming soon
               </span>
             </div>
@@ -137,10 +137,10 @@ export default function SettingsForm() {
             aria-checked={settings.emailDigest}
             onClick={() => updateSetting("emailDigest", !settings.emailDigest)}
             disabled
-            className={`relative w-11 h-6 rounded-full transition-colors cursor-not-allowed opacity-50 ${
+            className={`relative w-11 h-6 rounded-full transition-colors cursor-not-allowed opacity-50 border-[var(--border-w)] border-[var(--border-color)] ${
               settings.emailDigest
-                ? "bg-[var(--color-accent)]"
-                : "bg-[var(--color-bg-tertiary)]"
+                ? "bg-[var(--primary)]"
+                : "bg-[var(--tag-bg)]"
             }`}
           >
             <span

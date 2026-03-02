@@ -1,16 +1,16 @@
 export default function TermsPage() {
   return (
     <div className="max-w-3xl mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold text-[var(--color-text-primary)] mb-2">
+      <h1 className="text-2xl font-extrabold text-[var(--text-1)] mb-2">
         Terms of Service
       </h1>
-      <p className="text-sm text-[var(--color-text-muted)] mb-8">
+      <p className="text-sm text-[var(--text-3)] mb-8">
         Last updated: February 2026
       </p>
 
-      <div className="prose prose-invert max-w-none space-y-6 text-[var(--color-text-secondary)]">
+      <div className="bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-8 prose dark:prose-invert max-w-none space-y-6 text-[var(--text-2)]">
         <section>
-          <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">
+          <h2 className="text-xl font-bold text-[var(--text-1)]">
             1. Acceptance of Terms
           </h2>
           <p>
@@ -21,7 +21,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">
+          <h2 className="text-xl font-bold text-[var(--text-1)]">
             2. Description of Service
           </h2>
           <p>
@@ -33,7 +33,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">
+          <h2 className="text-xl font-bold text-[var(--text-1)]">
             3. Content & Intellectual Property
           </h2>
           <p>
@@ -46,11 +46,11 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">
+          <h2 className="text-xl font-bold text-[var(--text-1)]">
             4. Use Restrictions
           </h2>
           <p>You agree not to:</p>
-          <ul className="list-disc list-inside space-y-1 text-[var(--color-text-secondary)]">
+          <ul className="list-disc list-inside space-y-1 text-[var(--text-2)]">
             <li>
               Use the Service for any unlawful purpose or in violation of any
               applicable laws
@@ -70,7 +70,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">
+          <h2 className="text-xl font-bold text-[var(--text-1)]">
             5. Disclaimer of Warranties
           </h2>
           <p>
@@ -84,7 +84,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">
+          <h2 className="text-xl font-bold text-[var(--text-1)]">
             6. Limitation of Liability
           </h2>
           <p>
@@ -96,7 +96,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">
+          <h2 className="text-xl font-bold text-[var(--text-1)]">
             7. Changes to Terms
           </h2>
           <p>
@@ -108,7 +108,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">
+          <h2 className="text-xl font-bold text-[var(--text-1)]">
             8. Contact
           </h2>
           <p>
@@ -117,7 +117,7 @@ export default function TermsPage() {
               href="https://github.com/gauravsurtani/tech-blog-catchup"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[var(--color-accent)] hover:underline"
+              className="text-[var(--blue)] hover:underline"
             >
               GitHub repository
             </a>

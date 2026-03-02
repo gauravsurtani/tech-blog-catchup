@@ -19,7 +19,7 @@ export default function ThemeToggle() {
   if (!mounted) {
     return (
       <button
-        className="p-2 rounded-md bg-[var(--color-bg-tertiary)] text-[var(--color-text-secondary)]"
+        className="p-2 border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius)] bg-[var(--bg-elevated)] text-[var(--text-2)] shadow-[var(--shadow-sm)]"
         aria-label="Toggle theme"
       >
         <Sun className="w-5 h-5" />
@@ -32,7 +32,7 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      className="p-2 rounded-md bg-[var(--color-bg-tertiary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors cursor-pointer"
+      className="nb-hover p-2 border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius)] bg-[var(--bg-elevated)] text-[var(--text-2)] shadow-[var(--shadow-sm)] cursor-pointer"
       aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
       title={isDark ? "Switch to light theme" : "Switch to dark theme"}
     >

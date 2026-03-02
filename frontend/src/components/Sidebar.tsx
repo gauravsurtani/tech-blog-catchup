@@ -18,6 +18,7 @@ import Logo from "./Logo";
 import UserMenu from "./UserMenu";
 import SearchDialog from "./SearchDialog";
 import { useAuthEnabled } from "@/hooks/useRequireAuth";
+import ThemeToggle from "./ThemeToggle";
 
 const STORAGE_KEY = "sidebar-collapsed";
 
@@ -65,15 +66,15 @@ export default function Sidebar() {
     <aside
       role="navigation"
       aria-label="Main navigation"
-      className="hidden md:flex flex-col fixed top-0 left-0 h-screen border-r border-[var(--color-border)] bg-[var(--color-bg-secondary)] transition-[width] duration-300 ease-in-out"
+      className="hidden md:flex flex-col fixed top-0 left-0 h-screen pb-[var(--player-height)] border-r-[var(--border-w)] border-[var(--border-color)] bg-[var(--bg-elevated)] transition-[width] duration-300 ease-in-out"
       style={{
         width: collapsed ? 72 : 240,
         zIndex: "var(--z-nav)",
       }}
     >
       {/* Logo */}
-      <div className="flex items-center h-16 px-4 border-b border-[var(--color-border)]">
-        <Link href="/" className="text-[var(--color-text-primary)] text-xl">
+      <div className="flex items-center h-16 px-4 border-b border-[var(--border-color)]">
+        <Link href="/" className="text-[var(--text-1)] text-xl">
           <Logo
             variant={collapsed ? "icon" : "full"}
             className={collapsed ? "h-8 w-8" : "text-xl"}
@@ -87,13 +88,13 @@ export default function Sidebar() {
           onClick={() => setSearchOpen(true)}
           title={collapsed ? "Search (Cmd+K)" : undefined}
           aria-label="Search posts"
-          className="flex items-center gap-3 w-full rounded-[var(--radius-md)] px-3 py-2.5 text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors"
+          className="nb-hover flex items-center gap-3 w-full rounded-[var(--radius)] px-3 py-2.5 text-sm font-semibold text-[var(--text-2)] border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-sm)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-1)] transition-colors"
         >
           <Search size={20} className="shrink-0" />
           {!collapsed && (
             <>
               <span className="flex-1 text-left whitespace-nowrap">Search</span>
-              <kbd className="text-[10px] font-mono text-[var(--color-text-muted)] bg-[var(--color-bg-hover)] px-1.5 py-0.5 rounded">
+              <kbd className="text-[10px] font-mono text-[var(--text-3)] bg-[var(--bg-hover)] px-1.5 py-0.5 rounded-[var(--radius)]">
                 {typeof navigator !== "undefined" && /Mac/.test(navigator.platform)
                   ? "\u2318"
                   : "Ctrl+"}
@@ -105,7 +106,7 @@ export default function Sidebar() {
       </div>
 
       {/* Nav items */}
-      <nav role="list" className="flex-1 py-4 flex flex-col gap-1 px-3 overflow-y-auto">
+      <nav className="flex-1 py-4 flex flex-col gap-1 px-3 overflow-y-auto">
         {navItems.map(({ href, label, icon: Icon }) => {
           const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
           return (
@@ -113,10 +114,10 @@ export default function Sidebar() {
               key={href}
               href={href}
               title={collapsed ? label : undefined}
-              className={`flex items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 text-sm font-medium transition-colors ${
+              className={`nb-hover flex items-center gap-3 rounded-[var(--radius)] px-3 py-2.5 text-sm font-semibold transition-colors ${
                 active
-                  ? "bg-[var(--color-accent)] text-[var(--color-accent-text)]"
-                  : "text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]"
+                  ? "bg-[var(--primary)] text-[var(--primary-text)] border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-sm)]"
+                  : "text-[var(--text-2)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-1)]"
               }`}
             >
               <Icon size={20} className="shrink-0" />
@@ -128,15 +129,20 @@ export default function Sidebar() {
 
       {/* User menu — hidden when no OAuth providers configured */}
       {authEnabled !== false && (
-        <div className="px-3 py-2 border-t border-[var(--color-border)]">
+        <div className="px-3 py-2 border-t border-[var(--border-color)]">
           <UserMenu collapsed={collapsed} />
         </div>
       )}
 
+      {/* Theme toggle */}
+      <div className="px-3 py-2 border-t border-[var(--border-color)]">
+        <ThemeToggle />
+      </div>
+
       {/* Collapse toggle */}
       <button
         onClick={toggle}
-        className="flex items-center justify-center h-12 border-t border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] transition-colors"
+        className="nb-hover flex items-center justify-center h-12 border-t border-[var(--border-color)] border-[var(--border-w)] rounded-[var(--radius)] text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--bg-hover)] transition-colors"
         aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
       >
         {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}

@@ -204,7 +204,7 @@ export default function FullScreenPlayer({
   return (
     <div
       className="fixed inset-0 z-[70] flex flex-col animate-slide-up"
-      style={{ backgroundColor: "var(--color-bg-primary, #111)" }}
+      style={{ backgroundColor: "var(--bg)" }}
     >
       {/* Background gradient */}
       <div
@@ -217,21 +217,21 @@ export default function FullScreenPlayer({
         <div className="flex items-center justify-between px-6 pt-6 pb-2">
           <button
             onClick={toggleExpanded}
-            className="text-gray-400 hover:text-white transition-colors p-2 -ml-2"
+            className="text-[var(--text-2)] hover:text-[var(--text-1)] transition-colors p-2 -ml-2 nb-hover border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius)]"
             aria-label="Minimize player"
           >
             <ChevronDown size={28} />
           </button>
-          <span className="text-xs text-gray-400 uppercase tracking-widest font-medium">
+          <span className="text-xs text-[var(--text-2)] uppercase tracking-widest font-medium">
             Now Playing
           </span>
           <div className="flex items-center gap-2 -mr-2">
             <button
               onClick={() => setTranscriptOpen((prev) => !prev)}
-              className={`p-2 rounded-md transition-colors ${
+              className={`p-2 rounded-[var(--radius)] transition-colors nb-hover border-[var(--border-w)] border-[var(--border-color)] ${
                 transcriptOpen
-                  ? "text-green-400 bg-white/10"
-                  : "text-gray-400 hover:text-white"
+                  ? "text-[var(--primary)] bg-[var(--primary-bg)]"
+                  : "text-[var(--text-2)] hover:text-[var(--text-1)]"
               }`}
               aria-label="Toggle transcript"
             >
@@ -239,16 +239,16 @@ export default function FullScreenPlayer({
             </button>
             <button
               onClick={onQueueToggle}
-              className={`relative p-2 rounded-md transition-colors ${
+              className={`relative p-2 rounded-[var(--radius)] transition-colors nb-hover border-[var(--border-w)] border-[var(--border-color)] ${
                 queueOpen
-                  ? "text-green-400 bg-white/10"
-                  : "text-gray-400 hover:text-white"
+                  ? "text-[var(--primary)] bg-[var(--primary-bg)]"
+                  : "text-[var(--text-2)] hover:text-[var(--text-1)]"
               }`}
               aria-label="Toggle queue"
             >
               <ListMusic size={24} />
               {queue.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-green-500 text-black text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-[var(--primary)] text-[var(--primary-text)] text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center border-[var(--border-w)] border-[var(--border-color)]">
                   {queue.length > 9 ? "9+" : queue.length}
                 </span>
               )}
@@ -260,14 +260,13 @@ export default function FullScreenPlayer({
         <div className="flex-1 flex items-center justify-center px-8 min-h-0">
           {transcriptOpen ? (
             <div
-              className="w-full max-w-2xl h-full rounded-2xl overflow-hidden"
-              style={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
+              className="w-full max-w-2xl h-full rounded-[var(--radius)] overflow-hidden nb-card"
             >
               {transcriptLoading ? (
                 <div className="flex items-center justify-center h-full">
                   <div
                     className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin"
-                    style={{ borderColor: "var(--color-text-muted)", borderTopColor: "transparent" }}
+                    style={{ borderColor: "var(--text-3)", borderTopColor: "transparent" }}
                   />
                 </div>
               ) : fullText ? (
@@ -279,7 +278,7 @@ export default function FullScreenPlayer({
               ) : (
                 <div
                   className="flex items-center justify-center h-full"
-                  style={{ color: "var(--color-text-muted)" }}
+                  style={{ color: "var(--text-3)" }}
                 >
                   <p className="text-sm">No transcript available.</p>
                 </div>
@@ -287,7 +286,7 @@ export default function FullScreenPlayer({
             </div>
           ) : (
             <div
-              className={`w-64 h-64 sm:w-80 sm:h-80 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-2xl`}
+              className={`w-64 h-64 sm:w-80 sm:h-80 rounded-[var(--radius)] bg-gradient-to-br ${gradient} flex items-center justify-center border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-sm)]`}
             >
               <span className="text-8xl sm:text-9xl font-bold text-white/80 select-none">
                 {initial}
@@ -298,10 +297,10 @@ export default function FullScreenPlayer({
 
         {/* Track info */}
         <div className="px-8 pb-4 text-center">
-          <h2 className="text-xl sm:text-2xl font-bold text-white truncate">
+          <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-1)] truncate">
             {currentTrack.title}
           </h2>
-          <p className="text-sm text-gray-400 mt-1">
+          <p className="text-sm text-[var(--text-2)] mt-1">
             {currentTrack.source_name}
             {currentTrack.author && ` \u00B7 ${currentTrack.author}`}
             {currentTrack.published_at &&
@@ -316,14 +315,12 @@ export default function FullScreenPlayer({
             progress={progress}
             onSeek={seek}
             height={32}
-            activeColor="rgba(255, 255, 255, 0.9)"
-            inactiveColor="rgba(255, 255, 255, 0.2)"
           />
           <div className="flex justify-between mt-1">
-            <span className="text-xs text-gray-400 tabular-nums">
+            <span className="text-xs text-[var(--text-2)] tabular-nums">
               {formatTime(currentTime)}
             </span>
-            <span className="text-xs text-gray-400 tabular-nums">
+            <span className="text-xs text-[var(--text-2)] tabular-nums">
               {formatTime(duration)}
             </span>
           </div>
@@ -333,14 +330,14 @@ export default function FullScreenPlayer({
         <div className="flex items-center justify-center gap-8 pb-4">
           <button
             onClick={previous}
-            className="text-gray-300 hover:text-white transition-colors p-2"
+            className="text-[var(--text-2)] hover:text-[var(--text-1)] transition-colors p-2 nb-hover"
             aria-label="Previous track"
           >
             <SkipBack size={28} />
           </button>
           <button
             onClick={togglePlay}
-            className="bg-white text-black rounded-full p-4 hover:scale-105 transition-transform"
+            className="w-16 h-16 flex items-center justify-center bg-[var(--primary)] text-[var(--primary-text)] rounded-full border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-sm)] nb-hover"
             aria-label={isPlaying ? "Pause" : "Play"}
           >
             {isPlaying ? (
@@ -352,7 +349,7 @@ export default function FullScreenPlayer({
           <button
             onClick={next}
             disabled={queue.length === 0}
-            className="text-gray-300 hover:text-white transition-colors p-2 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="text-[var(--text-2)] hover:text-[var(--text-1)] transition-colors p-2 disabled:opacity-30 disabled:cursor-not-allowed nb-hover"
             aria-label="Next track"
           >
             <SkipForward size={28} />
@@ -364,21 +361,21 @@ export default function FullScreenPlayer({
           <div className="flex items-center gap-2">
             <button
               onClick={toggleMute}
-              className="text-gray-400 hover:text-white transition-colors p-1"
+              className="text-[var(--text-2)] hover:text-[var(--text-1)] transition-colors p-1 nb-hover"
               aria-label={volume === 0 ? "Unmute" : "Mute"}
             >
               {volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}
             </button>
             <div
               ref={volumeBarRef}
-              className="w-28 h-1.5 bg-white/20 rounded-full cursor-pointer group relative"
+              className="w-28 h-1.5 bg-[var(--tag-bg)] rounded-full cursor-pointer group relative border-[1.5px] border-[var(--border-color)] p-[2px]"
               onMouseDown={handleVolumeMouseDown}
             >
               <div
-                className="h-full bg-gray-300 rounded-full relative"
+                className="h-full bg-[var(--primary)] rounded-full relative"
                 style={{ width: `${volume * 100}%` }}
               >
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-[var(--text-1)] rounded-full shadow-[var(--shadow-sm)] opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
             </div>
           </div>
@@ -389,7 +386,7 @@ export default function FullScreenPlayer({
               const nextIndex = (currentIndex + 1) % speeds.length;
               setPlaybackRate(speeds[nextIndex]);
             }}
-            className="text-sm font-medium px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-gray-300 transition-colors min-w-[3.5rem] text-center cursor-pointer"
+            className="text-sm font-medium px-3 py-1.5 rounded-[var(--radius-full)] border-[var(--border-w)] border-[var(--border-color)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] text-[var(--text-2)] shadow-[var(--shadow-sm)] transition-colors min-w-[3.5rem] text-center cursor-pointer nb-hover"
             aria-label={`Playback speed: ${playbackRate}x`}
           >
             {playbackRate}x

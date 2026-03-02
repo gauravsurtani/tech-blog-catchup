@@ -46,28 +46,28 @@ export default function PlaylistQueue({ isOpen, onClose }: PlaylistQueueProps) {
 
       {/* Slide-out panel */}
       <div
-        className={`fixed top-0 right-0 z-50 h-full w-80 sm:w-96 bg-gray-900 border-l border-gray-800 shadow-2xl transform transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 right-0 z-50 h-full w-80 sm:w-96 bg-[var(--bg)] border-l-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-lg)] transform transition-transform duration-300 ease-in-out ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
         style={{ bottom: "80px", height: "calc(100vh - 80px)" }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-800">
-          <h2 className="text-lg font-semibold text-white">Queue</h2>
+        <div className="flex items-center justify-between px-4 py-4 border-b-[1.5px] border-[var(--split)]">
+          <h2 className="text-lg font-semibold text-[var(--text-1)]">Queue</h2>
           <div className="flex items-center gap-2">
             {queue.length > 0 && (
               confirmClear ? (
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-gray-300">Clear {queue.length} tracks?</span>
+                  <span className="text-xs text-[var(--text-2)]">Clear {queue.length} tracks?</span>
                   <button
                     onClick={() => { clearQueue(); setConfirmClear(false); }}
-                    className="text-xs text-red-400 hover:text-red-300 px-2 py-0.5 rounded bg-red-900/30 hover:bg-red-900/50 transition-colors"
+                    className="text-xs text-[var(--error)] hover:opacity-80 px-2 py-0.5 rounded-[var(--radius)] bg-[var(--error)]/10 hover:bg-[var(--error)]/20 transition-colors"
                   >
                     Yes
                   </button>
                   <button
                     onClick={() => setConfirmClear(false)}
-                    className="text-xs text-gray-400 hover:text-gray-200 px-2 py-0.5 rounded hover:bg-gray-800 transition-colors"
+                    className="text-xs text-[var(--text-2)] hover:text-[var(--text-1)] px-2 py-0.5 rounded-[var(--radius)] hover:bg-[var(--bg-hover)] transition-colors"
                   >
                     No
                   </button>
@@ -75,7 +75,7 @@ export default function PlaylistQueue({ isOpen, onClose }: PlaylistQueueProps) {
               ) : (
                 <button
                   onClick={() => setConfirmClear(true)}
-                  className="text-xs text-gray-400 hover:text-red-400 transition-colors px-2 py-1 rounded hover:bg-gray-800"
+                  className="text-xs text-[var(--text-2)] hover:text-[var(--error)] transition-colors px-2 py-1 rounded-[var(--radius)] hover:bg-[var(--bg-hover)]"
                 >
                   Clear All
                 </button>
@@ -83,7 +83,7 @@ export default function PlaylistQueue({ isOpen, onClose }: PlaylistQueueProps) {
             )}
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-white transition-colors p-1"
+              className="text-[var(--text-2)] hover:text-[var(--text-1)] transition-colors p-1"
               aria-label="Close queue"
             >
               <X size={20} />
@@ -96,19 +96,19 @@ export default function PlaylistQueue({ isOpen, onClose }: PlaylistQueueProps) {
           {/* Now Playing */}
           {currentTrack && (
             <div className="px-4 pt-4 pb-2">
-              <span className="text-xs font-medium text-green-400 uppercase tracking-wider">
+              <span className="text-xs font-medium text-[var(--primary)] uppercase tracking-wider">
                 Now Playing
               </span>
-              <div className="mt-2 p-3 bg-gray-800/70 rounded-lg border border-gray-700">
-                <p className="text-sm font-medium text-white truncate">
+              <div className="mt-2 p-3 bg-[var(--bg-elevated)] rounded-[var(--radius)] border-l-4 border-[var(--primary)] border-t-[var(--border-w)] border-r-[var(--border-w)] border-b-[var(--border-w)] border-t-[var(--border-color)] border-r-[var(--border-color)] border-b-[var(--border-color)]">
+                <p className="text-sm font-medium text-[var(--text-1)] truncate">
                   {currentTrack.title}
                 </p>
-                <p className="text-xs text-gray-400 mt-0.5 truncate">
+                <p className="text-xs text-[var(--text-2)] mt-0.5 truncate">
                   {currentTrack.source_name}
                   {currentTrack.author ? ` \u2022 ${currentTrack.author}` : ""}
                 </p>
                 {currentTrack.audio_duration_secs && (
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-[var(--text-3)] mt-1">
                     {formatTime(currentTrack.audio_duration_secs)}
                   </p>
                 )}
@@ -118,16 +118,16 @@ export default function PlaylistQueue({ isOpen, onClose }: PlaylistQueueProps) {
 
           {/* Upcoming tracks */}
           <div className="px-4 pt-3">
-            <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+            <span className="text-xs font-medium text-[var(--text-2)] uppercase tracking-wider">
               Next Up {queue.length > 0 && `(${queue.length})`}
             </span>
           </div>
 
           {queue.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-              <Music size={40} className="text-gray-600 mb-3" />
-              <p className="text-gray-400 text-sm">Queue is empty</p>
-              <p className="text-gray-500 text-xs mt-1">
+              <Music size={40} className="text-[var(--text-4)] mb-3" />
+              <p className="text-[var(--text-2)] text-sm">Queue is empty</p>
+              <p className="text-[var(--text-3)] text-xs mt-1">
                 Add tracks from the playlist to start building your queue.
               </p>
             </div>
@@ -136,10 +136,10 @@ export default function PlaylistQueue({ isOpen, onClose }: PlaylistQueueProps) {
               {queue.map((track, index) => (
                 <li
                   key={`${track.id}-${index}`}
-                  className="flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-gray-800/60 transition-colors group"
+                  className="flex items-center gap-2 px-2 py-2 rounded-[var(--radius)] hover:bg-[var(--bg-hover)] transition-colors group"
                 >
                   {/* Track number */}
-                  <span className="text-xs text-gray-500 w-5 text-center shrink-0">
+                  <span className="text-xs text-[var(--text-4)] w-5 text-center shrink-0">
                     {index + 1}
                   </span>
 
@@ -148,10 +148,10 @@ export default function PlaylistQueue({ isOpen, onClose }: PlaylistQueueProps) {
                     onClick={() => play(track)}
                     className="flex-1 min-w-0 text-left"
                   >
-                    <p className="text-sm text-gray-200 truncate group-hover:text-white transition-colors">
+                    <p className="text-sm text-[var(--text-1)] truncate group-hover:text-[var(--text-1)] transition-colors">
                       {track.title}
                     </p>
-                    <p className="text-xs text-gray-500 truncate">
+                    <p className="text-xs text-[var(--text-3)] truncate">
                       {track.source_name}
                       {track.audio_duration_secs
                         ? ` \u2022 ${formatTime(track.audio_duration_secs)}`
@@ -160,13 +160,13 @@ export default function PlaylistQueue({ isOpen, onClose }: PlaylistQueueProps) {
                   </button>
 
                   {/* Reorder buttons */}
-                  <div className="flex flex-col shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex flex-col shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => {
                         if (index > 0) reorderQueue(index, index - 1);
                       }}
                       disabled={index === 0}
-                      className="text-gray-500 hover:text-white disabled:opacity-20 p-0.5"
+                      className="text-[var(--text-4)] hover:text-[var(--text-1)] disabled:opacity-20 p-0.5"
                       aria-label="Move up"
                     >
                       <ChevronUp size={14} />
@@ -177,7 +177,7 @@ export default function PlaylistQueue({ isOpen, onClose }: PlaylistQueueProps) {
                           reorderQueue(index, index + 1);
                       }}
                       disabled={index === queue.length - 1}
-                      className="text-gray-500 hover:text-white disabled:opacity-20 p-0.5"
+                      className="text-[var(--text-4)] hover:text-[var(--text-1)] disabled:opacity-20 p-0.5"
                       aria-label="Move down"
                     >
                       <ChevronDown size={14} />
@@ -187,7 +187,7 @@ export default function PlaylistQueue({ isOpen, onClose }: PlaylistQueueProps) {
                   {/* Remove button */}
                   <button
                     onClick={() => removeFromQueue(index)}
-                    className="text-gray-500 hover:text-red-400 transition-colors p-1 opacity-0 group-hover:opacity-100 shrink-0"
+                    className="text-[var(--text-3)] hover:text-[var(--error)] transition-colors p-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 shrink-0"
                     aria-label="Remove from queue"
                   >
                     <Trash2 size={14} />

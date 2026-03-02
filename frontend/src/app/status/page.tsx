@@ -32,13 +32,13 @@ function formatTimeAgo(dateStr: string | null): string {
 function StatusIcon({ status }: { status: string }) {
   switch (status) {
     case "success":
-      return <CheckCircle2 className="w-5 h-5 text-green-400" />;
+      return <CheckCircle2 className="w-5 h-5 text-[var(--primary)]" />;
     case "error":
-      return <XCircle className="w-5 h-5 text-red-400" />;
+      return <XCircle className="w-5 h-5 text-[var(--error)]" />;
     case "running":
-      return <RefreshCw className="w-5 h-5 text-yellow-400 animate-spin" />;
+      return <RefreshCw className="w-5 h-5 text-[var(--warning)] animate-spin" />;
     default:
-      return <Circle className="w-5 h-5 text-gray-600" />;
+      return <Circle className="w-5 h-5 text-[var(--text-3)]" />;
   }
 }
 
@@ -58,13 +58,13 @@ function statusLabel(status: string): string {
 function statusColor(status: string): string {
   switch (status) {
     case "success":
-      return "text-green-400";
+      return "text-[var(--primary)]";
     case "error":
-      return "text-red-400";
+      return "text-[var(--error)]";
     case "running":
-      return "text-yellow-400";
+      return "text-[var(--warning)]";
     default:
-      return "text-gray-500";
+      return "text-[var(--text-3)]";
   }
 }
 
@@ -75,16 +75,16 @@ function ProgressIndicator({ scraped, total }: { scraped: number; total: number 
     <div className="flex items-center gap-2">
       <span>{scraped} / {total}</span>
       <div
-        className="w-16 h-1.5 bg-gray-700 rounded-full overflow-hidden"
+        className="w-16 h-3 rounded-full border-[1.5px] border-[var(--border-color)] bg-[var(--tag-bg)] p-[2px] overflow-hidden"
         role="progressbar"
         aria-valuenow={pct}
         aria-valuemin={0}
         aria-valuemax={100}
         aria-label={`${pct}% scraped`}
       >
-        <div className="h-full bg-blue-500 rounded-full" style={{ width: `${pct}%` }} />
+        <div className="h-full bg-[var(--primary)] rounded-full" style={{ width: `${pct}%` }} />
       </div>
-      <span className="text-gray-600">{pct}%</span>
+      <span className="text-[var(--text-3)]">{pct}%</span>
     </div>
   );
 }
@@ -161,8 +161,8 @@ export default function StatusPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold">Scrape Status</h1>
-          <p className="text-gray-400 text-sm mt-1">
+          <h1 className="text-3xl font-extrabold text-[var(--text-1)]">Scrape Status</h1>
+          <p className="text-[var(--text-2)] text-sm mt-1">
             Monitor which tech blogs are being scraped successfully
           </p>
         </div>
@@ -170,7 +170,7 @@ export default function StatusPage() {
           <button
             onClick={handleGenerate}
             disabled={generating || crawling !== null}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-500 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            className="nb-hover inline-flex items-center gap-2 px-4 py-2.5 bg-[var(--primary)] text-[var(--primary-text)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius)] shadow-[var(--shadow-sm)] text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             {generating ? (
               <Loader className="w-4 h-4 animate-spin" />
@@ -182,7 +182,7 @@ export default function StatusPage() {
           <button
             onClick={handleCrawlAll}
             disabled={crawling !== null}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            className="nb-hover inline-flex items-center gap-2 px-4 py-2.5 bg-[var(--blue)] text-[var(--primary-text)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius)] shadow-[var(--shadow-sm)] text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             <RefreshCw
               className={`w-4 h-4 ${crawling === "__all__" ? "animate-spin" : ""}`}
@@ -194,35 +194,35 @@ export default function StatusPage() {
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mb-8">
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-          <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+        <div className="bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] p-4">
+          <p className="text-xs text-[var(--text-3)] uppercase tracking-wide mb-1">
             Total Posts
           </p>
-          <p className="text-2xl font-bold">{totalPosts}</p>
+          <p className="text-3xl font-extrabold text-[var(--text-1)]">{totalPosts}</p>
         </div>
-        <div className="bg-gray-900 border border-green-900/50 rounded-xl p-4">
-          <p className="text-xs text-green-500 uppercase tracking-wide mb-1">
+        <div className="bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--primary)]/30 rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] p-4">
+          <p className="text-xs text-[var(--primary)] uppercase tracking-wide mb-1">
             Healthy
           </p>
-          <p className="text-2xl font-bold text-green-400">{successCount}</p>
+          <p className="text-3xl font-extrabold text-[var(--primary)]">{successCount}</p>
         </div>
-        <div className="bg-gray-900 border border-red-900/50 rounded-xl p-4">
-          <p className="text-xs text-red-500 uppercase tracking-wide mb-1">
+        <div className="bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--error)]/30 rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] p-4">
+          <p className="text-xs text-[var(--error)] uppercase tracking-wide mb-1">
             Errors
           </p>
-          <p className="text-2xl font-bold text-red-400">{errorCount}</p>
+          <p className="text-3xl font-extrabold text-[var(--error)]">{errorCount}</p>
         </div>
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-          <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+        <div className="bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] p-4">
+          <p className="text-xs text-[var(--text-3)] uppercase tracking-wide mb-1">
             Not Crawled
           </p>
-          <p className="text-2xl font-bold text-gray-500">{neverCount}</p>
+          <p className="text-3xl font-extrabold text-[var(--text-3)]">{neverCount}</p>
         </div>
-        <div className="bg-gray-900 border border-blue-900/50 rounded-xl p-4">
-          <p className="text-xs text-blue-500 uppercase tracking-wide mb-1">
+        <div className="bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--blue)]/30 rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] p-4">
+          <p className="text-xs text-[var(--blue)] uppercase tracking-wide mb-1">
             Discoverable
           </p>
-          <p className="text-2xl font-bold text-blue-400">
+          <p className="text-3xl font-extrabold text-[var(--blue)]">
             {(() => {
               const total = sources.reduce((sum, s) => sum + (s.total_discoverable ?? 0), 0);
               return total > 0 ? total.toLocaleString() : "--";
@@ -232,7 +232,7 @@ export default function StatusPage() {
       </div>
 
       {error && (
-        <div className="bg-red-900/30 border border-red-700/50 text-red-300 rounded-lg p-4 mb-6">
+        <div className="bg-[var(--error)]/10 border-[var(--border-w)] border-[var(--error)]/50 text-[var(--error)] rounded-[var(--radius)] p-4 mb-6">
           <p className="text-sm">Failed to load status: {error}</p>
         </div>
       )}
@@ -243,12 +243,12 @@ export default function StatusPage() {
           {Array.from({ length: 8 }).map((_, i) => (
             <div
               key={i}
-              className="bg-gray-900 border border-gray-800 rounded-xl p-4 animate-pulse"
+              className="bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius-xl)] p-4 animate-pulse"
             >
               <div className="flex items-center gap-4">
-                <div className="w-5 h-5 bg-gray-800 rounded-full" />
-                <div className="h-4 w-40 bg-gray-800 rounded" />
-                <div className="ml-auto h-4 w-20 bg-gray-800 rounded" />
+                <div className="w-5 h-5 bg-[var(--bg-hover)] rounded-full" />
+                <div className="h-4 w-40 bg-[var(--bg-hover)] rounded" />
+                <div className="ml-auto h-4 w-20 bg-[var(--bg-hover)] rounded" />
               </div>
             </div>
           ))}
@@ -261,12 +261,12 @@ export default function StatusPage() {
           {sources.map((source) => (
             <div
               key={source.source_key}
-              className={`bg-gray-900 border rounded-xl p-4 transition-colors ${
+              className={`bg-[var(--bg-elevated)] border-[var(--border-w)] rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] p-4 transition-colors ${
                 source.status === "error"
-                  ? "border-red-900/50"
+                  ? "border-[var(--error)]/50"
                   : source.status === "success"
-                  ? "border-green-900/30"
-                  : "border-gray-800"
+                  ? "border-[var(--primary)]/30"
+                  : "border-[var(--border-color)]"
               }`}
             >
               <div className="flex items-center gap-4">
@@ -281,13 +281,13 @@ export default function StatusPage() {
                         href={source.blog_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-semibold text-gray-100 hover:text-blue-400 transition-colors inline-flex items-center gap-1.5"
+                        className="font-semibold text-[var(--text-1)] hover:text-[var(--blue)] transition-colors inline-flex items-center gap-1.5"
                       >
                         {source.source_name}
-                        <ExternalLink className="w-3.5 h-3.5 text-gray-500" />
+                        <ExternalLink className="w-3.5 h-3.5 text-[var(--text-3)]" />
                       </a>
                     ) : (
-                      <h3 className="font-semibold text-gray-100">
+                      <h3 className="font-semibold text-[var(--text-1)]">
                         {source.source_name}
                       </h3>
                     )}
@@ -297,12 +297,12 @@ export default function StatusPage() {
                       {statusLabel(source.status)}
                     </span>
                   </div>
-                  <div className="flex items-center gap-4 mt-1 text-xs text-gray-500">
+                  <div className="flex items-center gap-4 mt-1 text-xs text-[var(--text-3)]">
                     <a
                       href={source.feed_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 hover:text-blue-400 transition-colors"
+                      className="flex items-center gap-1 hover:text-[var(--blue)] transition-colors"
                     >
                       <Rss className="w-3 h-3" />
                       {source.source_key}
@@ -316,7 +316,7 @@ export default function StatusPage() {
                     )}
                     {source.posts_added_last !== null &&
                       source.posts_added_last > 0 && (
-                        <span className="text-green-500">
+                        <span className="text-[var(--primary)]">
                           +{source.posts_added_last} new
                         </span>
                       )}
@@ -326,7 +326,7 @@ export default function StatusPage() {
                   </div>
                   {/* Error message */}
                   {source.error_message && (
-                    <div className="flex items-start gap-1.5 mt-2 text-xs text-red-400">
+                    <div className="flex items-start gap-1.5 mt-2 text-xs text-[var(--error)]">
                       <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" />
                       <span>{source.error_message}</span>
                     </div>
@@ -337,7 +337,7 @@ export default function StatusPage() {
                 <button
                   onClick={() => handleCrawl(source.source_key)}
                   disabled={crawling !== null}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-medium rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex-shrink-0"
+                  className="nb-hover inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] text-[var(--text-2)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius)] shadow-[var(--shadow-sm)] text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex-shrink-0"
                 >
                   <RefreshCw
                     className={`w-3.5 h-3.5 ${

@@ -59,25 +59,25 @@ export default function PostCard({ post, onPlay, onAddToQueue, onGenerate }: Pos
   const favorited = isFavorite(post.id);
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 flex flex-col gap-3 hover:border-gray-700 transition-colors">
+    <div className="bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius-xl)] p-5 flex flex-col gap-3 shadow-[var(--shadow-lg)] nb-hover transition-all">
       {/* Source name */}
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+        <span className="text-xs font-bold text-[var(--text-3)] uppercase tracking-wide bg-[var(--tag-bg)] px-2 py-0.5 rounded-[var(--radius-full)]">
           {post.source_name}
         </span>
         {post.published_at && (
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-[var(--text-3)]">
             {formatDate(post.published_at)}
           </span>
         )}
       </div>
 
       {/* Title */}
-      <h3 className="text-lg font-semibold leading-tight">
+      <h3 className="text-lg font-bold leading-tight">
         <div className="flex items-start gap-1.5">
           <Link
             href={`/post/${post.id}`}
-            className="text-gray-100 hover:text-white hover:underline transition-colors flex-1"
+            className="text-[var(--text-1)] hover:text-[var(--primary)] hover:underline transition-colors flex-1"
           >
             {post.title}
           </Link>
@@ -85,7 +85,7 @@ export default function PostCard({ post, onPlay, onAddToQueue, onGenerate }: Pos
             href={post.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-shrink-0 mt-1 text-gray-500 hover:text-gray-300 transition-colors"
+            className="flex-shrink-0 mt-1 text-[var(--text-3)] hover:text-[var(--text-2)] transition-colors"
             title="Open original article"
           >
             <ExternalLink className="w-3.5 h-3.5" />
@@ -95,7 +95,7 @@ export default function PostCard({ post, onPlay, onAddToQueue, onGenerate }: Pos
 
       {/* Author */}
       {post.author && (
-        <div className="flex items-center gap-1.5 text-sm text-gray-400">
+        <div className="flex items-center gap-1.5 text-sm text-[var(--text-2)]">
           <User className="w-3.5 h-3.5" />
           <span>{post.author}</span>
         </div>
@@ -103,13 +103,13 @@ export default function PostCard({ post, onPlay, onAddToQueue, onGenerate }: Pos
 
       {/* Summary */}
       {post.summary && (
-        <p className="text-sm text-gray-400 leading-relaxed">
+        <p className="text-sm text-[var(--text-2)] leading-relaxed">
           {truncateSummary(post.summary)}
         </p>
       )}
 
       {/* Meta info: word count + audio duration */}
-      <div className="flex items-center gap-4 text-xs text-gray-500">
+      <div className="flex items-center gap-4 text-xs text-[var(--text-3)]">
         {post.word_count && (
           <span>{formatWordCount(post.word_count)}</span>
         )}
@@ -131,27 +131,26 @@ export default function PostCard({ post, onPlay, onAddToQueue, onGenerate }: Pos
       )}
 
       {/* Action buttons */}
-      <div className="flex items-center gap-2 mt-auto pt-2 border-t border-gray-800">
+      <div className="flex items-center gap-2 mt-auto pt-2 border-t border-[var(--split)]">
         {post.audio_status === "ready" && (
           <button
             onClick={() => onPlay?.(post)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-500 text-white text-sm font-medium rounded-lg transition-colors cursor-pointer"
+            className="inline-flex items-center justify-center w-[42px] h-[42px] bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-[var(--primary-text)] rounded-full border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-sm)] nb-hover transition-all cursor-pointer"
           >
             <Play className="w-4 h-4" fill="currentColor" />
-            Play
           </button>
         )}
         {(post.audio_status === "pending" || post.audio_status === "failed") && onGenerate && (
           <button
             onClick={() => onGenerate(post)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm font-medium rounded-lg transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-[var(--primary-text)] text-sm font-bold rounded-[var(--radius)] border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-sm)] transition-all cursor-pointer"
           >
             <Mic className="w-4 h-4" />
             Generate
           </button>
         )}
         {post.audio_status === "processing" && (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-yellow-900/40 text-yellow-400 text-sm font-medium rounded-lg border border-yellow-700/40">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-yellow-900/40 text-yellow-400 text-sm font-bold rounded-[var(--radius)] border-[var(--border-w)] border-yellow-700/40">
             <Loader className="w-3.5 h-3.5 animate-spin" />
             Generating...
           </span>
@@ -159,18 +158,18 @@ export default function PostCard({ post, onPlay, onAddToQueue, onGenerate }: Pos
         <ShareButton postId={post.id} title={post.title} className="ml-auto" />
         <button
           onClick={() => onAddToQueue?.(post)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm font-medium rounded-lg transition-colors cursor-pointer"
+          title="Add to queue"
+          className="inline-flex items-center justify-center w-[34px] h-[34px] bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] text-[var(--text-2)] rounded-[var(--radius)] border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-sm)] transition-all cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          Add to queue
         </button>
         <button
           onClick={() => toggleFavorite(post.id)}
-          className="p-1.5 hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
+          className="p-1.5 hover:bg-[var(--bg-hover)] rounded-[var(--radius)] transition-colors cursor-pointer"
           title={favorited ? "Remove from favorites" : "Add to favorites"}
         >
           <Heart
-            className={`w-4 h-4 ${favorited ? "text-red-500 fill-red-500" : "text-gray-500 hover:text-gray-300"}`}
+            className={`w-4 h-4 ${favorited ? "text-red-500 fill-red-500" : "text-[var(--text-3)] hover:text-[var(--primary)]"}`}
           />
         </button>
       </div>

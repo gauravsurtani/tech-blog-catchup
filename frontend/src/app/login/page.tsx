@@ -23,73 +23,65 @@ function LoginContent() {
   const error = searchParams.get("error");
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4"
-         style={{ backgroundColor: "var(--color-bg-primary)" }}>
+    <div className="min-h-screen flex items-center justify-center px-4 bg-[var(--bg)]">
       <div className="w-full max-w-sm space-y-8">
-        {/* Logo */}
-        <div className="flex flex-col items-center gap-4">
-          <Logo variant="icon" className="h-16 w-16" />
-          <h1 className="text-2xl font-bold" style={{ color: "var(--color-text-primary)" }}>
-            Welcome back
-          </h1>
-          <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
-            Sign in to Tech Blog Catchup
-          </p>
-        </div>
-
-        {/* Error message */}
-        {error && (
-          <div className="rounded-lg px-4 py-3 text-sm text-red-400 bg-red-400/10 text-center">
-            {error === "OAuthSignin" ? "Error starting sign in. Try again." :
-             error === "OAuthCallback" ? "Error completing sign in. Try again." :
-             error === "Callback" ? "Sign in error. Try again." :
-             "Something went wrong. Please try again."}
-          </div>
-        )}
-
-        {/* Sign-in buttons */}
-        <div className="space-y-3">
-          <button
-            onClick={() => signIn("google", { callbackUrl })}
-            className="w-full flex items-center justify-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors cursor-pointer border"
-            style={{
-              backgroundColor: "var(--color-bg-secondary)",
-              borderColor: "var(--color-border)",
-              color: "var(--color-text-primary)",
-            }}
-          >
-            <GoogleIcon className="h-5 w-5" />
-            Continue with Google
-          </button>
-
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-px" style={{ backgroundColor: "var(--color-border)" }} />
-            <span className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>or</span>
-            <div className="flex-1 h-px" style={{ backgroundColor: "var(--color-border)" }} />
+        {/* Form card */}
+        <div className="bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] p-8 space-y-8">
+          {/* Logo */}
+          <div className="flex flex-col items-center gap-4">
+            <Logo variant="icon" className="h-16 w-16" />
+            <h1 className="text-2xl font-extrabold text-[var(--text-1)]">
+              Welcome back
+            </h1>
+            <p className="text-sm text-[var(--text-2)]">
+              Sign in to Tech Blog Catchup
+            </p>
           </div>
 
-          <button
-            onClick={() => signIn("github", { callbackUrl })}
-            className="w-full flex items-center justify-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors cursor-pointer border"
-            style={{
-              backgroundColor: "var(--color-bg-secondary)",
-              borderColor: "var(--color-border)",
-              color: "var(--color-text-primary)",
-            }}
-          >
-            <Github className="h-5 w-5" />
-            Continue with GitHub
-          </button>
+          {/* Error message */}
+          {error && (
+            <div className="rounded-[var(--radius)] border-[var(--border-w)] border-red-400 px-4 py-3 text-sm text-red-400 bg-red-400/10 text-center">
+              {error === "OAuthSignin" ? "Error starting sign in. Try again." :
+               error === "OAuthCallback" ? "Error completing sign in. Try again." :
+               error === "Callback" ? "Sign in error. Try again." :
+               "Something went wrong. Please try again."}
+            </div>
+          )}
+
+          {/* Sign-in buttons */}
+          <div className="space-y-3">
+            <button
+              onClick={() => signIn("google", { callbackUrl })}
+              className="nb-hover w-full flex items-center justify-center gap-3 rounded-[var(--radius)] px-6 py-3 font-semibold transition-colors cursor-pointer border-[var(--border-w)] border-[var(--border-color)] bg-[var(--bg-elevated)] text-[var(--text-1)] shadow-[var(--shadow-sm)]"
+            >
+              <GoogleIcon className="h-5 w-5" />
+              Continue with Google
+            </button>
+
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px bg-[var(--split)]" />
+              <span className="text-xs text-[var(--text-3)]">or</span>
+              <div className="flex-1 h-px bg-[var(--split)]" />
+            </div>
+
+            <button
+              onClick={() => signIn("github", { callbackUrl })}
+              className="nb-hover w-full flex items-center justify-center gap-3 rounded-[var(--radius)] px-6 py-3 font-semibold transition-colors cursor-pointer border-[var(--border-w)] border-[var(--border-color)] bg-[var(--bg-elevated)] text-[var(--text-1)] shadow-[var(--shadow-sm)]"
+            >
+              <Github className="h-5 w-5" />
+              Continue with GitHub
+            </button>
+          </div>
         </div>
 
         {/* Terms */}
-        <p className="text-center text-xs" style={{ color: "var(--color-text-tertiary)" }}>
+        <p className="text-center text-xs text-[var(--text-3)]">
           By signing in, you agree to our{" "}
-          <a href="/terms" className="underline hover:no-underline" style={{ color: "var(--color-text-secondary)" }}>
+          <a href="/terms" className="text-[var(--blue)] hover:underline">
             Terms
           </a>{" "}
           and{" "}
-          <a href="/privacy" className="underline hover:no-underline" style={{ color: "var(--color-text-secondary)" }}>
+          <a href="/privacy" className="text-[var(--blue)] hover:underline">
             Privacy Policy
           </a>
         </p>

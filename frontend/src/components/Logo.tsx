@@ -65,7 +65,7 @@ export default function Logo({ variant = "icon", className }: LogoProps) {
   return (
     <span className={`inline-flex items-center gap-2 ${className ?? ""}`}>
       {icon}
-      <span className="font-bold leading-none whitespace-nowrap">{label}</span>
+      <span className="font-extrabold leading-none whitespace-nowrap text-[var(--text-1)]">{label}</span>
     </span>
   );
 }

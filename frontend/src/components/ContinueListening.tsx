@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Clock, Radio, Play } from "lucide-react";
-import { getPost } from "@/lib/api";
+import { getPosts } from "@/lib/api";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import type { Post } from "@/lib/types";
 import Carousel from "@/components/Carousel";
@@ -115,27 +115,24 @@ export default function ContinueListening() {
           return;
         }
 
-        const results = await Promise.allSettled(
-          entries.map(async ([id, pos]) => {
-            const post = await getPost(Number(id));
-            return {
-              post: post as Post,
-              position: pos.position,
-              duration: pos.duration,
-              progress: pos.position / pos.duration,
-            };
-          }),
-        );
+        const allIds = entries.map(([id]) => Number(id));
+        const { posts } = await getPosts({ ids: allIds, limit: allIds.length });
 
         if (cancelled) return;
 
-        const resolved = results
-          .filter(
-            (r): r is PromiseFulfilledResult<TrackWithProgress> =>
-              r.status === "fulfilled",
-          )
-          .map((r) => r.value)
-          .filter((t) => t.post.audio_status === "ready");
+        const postMap = new Map(posts.map(p => [p.id, p]));
+        const resolved: TrackWithProgress[] = [];
+        for (const [id, pos] of entries) {
+          const post = postMap.get(Number(id));
+          if (post && post.audio_status === "ready") {
+            resolved.push({
+              post,
+              position: pos.position,
+              duration: pos.duration,
+              progress: pos.position / pos.duration,
+            });
+          }
+        }
 
         setTracks(resolved);
       } catch {

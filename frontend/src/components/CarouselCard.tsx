@@ -3,21 +3,10 @@
 import Link from "next/link";
 import { Clock, Radio } from "lucide-react";
 import type { Post } from "@/lib/types";
+import { formatDuration } from "@/lib/formatters";
 
 interface CarouselCardProps {
   post: Post;
-}
-
-function formatDuration(seconds: number | null): string {
-  if (!seconds) return "";
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  if (mins >= 60) {
-    const hrs = Math.floor(mins / 60);
-    const remainMins = mins % 60;
-    return `${hrs}h ${remainMins}m`;
-  }
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
 export default function CarouselCard({ post }: CarouselCardProps) {

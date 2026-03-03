@@ -54,6 +54,7 @@ def list_posts(
     tag: str | None = None,
     search: str | None = None,
     audio_status: str | None = None,
+    ids: str | None = None,
     quality_min: int | None = None,
     offset: int = Query(default=0, ge=0),
     limit: int = Query(default=20, ge=1, le=100),
@@ -62,6 +63,11 @@ def list_posts(
     session = get_session()
     try:
         query = session.query(Post).options(joinedload(Post.tags))
+
+        if ids:
+            id_list = [int(x.strip()) for x in ids.split(",") if x.strip().isdigit()]
+            if id_list:
+                query = query.filter(Post.id.in_(id_list))
 
         if source:
             source_keys = [s.strip() for s in source.split(",")]

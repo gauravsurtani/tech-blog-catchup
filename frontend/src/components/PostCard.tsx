@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Play, Clock, User, ExternalLink, Plus, Loader, Mic, Heart } from "lucide-react";
 import type { Post } from "@/lib/types";
 import { useFavorites } from "@/hooks/useFavorites";
+import { formatDate, formatDuration, formatWordCount } from "@/lib/formatters";
 import TagBadge from "./TagBadge";
 import ShareButton from "./ShareButton";
 
@@ -13,40 +14,6 @@ interface PostCardProps {
   onPlay?: (post: Post) => void;
   onAddToQueue?: (post: Post) => void;
   onGenerate?: (post: Post) => void;
-}
-
-function formatDate(dateStr: string | null): string {
-  if (!dateStr) return "";
-  try {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  } catch {
-    return dateStr;
-  }
-}
-
-function formatDuration(seconds: number | null): string {
-  if (!seconds) return "";
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  if (mins >= 60) {
-    const hrs = Math.floor(mins / 60);
-    const remainMins = mins % 60;
-    return `${hrs}h ${remainMins}m`;
-  }
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
-}
-
-function formatWordCount(count: number | null): string {
-  if (!count) return "";
-  if (count >= 1000) {
-    return `${(count / 1000).toFixed(1)}k words`;
-  }
-  return `${count} words`;
 }
 
 export default function PostCard({ post, onPlay, onAddToQueue, onGenerate }: PostCardProps) {
@@ -58,9 +25,17 @@ export default function PostCard({ post, onPlay, onAddToQueue, onGenerate }: Pos
     <div className="bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius-xl)] p-5 flex flex-col gap-3 shadow-[var(--shadow-lg)] nb-hover transition-all">
       {/* Source name */}
       <div className="flex items-center justify-between">
-        <span className="text-xs font-bold text-[var(--text-3)] uppercase tracking-wide bg-[var(--tag-bg)] px-2 py-0.5 rounded-[var(--radius-full)]">
-          {post.source_name}
-        </span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-bold text-[var(--text-3)] uppercase tracking-wide bg-[var(--tag-bg)] px-2 py-0.5 rounded-[var(--radius-full)]">
+            {post.source_name}
+          </span>
+          {post.audio_status === "ready" && (
+            <span className="w-2 h-2 rounded-full bg-[var(--cyan)]" title="Audio ready" />
+          )}
+          {(post.audio_status === "pending" || post.audio_status === "failed") && (
+            <span className="w-2 h-2 rounded-full bg-[var(--orange)]" title="Audio pending" />
+          )}
+        </div>
         {post.published_at && (
           <span className="text-xs text-[var(--text-3)]">
             {formatDate(post.published_at)}

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import { getPost } from "@/lib/api";
+import { formatDate } from "@/lib/formatters";
 import WaveformBar from "./WaveformBar";
 import TranscriptPanel from "./TranscriptPanel";
 
@@ -51,19 +52,6 @@ function formatTime(seconds: number): string {
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   return `${mins}:${secs.toString().padStart(2, "0")}`;
-}
-
-function formatDate(dateStr: string | null): string {
-  if (!dateStr) return "";
-  try {
-    return new Date(dateStr).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  } catch {
-    return "";
-  }
 }
 
 interface FullScreenPlayerProps {

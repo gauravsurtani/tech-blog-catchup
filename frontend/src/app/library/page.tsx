@@ -11,7 +11,8 @@ import {
   Play,
   Library,
 } from "lucide-react";
-import { getPost } from "@/lib/api";
+import { getPosts } from "@/lib/api";
+import { formatDuration } from "@/lib/formatters";
 import type { Post } from "@/lib/types";
 import { useFavorites } from "@/hooks/useFavorites";
 import { usePlaylists } from "@/hooks/usePlaylists";
@@ -63,12 +64,6 @@ function formatTimeAgo(dateStr: string): string {
     month: "short",
     day: "numeric",
   });
-}
-
-function formatDuration(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
 // ----------------------------------------------------------------
@@ -124,14 +119,12 @@ function FavoritesSection() {
       if (!cancelled) setLoading(true);
     });
 
-    Promise.allSettled(favorites.map((id) => getPost(id))).then((results) => {
+    getPosts({ ids: favorites, limit: favorites.length }).then(({ posts: fetched }) => {
       if (cancelled) return;
-      const fetched: Post[] = [];
-      for (const r of results) {
-        if (r.status === "fulfilled") fetched.push(r.value);
-      }
       setPosts(fetched);
       setLoading(false);
+    }).catch(() => {
+      if (!cancelled) setLoading(false);
     });
 
     return () => {
@@ -253,17 +246,15 @@ function HistorySection() {
     });
 
     const ids = historyEntries.map((e) => e.postId);
-    Promise.allSettled(ids.map((id) => getPost(id))).then((results) => {
+    getPosts({ ids, limit: ids.length }).then(({ posts: fetched }) => {
       if (cancelled) return;
-      const fetched: Post[] = [];
-      for (const r of results) {
-        if (r.status === "fulfilled") fetched.push(r.value);
-      }
       // Maintain the history order (most recent first)
       const postMap = new Map(fetched.map((p) => [p.id, p]));
       const ordered = ids.map((id) => postMap.get(id)).filter((p): p is Post => !!p);
       setPosts(ordered);
       setLoading(false);
+    }).catch(() => {
+      if (!cancelled) setLoading(false);
     });
 
     return () => {

@@ -108,13 +108,18 @@ export interface PostsParams {
   offset?: number;
   limit?: number;
   sort?: string;
+  ids?: number[];
 }
 
 export function getPosts(params: PostsParams = {}): Promise<PaginatedPosts> {
   const searchParams = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== "") {
-      searchParams.set(key, String(value));
+      if (Array.isArray(value)) {
+        searchParams.set(key, value.join(","));
+      } else {
+        searchParams.set(key, String(value));
+      }
     }
   });
   const qs = searchParams.toString();

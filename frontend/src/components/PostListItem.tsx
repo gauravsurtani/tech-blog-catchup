@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Play, Plus, Loader, Clock, User, Mic, Heart } from "lucide-react";
 import type { Post } from "@/lib/types";
 import { useFavorites } from "@/hooks/useFavorites";
+import { formatDuration } from "@/lib/formatters";
 import ShareButton from "./ShareButton";
 
 interface PostListItemProps {
@@ -13,18 +14,6 @@ interface PostListItemProps {
   onGenerate?: (post: Post) => void;
   isPlaying?: boolean;
   isQueued?: boolean;
-}
-
-function formatDuration(seconds: number | null): string {
-  if (!seconds) return "";
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  if (mins >= 60) {
-    const hrs = Math.floor(mins / 60);
-    const remainMins = mins % 60;
-    return `${hrs}h ${remainMins}m`;
-  }
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
 function truncateSummary(summary: string | null, maxLen: number = 120): string {
@@ -94,9 +83,17 @@ export default function PostListItem({
       </div>
 
       {/* Source badge */}
-      <span className="flex-shrink-0 text-xs font-bold text-[var(--primary)] bg-[var(--primary)]/10 px-2 py-0.5 rounded-[var(--radius-full)] border-[1.5px] border-[var(--border-color)] hidden sm:inline-block">
-        {post.source_name}
-      </span>
+      <div className="flex-shrink-0 hidden sm:flex items-center gap-1.5">
+        <span className="text-xs font-bold text-[var(--primary)] bg-[var(--primary)]/10 px-2 py-0.5 rounded-[var(--radius-full)] border-[1.5px] border-[var(--border-color)]">
+          {post.source_name}
+        </span>
+        {post.audio_status === "ready" && (
+          <span className="w-2 h-2 rounded-full bg-[var(--cyan)]" title="Audio ready" />
+        )}
+        {(post.audio_status === "pending" || post.audio_status === "failed") && (
+          <span className="w-2 h-2 rounded-full bg-[var(--orange)]" title="Audio pending" />
+        )}
+      </div>
 
       {/* Author */}
       {post.author && (

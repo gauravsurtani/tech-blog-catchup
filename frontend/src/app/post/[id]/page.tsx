@@ -15,6 +15,7 @@ import {
   Heart,
 } from "lucide-react";
 import { getPost, triggerGenerate, ApiError } from "@/lib/api";
+import { formatDuration, formatWordCount } from "@/lib/formatters";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import { useFavorites } from "@/hooks/useFavorites";
 import TagBadge from "@/components/TagBadge";
@@ -35,26 +36,6 @@ function formatDate(dateStr: string | null): string {
   } catch {
     return dateStr;
   }
-}
-
-function formatDuration(seconds: number | null): string {
-  if (!seconds) return "";
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  if (mins >= 60) {
-    const hrs = Math.floor(mins / 60);
-    const remainMins = mins % 60;
-    return `${hrs}h ${remainMins}m`;
-  }
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
-}
-
-function formatWordCount(count: number | null): string {
-  if (!count) return "";
-  if (count >= 1000) {
-    return `${(count / 1000).toFixed(1)}k words`;
-  }
-  return `${count} words`;
 }
 
 function PostDetailSkeleton() {
@@ -172,13 +153,13 @@ export default function PostDetailPage() {
   if (error) {
     return (
       <div className="max-w-3xl mx-auto">
-        <Link
-          href="/explore"
-          className="inline-flex items-center gap-2 text-[var(--text-2)] hover:text-[var(--text-1)] text-sm mb-8 transition-colors"
+        <button
+          onClick={() => window.history.length > 1 ? router.back() : router.push('/explore')}
+          className="inline-flex items-center gap-2 text-[var(--text-2)] hover:text-[var(--text-1)] text-sm mb-8 transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Explore
-        </Link>
+          Back
+        </button>
         <div className="bg-[var(--error)]/10 border-[var(--border-w)] border-[var(--error)] text-[var(--error)] rounded-[var(--radius)] p-4">
           <p className="text-sm">Failed to load post: {error}</p>
         </div>
@@ -191,13 +172,13 @@ export default function PostDetailPage() {
   return (
     <div className="max-w-3xl mx-auto">
       {/* Back link */}
-      <Link
-        href="/explore"
-        className="inline-flex items-center gap-2 text-[var(--text-2)] hover:text-[var(--text-1)] text-sm mb-8 transition-colors"
+      <button
+        onClick={() => window.history.length > 1 ? router.back() : router.push('/explore')}
+        className="inline-flex items-center gap-2 text-[var(--text-2)] hover:text-[var(--text-1)] text-sm mb-8 transition-colors cursor-pointer"
       >
         <ArrowLeft className="w-4 h-4" />
-        Back to Explore
-      </Link>
+        Back
+      </button>
 
       {/* Content card */}
       <div className="bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] p-6">

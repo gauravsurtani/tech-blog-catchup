@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Headphones, Clock, TrendingUp, BarChart3, History } from "lucide-react";
-import { getPost } from "@/lib/api";
+import { getPosts } from "@/lib/api";
 import type { Post } from "@/lib/types";
 import Link from "next/link";
 
@@ -144,37 +144,15 @@ export default function ListeningStats() {
           )
           .slice(0, 10);
 
-        // Fetch post details for completed posts
-        const postResults = await Promise.allSettled(
-          completedEntries.map(async ([id]) => {
-            const post = await getPost(Number(id));
-            return post as Post;
-          })
-        );
+        // Fetch all listened posts in one batch
+        const allIds = entries.map(([id]) => Number(id));
+        const { posts: allPosts } = await getPosts({ ids: allIds, limit: allIds.length });
 
         if (cancelled) return;
 
-        const completedPosts = postResults
-          .filter(
-            (r): r is PromiseFulfilledResult<Post> => r.status === "fulfilled"
-          )
-          .map((r) => r.value);
-
-        // Compute top sources from all listened posts (fetch all)
-        const allPostResults = await Promise.allSettled(
-          entries.map(async ([id]) => {
-            const post = await getPost(Number(id));
-            return post as Post;
-          })
-        );
-
-        if (cancelled) return;
-
-        const allPosts = allPostResults
-          .filter(
-            (r): r is PromiseFulfilledResult<Post> => r.status === "fulfilled"
-          )
-          .map((r) => r.value);
+        // Filter completed posts
+        const completedIds = new Set(completedEntries.map(([id]) => Number(id)));
+        const completedPosts = allPosts.filter(p => completedIds.has(p.id));
 
         // Count sources
         const sourceCounts: Record<string, number> = {};

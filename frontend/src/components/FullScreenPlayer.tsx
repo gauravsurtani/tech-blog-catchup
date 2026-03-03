@@ -17,29 +17,33 @@ import { getPost } from "@/lib/api";
 import WaveformBar from "./WaveformBar";
 import TranscriptPanel from "./TranscriptPanel";
 
-// Brand colors are intentional — these match company brand palettes, not the app theme.
-const SOURCE_GRADIENTS: Record<string, string> = {
-  cloudflare: "from-orange-600 to-amber-800",
-  github: "from-gray-700 to-gray-900",
-  meta: "from-blue-600 to-indigo-900",
-  uber: "from-gray-800 to-black",
-  airbnb: "from-rose-600 to-pink-900",
-  netflix: "from-red-700 to-red-950",
-  stripe: "from-violet-600 to-indigo-900",
-  spotify: "from-green-600 to-green-900",
-  google: "from-blue-500 to-blue-800",
-  aws: "from-amber-600 to-orange-900",
-  linkedin: "from-sky-600 to-blue-900",
-  dropbox: "from-blue-500 to-indigo-800",
-  slack: "from-purple-600 to-fuchsia-900",
-  twitter: "from-sky-500 to-cyan-800",
-  default: "from-gray-600 to-gray-900",
-};
+// Deterministic gradient palette — works for any source key
+const GRADIENT_PALETTE = [
+  "from-orange-600 to-amber-800",
+  "from-blue-600 to-indigo-900",
+  "from-rose-600 to-pink-900",
+  "from-violet-600 to-indigo-900",
+  "from-green-600 to-green-900",
+  "from-red-700 to-red-950",
+  "from-sky-600 to-blue-900",
+  "from-amber-600 to-orange-900",
+  "from-purple-600 to-fuchsia-900",
+  "from-teal-600 to-cyan-900",
+  "from-gray-700 to-gray-900",
+  "from-emerald-600 to-emerald-900",
+];
+
+function hashString(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
+}
 
 function getGradient(sourceKey: string): string {
-  return (
-    SOURCE_GRADIENTS[sourceKey.toLowerCase()] ?? SOURCE_GRADIENTS["default"]
-  );
+  const index = hashString(sourceKey.toLowerCase()) % GRADIENT_PALETTE.length;
+  return GRADIENT_PALETTE[index];
 }
 
 function formatTime(seconds: number): string {

@@ -13,6 +13,7 @@ interface UserMenuProps {
 export default function UserMenu({ collapsed = false }: UserMenuProps) {
   const { data: session } = useSession();
   const [open, setOpen] = useState(false);
+  const [direction, setDirection] = useState<"up" | "down">("up");
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -51,7 +52,18 @@ export default function UserMenu({ collapsed = false }: UserMenuProps) {
   return (
     <div ref={menuRef} className="relative">
       <button
-        onClick={() => setOpen(!open)}
+        onClick={() => {
+          if (!open) {
+            // Check if dropdown would clip above viewport
+            const rect = menuRef.current?.getBoundingClientRect();
+            if (rect && rect.top < 220) {
+              setDirection("down");
+            } else {
+              setDirection("up");
+            }
+          }
+          setOpen(!open);
+        }}
         className="flex items-center gap-3 w-full px-3 py-2.5 rounded-[var(--radius)] text-sm font-medium text-[var(--text-2)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-1)] transition-colors"
         title={collapsed ? user.name || "Account" : undefined}
         aria-label="User menu"
@@ -77,7 +89,9 @@ export default function UserMenu({ collapsed = false }: UserMenuProps) {
       </button>
 
       {open && (
-        <div className="absolute bottom-full left-0 mb-2 w-48 rounded-[var(--radius)] border-[var(--border-w)] border-[var(--border-color)] bg-[var(--bg-elevated)] shadow-[var(--shadow)] py-1 z-50">
+        <div className={`absolute left-0 w-48 rounded-[var(--radius)] border-[var(--border-w)] border-[var(--border-color)] bg-[var(--bg-elevated)] shadow-[var(--shadow)] py-1 z-50 ${
+          direction === "up" ? "bottom-full mb-2" : "top-full mt-2"
+        }`}>
           <Link
             href="/profile"
             onClick={() => setOpen(false)}

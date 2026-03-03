@@ -1,6 +1,17 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+const navLinks = [
+  { href: "/about", label: "About" },
+  { href: "/terms", label: "Terms" },
+  { href: "/privacy", label: "Privacy" },
+];
 
 export default function Footer() {
+  const pathname = usePathname();
+
   return (
     <footer className="border-t-[var(--border-w)] border-[var(--border-color)] bg-[var(--bg)] mt-auto pb-[var(--player-height)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -9,24 +20,20 @@ export default function Footer() {
             &copy; {new Date().getFullYear()} Catchup
           </p>
           <nav className="flex items-center gap-6">
-            <Link
-              href="/about"
-              className="text-sm text-[var(--text-3)] hover:text-[var(--blue)] hover:underline transition-colors"
-            >
-              About
-            </Link>
-            <Link
-              href="/terms"
-              className="text-sm text-[var(--text-3)] hover:text-[var(--blue)] hover:underline transition-colors"
-            >
-              Terms
-            </Link>
-            <Link
-              href="/privacy"
-              className="text-sm text-[var(--text-3)] hover:text-[var(--blue)] hover:underline transition-colors"
-            >
-              Privacy
-            </Link>
+            {navLinks.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                aria-current={pathname === href ? "page" : undefined}
+                className={`text-sm transition-colors ${
+                  pathname === href
+                    ? "text-[var(--text-1)] font-medium"
+                    : "text-[var(--text-3)] hover:text-[var(--blue)] hover:underline"
+                }`}
+              >
+                {label}
+              </Link>
+            ))}
             <a
               href="https://github.com/gauravsurtani/tech-blog-catchup"
               target="_blank"

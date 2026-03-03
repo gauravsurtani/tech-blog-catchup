@@ -9,7 +9,20 @@ import { useMemo } from "react";
 
 const PLAYBACK_POSITIONS_KEY = "tbc-playback-positions";
 
-function getMemberSince(): string | null {
+function getMemberSince(sessionCreatedAt?: string | null): string | null {
+  // Prefer session creation date if available
+  if (sessionCreatedAt) {
+    try {
+      return new Date(sessionCreatedAt).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    } catch {
+      // fall through to playback heuristic
+    }
+  }
+
   if (typeof window === "undefined") return null;
   try {
     const raw = localStorage.getItem(PLAYBACK_POSITIONS_KEY);
@@ -33,7 +46,10 @@ export default function ProfilePage() {
   const { data: session } = useSession();
   const user = session?.user;
 
-  const memberSince = useMemo(() => getMemberSince(), []);
+  const memberSince = useMemo(
+    () => getMemberSince((user as Record<string, unknown>)?.createdAt as string | undefined),
+    [user]
+  );
 
   const initials = useMemo(() => {
     if (!user) return "?";

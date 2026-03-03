@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SearchX } from "lucide-react";
+import { SearchX, Compass } from "lucide-react";
 
 export default function NotFound() {
   return (
@@ -21,12 +21,21 @@ export default function NotFound() {
         The page you&apos;re looking for doesn&apos;t exist or has been moved.
       </p>
 
-      <Link
-        href="/"
-        className="nb-hover inline-flex items-center gap-2 px-8 py-3 font-bold rounded-[var(--radius)] bg-[var(--primary)] text-[var(--primary-text)] border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow)] transition-all"
-      >
-        Go Home
-      </Link>
+      <div className="flex flex-col sm:flex-row items-center gap-3">
+        <Link
+          href="/"
+          className="nb-hover inline-flex items-center gap-2 px-8 py-3 font-bold rounded-[var(--radius)] bg-[var(--primary)] text-[var(--primary-text)] border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow)] transition-all"
+        >
+          Go Home
+        </Link>
+        <Link
+          href="/explore"
+          className="nb-hover inline-flex items-center gap-2 px-6 py-3 font-medium text-sm rounded-[var(--radius)] bg-[var(--bg-elevated)] text-[var(--text-1)] border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-sm)] transition-all"
+        >
+          <Compass className="w-4 h-4" />
+          Search Posts
+        </Link>
+      </div>
     </div>
   );
 }

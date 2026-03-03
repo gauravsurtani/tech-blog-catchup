@@ -46,7 +46,7 @@ export default function SidebarLayout({
     };
   }, []);
 
-  const marginLeft = isDesktop ? (collapsed ? 72 : 240) : 0;
+  const marginLeft = isDesktop ? (collapsed ? 60 : 240) : 0;
 
   return (
     <div

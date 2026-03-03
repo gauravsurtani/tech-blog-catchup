@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { getCrawlStatus, triggerCrawl, triggerGenerate } from "@/lib/api";
 import type { CrawlStatusItem } from "@/lib/types";
+import AuthGuard from "@/components/AuthGuard";
 
 function formatTimeAgo(dateStr: string | null): string {
   if (!dateStr) return "Never";
@@ -157,6 +158,7 @@ export default function StatusPage() {
   const totalPosts = sources.reduce((sum, s) => sum + s.post_count, 0);
 
   return (
+    <AuthGuard>
     <div>
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
@@ -352,5 +354,6 @@ export default function StatusPage() {
         </div>
       )}
     </div>
+    </AuthGuard>
   );
 }

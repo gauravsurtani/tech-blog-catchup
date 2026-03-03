@@ -1,9 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import { Github } from "lucide-react";
+import { Github, Loader } from "lucide-react";
 import Logo from "@/components/Logo";
 
 function GoogleIcon({ className }: { className?: string }) {
@@ -21,6 +22,7 @@ function LoginContent() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
   const error = searchParams.get("error");
+  const [loadingProvider, setLoadingProvider] = useState<string | null>(null);
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-[var(--bg)]">
@@ -51,11 +53,19 @@ function LoginContent() {
           {/* Sign-in buttons */}
           <div className="space-y-3">
             <button
-              onClick={() => signIn("google", { callbackUrl })}
-              className="nb-hover w-full flex items-center justify-center gap-3 rounded-[var(--radius)] px-6 py-3 font-semibold transition-colors cursor-pointer border-[var(--border-w)] border-[var(--border-color)] bg-[var(--bg-elevated)] text-[var(--text-1)] shadow-[var(--shadow-sm)]"
+              onClick={() => {
+                setLoadingProvider("google");
+                signIn("google", { callbackUrl });
+              }}
+              disabled={loadingProvider !== null}
+              className="nb-hover w-full flex items-center justify-center gap-3 rounded-[var(--radius)] px-6 py-3 font-semibold transition-colors cursor-pointer border-[var(--border-w)] border-[var(--border-color)] bg-[var(--bg-elevated)] text-[var(--text-1)] shadow-[var(--shadow-sm)] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <GoogleIcon className="h-5 w-5" />
-              Continue with Google
+              {loadingProvider === "google" ? (
+                <Loader className="h-5 w-5 animate-spin" />
+              ) : (
+                <GoogleIcon className="h-5 w-5" />
+              )}
+              {loadingProvider === "google" ? "Redirecting..." : "Continue with Google"}
             </button>
 
             <div className="flex items-center gap-3">
@@ -65,11 +75,19 @@ function LoginContent() {
             </div>
 
             <button
-              onClick={() => signIn("github", { callbackUrl })}
-              className="nb-hover w-full flex items-center justify-center gap-3 rounded-[var(--radius)] px-6 py-3 font-semibold transition-colors cursor-pointer border-[var(--border-w)] border-[var(--border-color)] bg-[var(--bg-elevated)] text-[var(--text-1)] shadow-[var(--shadow-sm)]"
+              onClick={() => {
+                setLoadingProvider("github");
+                signIn("github", { callbackUrl });
+              }}
+              disabled={loadingProvider !== null}
+              className="nb-hover w-full flex items-center justify-center gap-3 rounded-[var(--radius)] px-6 py-3 font-semibold transition-colors cursor-pointer border-[var(--border-w)] border-[var(--border-color)] bg-[var(--bg-elevated)] text-[var(--text-1)] shadow-[var(--shadow-sm)] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Github className="h-5 w-5" />
-              Continue with GitHub
+              {loadingProvider === "github" ? (
+                <Loader className="h-5 w-5 animate-spin" />
+              ) : (
+                <Github className="h-5 w-5" />
+              )}
+              {loadingProvider === "github" ? "Redirecting..." : "Continue with GitHub"}
             </button>
           </div>
         </div>

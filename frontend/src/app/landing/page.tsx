@@ -109,6 +109,24 @@ export default function LandingPage() {
         </Link>
       </section>
 
+      {/* Stats bar */}
+      <section className="flex items-center justify-center gap-8 sm:gap-12 w-full max-w-2xl py-2">
+        {[
+          { value: "15+", label: "Sources" },
+          { value: "100+", label: "Podcasts" },
+          { value: "50+", label: "Hours" },
+        ].map((stat) => (
+          <div key={stat.label} className="flex flex-col items-center gap-1">
+            <span className="text-2xl sm:text-3xl font-extrabold text-[var(--primary)]">
+              {stat.value}
+            </span>
+            <span className="text-xs text-[var(--text-3)] uppercase tracking-wide font-medium">
+              {stat.label}
+            </span>
+          </div>
+        ))}
+      </section>
+
       {/* Feature cards */}
       <section className="grid grid-cols-1 sm:grid-cols-3 gap-[var(--space-6)] w-full max-w-4xl">
         {features.map((f) => (
@@ -145,6 +163,12 @@ export default function LandingPage() {
             </span>
           ))}
         </div>
+        <Link
+          href="/browse"
+          className="nb-hover inline-flex items-center gap-2 px-6 py-2.5 rounded-[var(--radius)] bg-[var(--bg-elevated)] text-[var(--text-1)] border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-sm)] font-medium text-sm transition-all mt-4"
+        >
+          Browse Sources
+        </Link>
       </section>
     </div>
   );

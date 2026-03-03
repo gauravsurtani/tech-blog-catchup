@@ -16,6 +16,9 @@ const SORT_OPTIONS = [
   { value: "newest", label: "Newest First" },
   { value: "oldest", label: "Oldest First" },
   { value: "title", label: "Title A-Z" },
+  { value: "shortest", label: "Shortest First" },
+  { value: "longest", label: "Longest First" },
+  { value: "quality", label: "Highest Quality" },
 ];
 
 function PostCardSkeleton() {
@@ -90,15 +93,50 @@ export default function ExplorePage() {
     loadFilters();
   }, []);
 
+  // Apply onboarding preferences on first visit
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const applied = sessionStorage.getItem("tbc-prefs-applied");
+    if (applied) return;
+
+    // Only apply if no URL params are set
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.toString()) return;
+
+    try {
+      const raw = localStorage.getItem("tbc-user-preferences");
+      if (!raw) return;
+      const prefs = JSON.parse(raw);
+      if (prefs.sources && Array.isArray(prefs.sources) && prefs.sources.length > 0) {
+        setSelectedSources(prefs.sources);
+      }
+      if (prefs.tags && Array.isArray(prefs.tags) && prefs.tags.length > 0) {
+        setSelectedTags(prefs.tags);
+      }
+    } catch {
+      // ignore
+    } finally {
+      sessionStorage.setItem("tbc-prefs-applied", "true");
+    }
+  }, []);
+
   // Build API params
   const params = useMemo(() => {
     const p: Record<string, string | number | undefined> = {
-      sort,
       limit: PAGE_SIZE,
       offset,
     };
+    // Map sort UI values to API sort params
+    const sortMap: Record<string, string> = {
+      newest: "-published_at",
+      oldest: "published_at",
+      title: "title",
+      shortest: "audio_duration_secs",
+      longest: "-audio_duration_secs",
+      quality: "-quality_score",
+    };
+    p.sort = sortMap[sort] || "-published_at";
     if (debouncedSearch) p.search = debouncedSearch;
-    // API accepts single source/tag, so we pass comma-joined if multiple
     if (selectedSources.length === 1) p.source = selectedSources[0];
     else if (selectedSources.length > 1) p.source = selectedSources.join(",");
     if (selectedTags.length === 1) p.tag = selectedTags[0];
@@ -409,6 +447,28 @@ export default function ExplorePage() {
                 )
               )}
             </div>
+
+            {/* Jump to page */}
+            {totalPages > 7 && (
+              <div className="flex items-center gap-1.5 ml-2">
+                <input
+                  type="number"
+                  min={1}
+                  max={totalPages}
+                  placeholder="#"
+                  className="w-14 px-2 py-2 text-sm text-center bg-[var(--bg)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius)] text-[var(--text-1)] placeholder-[var(--text-3)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const val = parseInt((e.target as HTMLInputElement).value, 10);
+                      if (val >= 1 && val <= totalPages) {
+                        goToPage(val);
+                        (e.target as HTMLInputElement).value = "";
+                      }
+                    }
+                  }}
+                />
+              </div>
+            )}
 
             <button
               onClick={() => goToPage(currentPage + 1)}

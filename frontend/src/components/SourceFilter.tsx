@@ -77,6 +77,12 @@ export default function SourceFilter({
           </label>
         ))}
       </div>
+      {/* Filter status */}
+      <p className="text-xs text-[var(--text-3)] mt-2 px-2">
+        {selected.length === 0
+          ? "Showing all sources"
+          : `Filtering ${selected.length} source${selected.length === 1 ? "" : "s"}`}
+      </p>
     </div>
   );
 }

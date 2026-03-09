@@ -496,6 +496,93 @@ def cmd_regenerate(args):
         session.close()
 
 
+def cmd_cleanup(args):
+    """Remove posts without podcast audio from the database."""
+    from src.database import get_session, init_db
+    from src.models import Post, post_tags
+    from sqlalchemy import func
+
+    init_db()
+    session = get_session()
+
+    try:
+        total = session.query(func.count(Post.id)).scalar() or 0
+        ready_count = (
+            session.query(func.count(Post.id))
+            .filter(Post.audio_status == "ready")
+            .scalar() or 0
+        )
+
+        # Build filter for posts to remove
+        remove_filter = Post.audio_status != "ready"
+        if args.keep_failed:
+            remove_filter = Post.audio_status.notin_(["ready", "failed"])
+
+        to_remove = session.query(Post).filter(remove_filter).all()
+        remove_count = len(to_remove)
+
+        if remove_count == 0:
+            console.print("[green]No posts to remove — all posts have audio.[/green]")
+            return
+
+        # Show breakdown by status
+        status_table = Table(title="Cleanup Preview")
+        status_table.add_column("Audio Status", style="cyan")
+        status_table.add_column("Count", justify="right", style="green")
+        status_table.add_column("Action", style="yellow")
+
+        status_counts = (
+            session.query(Post.audio_status, func.count(Post.id))
+            .group_by(Post.audio_status)
+            .all()
+        )
+        for status, count in status_counts:
+            if status == "ready":
+                action = "KEEP"
+            elif status == "failed" and args.keep_failed:
+                action = "KEEP (--keep-failed)"
+            else:
+                action = "REMOVE"
+            status_table.add_row(status, str(count), action)
+        console.print(status_table)
+
+        if args.dry_run:
+            console.print(
+                f"\n[yellow][DRY RUN][/yellow] Would remove [bold]{remove_count}[/bold] posts, "
+                f"keep [bold]{total - remove_count}[/bold]"
+            )
+            return
+
+        # Delete post_tags associations for posts being removed
+        remove_ids = [p.id for p in to_remove]
+        orphaned_tags = (
+            session.query(func.count())
+            .select_from(post_tags)
+            .filter(post_tags.c.post_id.in_(remove_ids))
+            .scalar() or 0
+        )
+        session.execute(
+            post_tags.delete().where(post_tags.c.post_id.in_(remove_ids))
+        )
+
+        # Delete the posts
+        session.query(Post).filter(Post.id.in_(remove_ids)).delete(
+            synchronize_session="fetch"
+        )
+        session.commit()
+
+        console.print(
+            f"\n[green]Removed {remove_count} posts and {orphaned_tags} tag associations, "
+            f"kept {total - remove_count} with audio[/green]"
+        )
+
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
 def cmd_api(args):
     """Start FastAPI server."""
     import uvicorn
@@ -558,6 +645,11 @@ def main():
     regen_parser.add_argument("--dry-run", action="store_true", help="Show what would be regenerated without doing it")
     regen_parser.add_argument("--summary-only", action="store_true", help="Only regenerate summaries, skip podcast scripts")
 
+    # cleanup
+    cleanup_parser = subparsers.add_parser("cleanup", help="Remove posts without podcast audio")
+    cleanup_parser.add_argument("--dry-run", action="store_true", help="Preview what would be removed without deleting")
+    cleanup_parser.add_argument("--keep-failed", action="store_true", help="Retain failed posts for retry")
+
     # serve
     serve_parser = subparsers.add_parser("serve", help="Start backend server")
     serve_parser.add_argument("--port", type=int, default=8000, help="API port (default: 8000)")
@@ -578,6 +670,7 @@ def main():
         "discover": cmd_discover,
         "reextract": cmd_reextract,
         "regenerate": cmd_regenerate,
+        "cleanup": cmd_cleanup,
         "api": cmd_api,
         "serve": cmd_serve,
     }

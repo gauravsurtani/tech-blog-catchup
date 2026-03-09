@@ -87,7 +87,9 @@ config.yaml ──> Crawler (Crawl4AI + atoma RSS) ──> SQLite (SQLAlchemy OR
 
 - **All CLI commands** run from `backend/` via `python run.py <command>`.
 - **Config is centralized** in `backend/config.yaml` — sources, tags, podcast settings, crawl rate limits, app paths.
-- **Environment variables**: `OPENAI_API_KEY` (for podcast generation), `CORS_ORIGINS` (comma-separated), `NEXT_PUBLIC_API_URL` (frontend's backend URL).
+- **Environment variables**: See `.env.example` files in `backend/` and `frontend/` for the full list. Quick reference:
+  - **Backend**: `OPENAI_API_KEY` (required), `CORS_ORIGINS`, `AUDIO_DIR`, `AUDIO_BASE_URL`, `DATABASE_URL`, `NEXTAUTH_SECRET` (if OAuth), `FIRECRAWL_API_KEY` (optional).
+  - **Frontend**: `NEXT_PUBLIC_API_URL` (required, baked at build time), `AUTH_SECRET` (if OAuth), `GOOGLE_CLIENT_ID/SECRET`, `GITHUB_ID/SECRET`.
 - **Database** is SQLite, auto-created at `backend/data/techblog.db`. Both `data/` and `audio/` directories are gitignored.
 - **Post.audio_status** lifecycle: `pending` -> `processing` -> `ready` | `failed`.
 - **Crawl mode**: Unified "smart" crawl discovers via all methods (sitemap, Medium archive, blog page, RSS), deduplicates, filters junk URLs, extracts. Use `--max-posts N` to cap per source.

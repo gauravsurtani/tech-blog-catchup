@@ -45,7 +45,11 @@ def generate_podcast_for_post(post: Post, config: Config) -> tuple[str, int] | N
         logger.error("OPENAI_API_KEY not set, cannot generate TTS audio")
         return None
 
-    audio_dir = Path(__file__).parent.parent.parent / config.app.get("audio_dir", "audio")
+    env_audio_dir = os.environ.get("AUDIO_DIR")
+    if env_audio_dir:
+        audio_dir = Path(env_audio_dir)
+    else:
+        audio_dir = Path(__file__).parent.parent.parent / config.app.get("audio_dir", "audio")
     audio_dir.mkdir(parents=True, exist_ok=True)
 
     filename = f"{post.source_key}_{post.id}.mp3"

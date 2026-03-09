@@ -3,7 +3,12 @@
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { loading } = useRequireAuth();
+  const { loading, authEnabled } = useRequireAuth();
+
+  // When no OAuth providers are configured, allow anonymous access
+  if (!authEnabled) {
+    return <>{children}</>;
+  }
 
   if (loading) {
     return (

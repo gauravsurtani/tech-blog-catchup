@@ -17,6 +17,7 @@ import {
 import Logo from "./Logo";
 import UserMenu from "./UserMenu";
 import SearchDialog from "./SearchDialog";
+import { useAuthEnabled } from "@/hooks/useRequireAuth";
 
 const STORAGE_KEY = "sidebar-collapsed";
 
@@ -36,6 +37,7 @@ export default function Sidebar() {
     return localStorage.getItem(STORAGE_KEY) === "true";
   });
   const [searchOpen, setSearchOpen] = useState(false);
+  const authEnabled = useAuthEnabled();
 
   const handleGlobalKeyDown = useCallback((e: KeyboardEvent) => {
     if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -124,10 +126,12 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* User menu */}
-      <div className="px-3 py-2 border-t border-[var(--color-border)]">
-        <UserMenu collapsed={collapsed} />
-      </div>
+      {/* User menu — hidden when no OAuth providers configured */}
+      {authEnabled !== false && (
+        <div className="px-3 py-2 border-t border-[var(--color-border)]">
+          <UserMenu collapsed={collapsed} />
+        </div>
+      )}
 
       {/* Collapse toggle */}
       <button

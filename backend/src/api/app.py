@@ -1,5 +1,6 @@
 """FastAPI application setup."""
 
+import logging
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -12,6 +13,8 @@ from slowapi import _rate_limit_exceeded_handler
 from src.api.rate_limit import limiter
 from src.api.routes import router
 from src.database import init_db
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -51,17 +54,24 @@ def create_app() -> FastAPI:
         "CORS_ORIGINS",
         "http://localhost:3000,http://127.0.0.1:3000",
     ).split(",")
+    allowed_origins = [o.strip() for o in origins if o.strip()]
+    logger.info("CORS allowed origins: %s", allowed_origins)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[o.strip() for o in origins],
+        allow_origins=allowed_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
 
     # Mount audio directory for serving MP3 files
-    audio_dir = Path(__file__).parent.parent.parent / "audio"
-    audio_dir.mkdir(exist_ok=True)
+    env_audio_dir = os.getenv("AUDIO_DIR")
+    if env_audio_dir:
+        audio_dir = Path(env_audio_dir)
+    else:
+        audio_dir = Path(__file__).parent.parent.parent / "audio"
+    audio_dir.mkdir(parents=True, exist_ok=True)
+    logger.info("Serving audio from: %s", audio_dir.resolve())
     app.mount("/audio", StaticFiles(directory=str(audio_dir)), name="audio")
 
     # Include API routes

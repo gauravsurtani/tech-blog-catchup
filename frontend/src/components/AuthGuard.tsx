@@ -6,7 +6,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { loading, authEnabled } = useRequireAuth();
 
   // When no OAuth providers are configured, allow anonymous access
-  if (!authEnabled) {
+  if (authEnabled === false) {
     return <>{children}</>;
   }
 

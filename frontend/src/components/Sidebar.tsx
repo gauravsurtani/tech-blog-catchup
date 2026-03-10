@@ -135,7 +135,7 @@ export default function Sidebar() {
       </nav>
 
       {/* User menu — hidden when no OAuth providers configured */}
-      {authEnabled !== false && (
+      {authEnabled === true && (
         <div className="px-3 py-2 border-t border-[var(--border-color)]">
           <UserMenu collapsed={collapsed} />
         </div>

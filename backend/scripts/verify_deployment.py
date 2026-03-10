@@ -244,6 +244,8 @@ def check_cors_headers(backend: str, verbose: bool) -> tuple[str, str]:
         "Access-Control-Request-Method": "GET",
     }
     status, resp_headers, _ = _request(url, method="OPTIONS", headers=headers)
+    if status not in (200, 204):
+        return "FAIL", f"OPTIONS returned {status}, expected 200 or 204"
     acao = resp_headers.get("access-control-allow-origin", "")
     if not acao:
         return "FAIL", "Access-Control-Allow-Origin header missing"

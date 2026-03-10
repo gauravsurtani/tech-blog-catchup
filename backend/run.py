@@ -553,6 +553,12 @@ def cmd_cleanup(args):
             )
             return
 
+        if not args.yes:
+            confirm = input(f"\nRemove {remove_count} posts? [y/N] ").strip().lower()
+            if confirm not in ("y", "yes"):
+                console.print("[yellow]Aborted.[/yellow]")
+                return
+
         # Delete post_tags associations for posts being removed
         remove_ids = [p.id for p in to_remove]
         orphaned_tags = (
@@ -649,6 +655,7 @@ def main():
     cleanup_parser = subparsers.add_parser("cleanup", help="Remove posts without podcast audio")
     cleanup_parser.add_argument("--dry-run", action="store_true", help="Preview what would be removed without deleting")
     cleanup_parser.add_argument("--keep-failed", action="store_true", help="Retain failed posts for retry")
+    cleanup_parser.add_argument("--yes", "-y", action="store_true", help="Skip confirmation prompt")
 
     # serve
     serve_parser = subparsers.add_parser("serve", help="Start backend server")

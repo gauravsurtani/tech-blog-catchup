@@ -1,19 +1,17 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { X } from "lucide-react";
 import { useGenerationStatus } from "@/hooks/useGenerationStatus";
 
 export default function GenerationBanner() {
   const { isGenerating, activeJob } = useGenerationStatus();
-  const [dismissed, setDismissed] = useState(false);
-  const lastJobIdRef = useRef<number | null>(null);
+  const [dismissedJobId, setDismissedJobId] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (activeJob && activeJob.id !== lastJobIdRef.current) {
-      lastJobIdRef.current = activeJob.id;
-      setDismissed(false);
-    }
+  const dismissed = activeJob ? dismissedJobId === activeJob.id : false;
+
+  const handleDismiss = useCallback(() => {
+    if (activeJob) setDismissedJobId(activeJob.id);
   }, [activeJob]);
 
   if (!isGenerating || !activeJob || dismissed) return null;
@@ -29,7 +27,7 @@ export default function GenerationBanner() {
           Generating podcasts&hellip; (Job #{activeJob.id} running)
         </span>
         <button
-          onClick={() => setDismissed(true)}
+          onClick={handleDismiss}
           aria-label="Dismiss"
           className="shrink-0 p-1 rounded-[var(--radius)] text-[var(--primary-text)] hover:bg-white/20 transition-colors cursor-pointer"
         >

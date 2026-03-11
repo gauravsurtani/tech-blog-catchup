@@ -1,8 +1,13 @@
-"""TTS-only podcast generator — converts pre-generated podcast scripts to audio."""
+"""TTS-only podcast generator — converts pre-generated podcast scripts to audio.
 
+Supports parallel TTS generation via asyncio for ~3-5x speedup on multi-segment podcasts.
+"""
+
+import asyncio
 import logging
 import os
 import re
+import time
 from pathlib import Path
 
 from src.config import Config
@@ -27,11 +32,76 @@ def _parse_script_segments(script: str) -> list[tuple[str, str]]:
     return segments
 
 
+async def _generate_segment_async(
+    client: object,
+    text: str,
+    voice: str,
+    model: str,
+) -> bytes:
+    """Generate TTS audio for a single segment using the async OpenAI client.
+
+    Args:
+        client: AsyncOpenAI client instance.
+        text: The text to synthesize.
+        voice: TTS voice name (e.g., "nova", "onyx").
+        model: TTS model name (e.g., "tts-1").
+
+    Returns:
+        Raw MP3 audio bytes.
+    """
+    response = await client.audio.speech.create(
+        model=model,
+        voice=voice,
+        input=text,
+        response_format="mp3",
+    )
+    return response.content
+
+
+async def _generate_segments_parallel(
+    segments: list[tuple[str, str]],
+    api_key: str,
+    voice_map: dict[str, str],
+    tts_model: str,
+    concurrency: int = 5,
+) -> list[bytes]:
+    """Generate TTS audio for all segments in parallel batches.
+
+    Processes segments in batches of `concurrency` to avoid overwhelming
+    the OpenAI API. Order is preserved — output[i] corresponds to segments[i].
+
+    Args:
+        segments: List of (speaker, text) tuples.
+        api_key: OpenAI API key.
+        voice_map: Mapping of speaker name to voice (e.g., {"person1": "nova"}).
+        tts_model: TTS model name.
+        concurrency: Max parallel requests per batch.
+
+    Returns:
+        List of raw MP3 audio bytes, one per segment, in order.
+    """
+    from openai import AsyncOpenAI
+
+    client = AsyncOpenAI(api_key=api_key)
+    audio_chunks: list[bytes] = []
+
+    for batch_start in range(0, len(segments), concurrency):
+        batch = segments[batch_start:batch_start + concurrency]
+        tasks = [
+            _generate_segment_async(client, text, voice_map[speaker], tts_model)
+            for speaker, text in batch
+        ]
+        results = await asyncio.gather(*tasks)
+        audio_chunks.extend(results)
+
+    return audio_chunks
+
+
 def generate_podcast_for_post(post: Post, config: Config) -> tuple[str, int] | None:
     """Generate podcast audio from a post's pre-generated podcast_script.
 
-    Uses OpenAI TTS API directly to synthesize each speaker segment,
-    then concatenates into a single MP3.
+    Uses OpenAI TTS API to synthesize each speaker segment. Attempts parallel
+    generation via asyncio first; falls back to sequential on failure.
 
     Returns (audio_path, duration_secs) or None on failure.
     audio_path is relative to the backend/ directory (e.g., "audio/uber_42.mp3").
@@ -65,22 +135,53 @@ def generate_podcast_for_post(post: Post, config: Config) -> tuple[str, int] | N
         logger.error("No valid segments parsed from podcast_script for post %d", post.id)
         return None
 
+    voice_map = {"person1": voice_person1, "person2": voice_person2}
+
     try:
-        from openai import OpenAI
+        # Attempt parallel generation first
+        start_time = time.monotonic()
+        audio_chunks = asyncio.run(
+            _generate_segments_parallel(segments, api_key, voice_map, tts_model)
+        )
+        elapsed = time.monotonic() - start_time
+        logger.info(
+            "Parallel TTS for post %d: %d segments in %.1fs",
+            post.id, len(segments), elapsed,
+        )
+    except Exception:
+        logger.warning(
+            "Parallel TTS failed for post %d, falling back to sequential",
+            post.id,
+            exc_info=True,
+        )
+        # Fallback: sequential generation
+        try:
+            from openai import OpenAI
 
-        client = OpenAI()
-        audio_chunks: list[bytes] = []
+            client = OpenAI()
+            audio_chunks = []
 
-        for speaker, text in segments:
-            voice = voice_person1 if speaker == "person1" else voice_person2
-            response = client.audio.speech.create(
-                model=tts_model,
-                voice=voice,
-                input=text,
-                response_format="mp3",
+            start_time = time.monotonic()
+            for speaker, text in segments:
+                voice = voice_map[speaker]
+                response = client.audio.speech.create(
+                    model=tts_model,
+                    voice=voice,
+                    input=text,
+                    response_format="mp3",
+                )
+                audio_chunks.append(response.content)
+
+            elapsed = time.monotonic() - start_time
+            logger.info(
+                "Sequential TTS for post %d: %d segments in %.1fs",
+                post.id, len(segments), elapsed,
             )
-            audio_chunks.append(response.content)
+        except Exception:
+            logger.exception("Failed to generate podcast audio for post %d", post.id)
+            return None
 
+    try:
         # Concatenate MP3 chunks
         with open(output_path, "wb") as f:
             for chunk in audio_chunks:
@@ -92,7 +193,7 @@ def generate_podcast_for_post(post: Post, config: Config) -> tuple[str, int] | N
         return relative_path, duration
 
     except Exception:
-        logger.exception("Failed to generate podcast audio for post %d", post.id)
+        logger.exception("Failed to write podcast audio for post %d", post.id)
         return None
 
 

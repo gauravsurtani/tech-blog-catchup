@@ -664,14 +664,16 @@ def update_me(
 
 
 # --- Temporary upload endpoint for seeding audio files ---
-from fastapi import UploadFile, File  # noqa: E402
+from fastapi import Request as FastAPIRequest  # noqa: E402
 
-@router.post("/api/upload-audio/{filename}")
-async def upload_audio(filename: str, file: UploadFile = File(...)):
+@router.put("/api/upload-audio/{filename}")
+async def upload_audio(filename: str, request: FastAPIRequest):
     """Temporary endpoint to upload audio files for testing. Remove after seeding."""
+    if not filename.endswith(".mp3"):
+        return {"error": "Only .mp3 files allowed"}
     audio_dir = Path(os.getenv("AUDIO_DIR", "audio"))
     audio_dir.mkdir(parents=True, exist_ok=True)
     dest = audio_dir / filename
-    content = await file.read()
-    dest.write_bytes(content)
-    return {"ok": True, "filename": filename, "size": len(content)}
+    body = await request.body()
+    dest.write_bytes(body)
+    return {"ok": True, "filename": filename, "size": len(body)}

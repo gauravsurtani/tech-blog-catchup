@@ -135,6 +135,7 @@ def cmd_crawl(args):
 
 def cmd_generate(args):
     """Generate podcast audio for pending posts."""
+    import time
     from src.config import get_config
     from src.database import get_session, init_db
     from src.podcast.manager import generate_pending, generate_for_post
@@ -158,9 +159,18 @@ def cmd_generate(args):
                 console.print("[red]Failed to generate podcast[/red]")
                 sys.exit(1)
         else:
-            console.print(f"Generating podcasts for up to {args.limit} pending posts...")
-            count = generate_pending(session, config, limit=args.limit, since=since)
-            console.print(f"[green]Generated {count} podcasts[/green]")
+            batch_size = getattr(args, "batch_size", None) or args.limit
+            console.print(f"Generating podcasts for up to {batch_size} pending posts...")
+            start_time = time.time()
+            try:
+                count = generate_pending(session, config, limit=batch_size, since=since)
+            except KeyboardInterrupt:
+                elapsed = time.time() - start_time
+                console.print(f"\n[yellow]Interrupted! Completed work has been saved.[/yellow]")
+                console.print(f"[yellow]Elapsed: {elapsed:.1f}s[/yellow]")
+                sys.exit(130)
+            elapsed = time.time() - start_time
+            console.print(f"[green]Generated {count} podcasts in {elapsed:.1f}s[/green]")
     finally:
         session.close()
 
@@ -664,6 +674,7 @@ def main():
     gen_parser.add_argument("--post-id", type=int, help="Generate for specific post ID")
     gen_parser.add_argument("--limit", type=int, default=10, help="Max posts to process (default: 10)")
     gen_parser.add_argument("--since", type=str, help="Only generate for posts crawled within this window (e.g., 5d, 2w, 24h)")
+    gen_parser.add_argument("--batch-size", "-b", type=int, default=None, help="Batch size (overrides --limit, default: 10)")
 
     # status
     subparsers.add_parser("status", help="Show system status")

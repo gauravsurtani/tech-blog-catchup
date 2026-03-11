@@ -1,0 +1,61 @@
+name: tech_blog_catchup
+description: Tech Blog Catchup - Listen to tech engineering blogs as conversational podcasts
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State management
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+
+  # Data models
+  freezed_annotation: ^2.4.0
+  json_annotation: ^4.9.0
+
+  # HTTP
+  dio: ^5.8.0+1
+
+  # Audio
+  just_audio: ^0.9.43
+  audio_service: ^0.18.17
+  audio_session: ^0.1.25
+
+  # Routing
+  go_router: ^14.8.1
+
+  # UI
+  flutter_markdown: ^0.7.7+1
+
+  # Persistence
+  shared_preferences: ^2.5.3
+
+  # Connectivity
+  connectivity_plus: ^6.1.4
+
+  # Share intent
+  receive_sharing_intent: ^1.8.1
+
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+  # Code generation
+  freezed: ^2.5.8
+  json_serializable: ^6.9.4
+  build_runner: ^2.4.15
+  riverpod_generator: ^2.6.3
+
+  # Testing
+  mocktail: ^1.0.4
+
+flutter:
+  uses-material-design: true

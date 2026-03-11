@@ -1,0 +1,30 @@
+Codemap Diff Report
+Generated: 2026-02-15
+Branch: claude/scrape-company-tech-blogs-0Xj1w
+
+Status: INITIAL CREATION (no previous codemaps existed)
+Diff percentage: N/A (first generation)
+
+Files created:
+  docs/codemaps/architecture.md  - Overall system architecture
+  docs/codemaps/backend.md       - Backend module tree + dependencies (36 files)
+  docs/codemaps/frontend.md      - Frontend component tree + routes (16 files)
+  docs/codemaps/data.md          - Data models, schemas, lifecycles
+
+Coverage:
+  Backend modules scanned:  36
+  Frontend modules scanned: 16
+  API endpoints documented: 13
+  CLI commands documented:  9
+  Data models documented:   7 (Post, Tag, CrawlLog, Job, BlogSource, ExtractionResult, QualityResult)
+
+Key changes since last commit (d76bfc7):
+  + pagination_pattern field on BlogSource (config.py, config.yaml)
+  + Blog page pagination in _scrape_blog_page_urls() (crawl_manager.py)
+  + Medium archive scroll fix (sitemap_parser.py)
+  + Sitemap dedup in parse_sitemap() (sitemap_parser.py)
+  + cmd_discover CLI command (run.py)
+  + total_discoverable field on CrawlStatusItem (schemas.py, routes.py, types.ts)
+  + ProgressIndicator component + Discoverable card (status/page.tsx)
+  + docs/CONTRIB.md created
+  + docs/RUNBOOK.md created

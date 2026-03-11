@@ -54,10 +54,13 @@ def generate_pending(
         logger.info("No pending posts with full_text found")
         return 0
 
-    logger.info(f"Generating podcasts for {len(posts)} posts...")
+    total = len(posts)
+    logger.info(f"Generating podcasts for {total} posts...")
     success_count = 0
 
-    for post in posts:
+    for i, post in enumerate(posts, 1):
+        title_preview = post.title[:50] + "..." if len(post.title) > 50 else post.title
+        logger.info(f"Generating podcast {i}/{total} — {title_preview}")
         result = _generate_single(session, post, config)
         if result:
             success_count += 1

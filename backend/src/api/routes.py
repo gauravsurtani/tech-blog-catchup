@@ -663,8 +663,45 @@ def update_me(
         session.close()
 
 
-# --- Temporary upload endpoint for seeding audio files ---
+# --- Temporary endpoints for seeding test data (REMOVE AFTER TESTING) ---
 from fastapi import Request as FastAPIRequest  # noqa: E402
+
+@router.post("/seed-posts")
+async def seed_posts(request: FastAPIRequest):
+    """Seed posts from JSON payload. Temporary — remove after testing."""
+    import json as _json
+    body = await request.body()
+    posts_data = _json.loads(body)
+    session = get_session()
+    try:
+        results = []
+        for data in posts_data:
+            existing = session.query(Post).filter(Post.url == data['url']).first()
+            if existing:
+                # Update existing post
+                existing.audio_status = data.get('audio_status', existing.audio_status)
+                existing.audio_path = data.get('audio_path', existing.audio_path)
+                existing.audio_duration_secs = data.get('audio_duration_secs', existing.audio_duration_secs)
+                existing.podcast_script = data.get('podcast_script', existing.podcast_script)
+                results.append({"id": existing.id, "status": "updated"})
+                continue
+            tag_names = data.pop('tags', [])
+            data.pop('id', None)
+            post = Post(**data)
+            session.add(post)
+            session.flush()
+            for tag_name in tag_names:
+                tag = session.query(Tag).filter(Tag.name == tag_name).first()
+                if tag:
+                    session.execute(post_tags.insert().values(post_id=post.id, tag_id=tag.id))
+            results.append({"id": post.id, "status": "created"})
+        session.commit()
+        return {"ok": True, "results": results}
+    except Exception as e:
+        session.rollback()
+        return {"ok": False, "error": str(e)}
+    finally:
+        session.close()
 
 @router.put("/upload-audio/{filename}")
 async def upload_audio(filename: str, request: FastAPIRequest):

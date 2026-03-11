@@ -1,0 +1,31 @@
+# Railway deployment config for Tech Blog Catchup
+#
+# Required environment variables (set in Railway dashboard):
+#   OPENAI_API_KEY       - OpenAI API key for podcast generation (TTS + LLM)
+#   CORS_ORIGINS         - Comma-separated allowed origins, e.g.:
+#                          "https://your-frontend.up.railway.app,capacitor://localhost"
+#                          Include capacitor://localhost for iOS app access
+#   AUDIO_BASE_URL       - Public URL prefix for audio files, e.g.:
+#                          "https://your-backend.up.railway.app/audio"
+#
+# Volume mounts (configure in Railway dashboard):
+#   /app/data            - SQLite database (techblog.db)
+#   /app/audio           - Generated podcast MP3 files
+#
+# Worker separation (v2):
+#   For now, the API server and crawl/generate workers run in the same service.
+#   To split later, create a separate Railway service with the same Dockerfile
+#   but override the start command to run the worker process instead of the API.
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "backend/Dockerfile"
+
+[deploy]
+# healthcheckPath = "/api/health"
+# healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+[service]
+internalPort = 8000

@@ -42,7 +42,19 @@ class Post(Base):
     content_hash: Mapped[str | None] = mapped_column(String, nullable=True)
     podcast_script: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    # User submission fields
+    submitted_by_user_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=True
+    )
+    is_user_submitted: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False, server_default="0"
+    )
+    submission_type: Mapped[str | None] = mapped_column(String, nullable=True)  # 'url' | 'text'
+
     tags: Mapped[list["Tag"]] = relationship(secondary=post_tags, back_populates="posts")
+    submitted_by: Mapped["User | None"] = relationship(
+        "User", backref="submitted_posts", foreign_keys=[submitted_by_user_id]
+    )
 
     def __repr__(self) -> str:
         return f"<Post(id={self.id}, source={self.source_key}, title={self.title!r})>"

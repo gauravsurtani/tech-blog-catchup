@@ -1,0 +1,36 @@
+# Production-like local testing with named Docker volumes (not bind mounts).
+# Usage: docker-compose -f docker-compose.prod.yml up --build
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - techblog-data:/app/data
+      - techblog-audio:/app/audio
+    env_file: ./backend/.env
+    environment:
+      - CORS_ORIGINS=http://localhost:3000
+      - AUDIO_DIR=/app/audio
+      - AUDIO_BASE_URL=/audio
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://backend:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  techblog-data:
+  techblog-audio:

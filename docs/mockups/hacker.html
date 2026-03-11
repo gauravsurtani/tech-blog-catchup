@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>>_ techpod</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --phosphor: #3DD68C;
+  --phosphor-bright: #5CFFB1;
+  --phosphor-dim: #2a9d68;
+  --phosphor-glow: rgba(61, 214, 140, 0.4);
+  --phosphor-faint: rgba(61, 214, 140, 0.06);
+  --yellow: #ECBE7B;
+  --red: #FF6C6B;
+  --blue: #51AFEF;
+  --purple: #C678DD;
+  --cyan: #46D9FF;
+  --orange: #DA8548;
+  --bg: #0B0E14;
+  --bg-crt: #0D1018;
+  --surface: #111621;
+  --surface-selected: #182030;
+  --surface-hover: #151C28;
+  --text: #A6B2C4;
+  --text-bright: #D4DCE8;
+  --text-dim: #3D4A5C;
+  --border: rgba(166, 178, 196, 0.06);
+  --border-glow: rgba(61, 214, 140, 0.12);
+}
+
+html { font-size: 14px; }
+
+body {
+  font-family: 'IBM Plex Mono', 'JetBrains Mono', monospace;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* ═══════ CRT SCREEN EFFECTS ═══════ */
+
+/* Scanlines */
+.crt-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 1px,
+    rgba(0, 0, 0, 0.08) 1px,
+    rgba(0, 0, 0, 0.08) 2px
+  );
+}
+
+/* Screen vignette — dark edges, bright center */
+.crt-vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9997;
+  background: radial-gradient(
+    ellipse 80% 70% at 50% 45%,
+    transparent 55%,
+    rgba(0, 0, 0, 0.35) 100%
+  );
+}
+
+/* Subtle screen flicker */
+@keyframes crt-flicker {
+  0%, 100% { opacity: 1; }
+  92% { opacity: 1; }
+  93% { opacity: 0.97; }
+  94% { opacity: 1; }
+}
+
+body { animation: crt-flicker 8s infinite; }
+
+/* Phosphor dot grid */
+.crt-dots {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9996;
+  opacity: 0.012;
+  background-image: radial-gradient(circle, var(--phosphor) 0.4px, transparent 0.4px);
+  background-size: 3px 3px;
+}
+
+/* ═══════ ANIMATIONS ═══════ */
+
+@keyframes boot-line {
+  from { opacity: 0; transform: translateY(4px); filter: blur(1px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+@keyframes cursor-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+@keyframes glow-breathe {
+  0%, 100% { text-shadow: 0 0 8px var(--phosphor-glow); }
+  50% { text-shadow: 0 0 14px var(--phosphor-glow), 0 0 28px rgba(61,214,140,0.15); }
+}
+
+@keyframes waveform {
+  0% { height: 30%; }
+  15% { height: 80%; }
+  30% { height: 45%; }
+  45% { height: 95%; }
+  60% { height: 25%; }
+  75% { height: 70%; }
+  90% { height: 40%; }
+  100% { height: 30%; }
+}
+
+@keyframes slide-glow {
+  from { left: -40%; }
+  to { left: 140%; }
+}
+
+/* ═══════ HEADER ═══════ */
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 48px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  animation: boot-line 0.3s ease-out;
+}
+
+.logo {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.logo .prompt {
+  color: var(--text-dim);
+  font-weight: 400;
+  margin-right: 1px;
+}
+
+.logo .name {
+  color: var(--phosphor);
+  text-shadow: 0 0 10px var(--phosphor-glow), 0 0 20px rgba(61,214,140,0.12);
+  animation: glow-breathe 4s ease-in-out infinite;
+}
+
+.logo .cursor {
+  display: inline-block;
+  width: 8px;
+  height: 16px;
+  background: var(--phosphor);
+  margin-left: 2px;
+  animation: cursor-blink 1s step-end infinite;
+  opacity: 0.7;
+  vertical-align: text-bottom;
+}
+
+.header-right { display: flex; align-items: center; gap: 12px; }
+
+nav { display: flex; gap: 0; }
+
+nav a {
+  text-decoration: none;
+  color: var(--text-dim);
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: 'JetBrains Mono', monospace;
+  transition: all 0.12s;
+  border-bottom: 2px solid transparent;
+}
+
+nav a:hover { color: var(--text); }
+
+nav a.active {
+  color: var(--phosphor);
+  border-bottom-color: var(--phosphor);
+  text-shadow: 0 0 8px var(--phosphor-glow);
+}
+
+.cmd-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-dim);
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.cmd-badge:hover { border-color: var(--phosphor); color: var(--phosphor); }
+
+.cmd-badge kbd {
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+/* ═══════ MAIN ═══════ */
+
+main {
+  flex: 1;
+  max-width: 1120px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 28px 24px 140px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ═══════ FEED HEADER ═══════ */
+
+.feed-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  animation: boot-line 0.3s ease-out 0.1s both;
+}
+
+.feed-header h1 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-bright);
+}
+
+.ep-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--phosphor);
+  text-shadow: 0 0 8px var(--phosphor-glow);
+}
+
+/* Separator line with gradient */
+.sep-line {
+  height: 1px;
+  margin-bottom: 16px;
+  background: linear-gradient(90deg, var(--phosphor) 0%, rgba(61,214,140,0.2) 30%, transparent 80%);
+  animation: boot-line 0.3s ease-out 0.15s both;
+}
+
+/* ═══════ TABLE ═══════ */
+
+.feed-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.feed-table th {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-dim);
+  padding: 8px 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.feed-table th:first-child, .feed-table td:first-child { text-align: center; width: 32px; }
+.feed-table th:nth-child(2), .feed-table td:nth-child(2) { width: 54px; text-align: center; }
+.feed-table th:nth-child(4), .feed-table td:nth-child(4) { width: 100px; }
+.feed-table th:nth-child(5), .feed-table td:nth-child(5) { width: 140px; }
+.feed-table th:nth-child(6), .feed-table td:nth-child(6) { width: 64px; text-align: right; }
+.feed-table th:last-child, .feed-table td:last-child { width: 40px; text-align: center; }
+
+.feed-table tbody tr {
+  border-bottom: 1px solid rgba(255,255,255,0.025);
+  transition: all 0.1s;
+  cursor: pointer;
+  animation: boot-line 0.25s ease-out both;
+}
+
+/* Staggered boot sequence */
+.feed-table tbody tr:nth-child(1) { animation-delay: 0.2s; }
+.feed-table tbody tr:nth-child(2) { animation-delay: 0.24s; }
+.feed-table tbody tr:nth-child(3) { animation-delay: 0.28s; }
+.feed-table tbody tr:nth-child(4) { animation-delay: 0.32s; }
+.feed-table tbody tr:nth-child(5) { animation-delay: 0.36s; }
+.feed-table tbody tr:nth-child(6) { animation-delay: 0.4s; }
+.feed-table tbody tr:nth-child(7) { animation-delay: 0.44s; }
+.feed-table tbody tr:nth-child(8) { animation-delay: 0.48s; }
+.feed-table tbody tr:nth-child(9) { animation-delay: 0.52s; }
+
+.feed-table tbody tr:hover, .feed-table tbody tr.selected {
+  background: var(--surface-hover);
+}
+
+/* Keyboard selected row indicator */
+.feed-table tbody tr.selected {
+  background: var(--surface-selected);
+  box-shadow: inset 3px 0 0 var(--phosphor), inset 0 0 40px rgba(61,214,140,0.02);
+}
+
+.feed-table tbody tr.selected .episode-title { color: var(--text-bright); }
+
+.feed-table td {
+  padding: 11px 8px;
+  vertical-align: middle;
+  font-size: 13px;
+}
+
+.row-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+/* ── Status badges ── */
+.badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 3px;
+  letter-spacing: 0.8px;
+  display: inline-block;
+}
+
+.badge-rdy { background: rgba(61,214,140,0.1); color: var(--phosphor); border: 1px solid rgba(61,214,140,0.15); }
+.badge-gen {
+  background: rgba(236,190,123,0.1);
+  color: var(--yellow);
+  border: 1px solid rgba(236,190,123,0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Generating shimmer */
+.badge-gen::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -40%;
+  width: 30%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(236,190,123,0.2), transparent);
+  animation: slide-glow 1.5s ease-in-out infinite;
+}
+
+.badge-err { background: rgba(255,108,107,0.1); color: var(--red); border: 1px solid rgba(255,108,107,0.15); }
+.badge-none { color: var(--text-dim); font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 2px; }
+
+/* ── Source ── */
+.src-cell { display: flex; align-items: center; gap: 7px; }
+
+.src-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+/* Subtle source glow */
+.src-dot::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 4px;
+  background: inherit;
+  opacity: 0.2;
+  filter: blur(3px);
+}
+
+.src-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+/* ── Tags ── */
+.tag-list { display: flex; gap: 4px; flex-wrap: wrap; }
+
+.tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid;
+  letter-spacing: 0.3px;
+  opacity: 0.8;
+}
+
+.time-col {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  font-weight: 500;
+}
+
+.episode-title {
+  font-weight: 500;
+  color: var(--text);
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 420px;
+  display: block;
+}
+
+/* ── Action buttons ── */
+.action-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s;
+}
+
+.action-btn:hover {
+  border-color: var(--phosphor);
+  color: var(--phosphor);
+  box-shadow: 0 0 8px var(--phosphor-glow);
+}
+
+.action-btn svg { width: 11px; height: 11px; fill: currentColor; }
+
+.action-btn.gen-btn {
+  color: var(--phosphor);
+  border-color: rgba(61,214,140,0.25);
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 10px;
+}
+
+.action-btn.gen-btn:hover { background: var(--phosphor-faint); }
+
+/* ── Playing row ── */
+.playing-row {
+  background: var(--surface) !important;
+  position: relative;
+}
+
+/* Gradient left border for playing */
+.playing-row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--phosphor-bright), var(--phosphor), var(--phosphor-dim));
+  box-shadow: 0 0 8px var(--phosphor-glow);
+}
+
+.playing-row .episode-title {
+  color: var(--phosphor-bright);
+  text-shadow: 0 0 12px var(--phosphor-glow);
+}
+
+/* ── Waveform visualizer (replaces basic equalizer) ── */
+.waveform {
+  display: flex;
+  align-items: flex-end;
+  gap: 1.5px;
+  height: 18px;
+  width: 28px;
+}
+
+.waveform span {
+  display: block;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--phosphor);
+  box-shadow: 0 0 3px var(--phosphor-glow);
+  animation: waveform 1.2s ease-in-out infinite;
+}
+
+.waveform span:nth-child(1) { animation-delay: 0s; height: 40%; }
+.waveform span:nth-child(2) { animation-delay: 0.08s; height: 70%; }
+.waveform span:nth-child(3) { animation-delay: 0.16s; height: 30%; }
+.waveform span:nth-child(4) { animation-delay: 0.24s; height: 85%; }
+.waveform span:nth-child(5) { animation-delay: 0.32s; height: 50%; }
+.waveform span:nth-child(6) { animation-delay: 0.4s; height: 95%; }
+.waveform span:nth-child(7) { animation-delay: 0.48s; height: 35%; }
+.waveform span:nth-child(8) { animation-delay: 0.56s; height: 65%; }
+
+/* ═══════ KEYBOARD SHORTCUTS BAR ═══════ */
+
+.shortcuts-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 14px 0;
+  margin-top: 20px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-dim);
+  animation: boot-line 0.3s ease-out 0.6s both;
+}
+
+.shortcuts-bar span { display: flex; align-items: center; gap: 4px; }
+
+.shortcuts-bar kbd {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  padding: 2px 6px;
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  background: var(--surface);
+  color: var(--text);
+  line-height: 1;
+}
+
+/* ═══════ PENDING ═══════ */
+
+.pending-note {
+  text-align: center;
+  color: var(--text-dim);
+  margin-top: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  animation: boot-line 0.3s ease-out 0.65s both;
+}
+
+.pending-note a {
+  color: var(--phosphor);
+  text-decoration: none;
+  font-weight: 600;
+  text-shadow: 0 0 8px var(--phosphor-glow);
+}
+
+.pending-note a:hover { text-decoration: underline; }
+
+/* ═══════ BOTTOM PLAYER ═══════ */
+
+.player {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 12px;
+  z-index: 100;
+  animation: boot-line 0.3s ease-out 0.5s both;
+}
+
+/* Gradient top border on player */
+.player::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 5%, var(--phosphor-dim) 20%, var(--phosphor) 50%, var(--phosphor-dim) 80%, transparent 95%);
+  opacity: 0.3;
+}
+
+.player-source-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.player-title {
+  font-size: 13px;
+  font-weight: 500;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-bright);
+}
+
+.player-controls { display: flex; align-items: center; gap: 6px; }
+
+.ctrl-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 4px;
+  transition: all 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ctrl-btn:hover { color: var(--text); }
+.ctrl-btn svg { width: 15px; height: 15px; fill: currentColor; }
+
+.ctrl-btn.main {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--phosphor);
+  color: var(--bg);
+  box-shadow: 0 0 12px var(--phosphor-glow);
+  transition: all 0.12s;
+}
+
+.ctrl-btn.main:hover { transform: scale(1.06); box-shadow: 0 0 20px var(--phosphor-glow); }
+.ctrl-btn.main svg { fill: var(--bg); }
+
+.player-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.player-progress {
+  width: 120px;
+  height: 3px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.player-progress .fill {
+  height: 100%;
+  width: 51%;
+  background: var(--phosphor);
+  border-radius: 2px;
+  box-shadow: 0 0 4px var(--phosphor-glow);
+}
+
+.speed-badge, .player-kbd {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.speed-badge:hover, .player-kbd:hover { border-color: var(--phosphor); color: var(--phosphor); }
+
+.player-kbd { background: var(--bg); border-bottom-width: 2px; }
+
+/* ═══════ STATUS LINE (vim-style) ═══════ */
+
+.status-line {
+  position: fixed;
+  bottom: 56px;
+  left: 0;
+  right: 0;
+  height: 22px;
+  background: var(--phosphor);
+  color: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  z-index: 100;
+  animation: boot-line 0.3s ease-out 0.55s both;
+}
+
+.status-line .mode {
+  background: var(--bg);
+  color: var(--phosphor);
+  padding: 0 8px;
+  margin-left: -20px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.status-line .file-info { opacity: 0.8; }
+.status-line .position { opacity: 0.8; }
+</style>
+</head>
+<body>
+
+<!-- CRT screen effects -->
+<div class="crt-overlay"></div>
+<div class="crt-vignette"></div>
+<div class="crt-dots"></div>
+
+<!-- Header -->
+<header>
+  <div class="logo">
+    <span class="prompt">&gt;_</span>
+    <span class="name">techpod</span>
+    <span class="cursor"></span>
+  </div>
+  <div class="header-right">
+    <nav>
+      <a href="#" class="active">Feed</a>
+      <a href="#">Explore</a>
+      <a href="#">Status</a>
+    </nav>
+    <div class="cmd-badge"><kbd>&#8984;</kbd><kbd>K</kbd> Command</div>
+  </div>
+</header>
+
+<!-- Main -->
+<main>
+  <div class="feed-header">
+    <h1>Your Feed</h1>
+    <span class="ep-count">47 episodes ready</span>
+  </div>
+  <div class="sep-line"></div>
+
+  <table class="feed-table">
+    <thead>
+      <tr><th>#</th><th>ST</th><th>Title</th><th>Source</th><th>Tags</th><th>Time</th><th></th></tr>
+    </thead>
+    <tbody>
+      <!-- Row 1 — Playing -->
+      <tr class="playing-row selected" data-idx="0">
+        <td><span class="row-num">1</span></td>
+        <td><div class="waveform"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div></td>
+        <td><span class="episode-title">Kafka at Netflix Scale: Lessons from 10M Events/sec</span></td>
+        <td><div class="src-cell"><span class="src-dot" style="background:#e50914"></span><span class="src-name">netflix</span></div></td>
+        <td><div class="tag-list"><span class="tag" style="border-color:rgba(70,217,255,0.3); color:var(--cyan);">infra</span><span class="tag" style="border-color:rgba(198,120,221,0.3); color:var(--purple);">kafka</span></div></td>
+        <td class="time-col">11:15</td>
+        <td><button class="action-btn"><svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg></button></td>
+      </tr>
+
+      <tr data-idx="1">
+        <td><span class="row-num">2</span></td>
+        <td><span class="badge badge-rdy">RDY</span></td>
+        <td><span class="episode-title">How We Scaled to 1M QPS with Zero Downtime</span></td>
+        <td><div class="src-cell"><span class="src-dot" style="background:#fff"></span><span class="src-name">uber</span></div></td>
+        <td><div class="tag-list"><span class="tag" style="border-color:rgba(236,190,123,0.3); color:var(--yellow);">perf</span><span class="tag" style="border-color:rgba(81,175,239,0.3); color:var(--blue);">scale</span></div></td>
+        <td class="time-col">12:34</td>
+        <td><button class="action-btn"><svg viewBox="0 0 24 24"><polygon points="8,5 19,12 8,19"/></svg></button></td>
+      </tr>
+
+      <tr data-idx="2">
+        <td><span class="row-num">3</span></td>
+        <td><span class="badge badge-rdy">RDY</span></td>
+        <td><span class="episode-title">Hermit: Deterministic Linux for Controlled Testing</span></td>
+        <td><div class="src-cell"><span class="src-dot" style="background:#1877f2"></span><span class="src-name">meta</span></div></td>
+        <td><div class="tag-list"><span class="tag" style="border-color:rgba(61,214,140,0.3); color:var(--phosphor);">systems</span></div></td>
+        <td class="time-col">8:21</td>
+        <td><button class="action-btn"><svg viewBox="0 0 24 24"><polygon points="8,5 19,12 8,19"/></svg></button></td>
+      </tr>
+
+      <tr data-idx="3">
+        <td><span class="row-num">4</span></td>
+        <td><span class="badge badge-rdy">RDY</span></td>
+        <td><span class="episode-title">HTTP/3 at Cloudflare: Deploying QUIC to 20% of the Web</span></td>
+        <td><div class="src-cell"><span class="src-dot" style="background:#f48120"></span><span class="src-name">cflare</span></div></td>
+        <td><div class="tag-list"><span class="tag" style="border-color:rgba(81,175,239,0.3); color:var(--blue);">network</span></div></td>
+        <td class="time-col">15:02</td>
+        <td><button class="action-btn"><svg viewBox="0 0 24 24"><polygon points="8,5 19,12 8,19"/></svg></button></td>
+      </tr>
+
+      <tr data-idx="4">
+        <td><span class="row-num">5</span></td>
+        <td><span class="badge badge-rdy">RDY</span></td>
+        <td><span class="episode-title">Building Sorbet: A Fast Type Checker for Ruby at Stripe</span></td>
+        <td><div class="src-cell"><span class="src-dot" style="background:#635bff"></span><span class="src-name">stripe</span></div></td>
+        <td><div class="tag-list"><span class="tag" style="border-color:rgba(236,190,123,0.3); color:var(--yellow);">lang</span><span class="tag" style="border-color:rgba(255,108,107,0.3); color:var(--red);">ruby</span></div></td>
+        <td class="time-col">9:48</td>
+        <td><button class="action-btn"><svg viewBox="0 0 24 24"><polygon points="8,5 19,12 8,19"/></svg></button></td>
+      </tr>
+
+      <tr data-idx="5">
+        <td><span class="row-num">6</span></td>
+        <td><span class="badge badge-rdy">RDY</span></td>
+        <td><span class="episode-title">Rate Limiting Strategies at GitHub Scale</span></td>
+        <td><div class="src-cell"><span class="src-dot" style="background:#8b949e"></span><span class="src-name">github</span></div></td>
+        <td><div class="tag-list"><span class="tag" style="border-color:rgba(70,217,255,0.3); color:var(--cyan);">api</span></div></td>
+        <td class="time-col">7:33</td>
+        <td><button class="action-btn"><svg viewBox="0 0 24 24"><polygon points="8,5 19,12 8,19"/></svg></button></td>
+      </tr>
+
+      <tr data-idx="6">
+        <td><span class="row-num">7</span></td>
+        <td><span class="badge badge-gen">GEN</span></td>
+        <td><span class="episode-title">Building Real-Time Search at Airbnb</span></td>
+        <td><div class="src-cell"><span class="src-dot" style="background:#ff5a5f"></span><span class="src-name">airbnb</span></div></td>
+        <td><div class="tag-list"><span class="tag" style="border-color:rgba(61,214,140,0.3); color:var(--phosphor);">search</span><span class="tag" style="border-color:rgba(81,175,239,0.3); color:var(--blue);">ai</span></div></td>
+        <td class="time-col" style="color:var(--text-dim);">--:--</td>
+        <td><button class="action-btn"><svg viewBox="0 0 24 24"><polygon points="8,5 19,12 8,19"/></svg></button></td>
+      </tr>
+
+      <tr data-idx="7">
+        <td><span class="row-num">8</span></td>
+        <td><span class="badge badge-none">---</span></td>
+        <td><span class="episode-title">Async Runtimes in Rust: Tokio vs async-std</span></td>
+        <td><div class="src-cell"><span class="src-dot" style="background:#8b949e"></span><span class="src-name">github</span></div></td>
+        <td><div class="tag-list"><span class="tag" style="border-color:rgba(255,108,107,0.3); color:var(--red);">rust</span></div></td>
+        <td class="time-col" style="color:var(--text-dim);">--:--</td>
+        <td><button class="action-btn gen-btn">G</button></td>
+      </tr>
+
+      <tr data-idx="8">
+        <td><span class="row-num">9</span></td>
+        <td><span class="badge badge-err">ERR</span></td>
+        <td><span class="episode-title">DNS Resolution Deep Dive: How We Handle 1T Queries</span></td>
+        <td><div class="src-cell"><span class="src-dot" style="background:#f48120"></span><span class="src-name">cflare</span></div></td>
+        <td><div class="tag-list"><span class="tag" style="border-color:rgba(70,217,255,0.3); color:var(--cyan);">dns</span></div></td>
+        <td class="time-col" style="color:var(--text-dim);">--:--</td>
+        <td><button class="action-btn gen-btn">G</button></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="shortcuts-bar">
+    <span><kbd>j</kbd><kbd>k</kbd> navigate</span>
+    <span><kbd>&#9166;</kbd> open</span>
+    <span><kbd>p</kbd> play</span>
+    <span><kbd>q</kbd> queue</span>
+    <span><kbd>g</kbd> generate</span>
+    <span><kbd>/</kbd> search</span>
+  </div>
+
+  <div class="pending-note">23 posts pending generation &mdash; <a href="#">Explore &rarr;</a></div>
+</main>
+
+<!-- Vim-style status line -->
+<div class="status-line">
+  <div style="display:flex;align-items:center;gap:12px;">
+    <span class="mode">NORMAL</span>
+    <span class="file-info">feed.json [+]</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <span>9 episodes</span>
+    <span>6 ready</span>
+    <span>1 generating</span>
+    <span class="position">1:1</span>
+  </div>
+</div>
+
+<!-- Bottom Player -->
+<div class="player">
+  <span class="player-source-tag" style="background:rgba(229,9,20,0.15); color:#e50914;">NF</span>
+  <span class="player-title">Kafka at Netflix Scale: Lessons from 10M Events/sec</span>
+  <div class="player-controls">
+    <button class="ctrl-btn"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+    <button class="ctrl-btn main"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="5" height="16" rx="1"/><rect x="14" y="4" width="5" height="16" rx="1"/></svg></button>
+    <button class="ctrl-btn"><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
+  </div>
+  <span class="player-time">5:42</span>
+  <div class="player-progress"><div class="fill"></div></div>
+  <span class="player-time">11:15</span>
+  <span class="speed-badge">1.5x</span>
+  <span class="player-kbd">K</span>
+  <span class="player-kbd">M</span>
+</div>
+
+<script>
+// ═══════ KEYBOARD NAVIGATION ═══════
+(function() {
+  const rows = document.querySelectorAll('.feed-table tbody tr');
+  let current = 0;
+
+  function select(idx) {
+    rows.forEach(r => r.classList.remove('selected'));
+    if (idx >= 0 && idx < rows.length) {
+      current = idx;
+      rows[current].classList.add('selected');
+      rows[current].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      // Update status line position
+      const pos = document.querySelector('.status-line .position');
+      if (pos) pos.textContent = (current + 1) + ':1';
+    }
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'j' || e.key === 'ArrowDown') { e.preventDefault(); select(Math.min(current + 1, rows.length - 1)); }
+    if (e.key === 'k' || e.key === 'ArrowUp') { e.preventDefault(); select(Math.max(current - 1, 0)); }
+    if (e.key === 'g') { select(0); }
+    if (e.key === 'G') { select(rows.length - 1); }
+  });
+
+  select(0);
+})();
+</script>
+
+</body>
+</html>

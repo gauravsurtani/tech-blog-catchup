@@ -12,13 +12,25 @@ from src.podcast.generator import generate_podcast_for_post
 logger = logging.getLogger(__name__)
 
 
-def generate_pending(session: Session, config: Config, limit: int = 10) -> int:
+def generate_pending(
+    session: Session,
+    config: Config,
+    limit: int = 10,
+    since: datetime | None = None,
+) -> int:
     """Find posts with audio_status='pending' and full_text available.
     Generate podcasts for up to `limit` posts.
     Updates audio_status, audio_path, audio_duration_secs.
+
+    Args:
+        session: SQLAlchemy Session.
+        config: Loaded Config object.
+        limit: Maximum number of posts to process.
+        since: If provided, only include posts with crawled_at >= this datetime.
+
     Returns count of successfully generated audio files.
     """
-    posts = (
+    query = (
         session.query(Post)
         .filter(Post.audio_status == "pending")
         .filter(Post.full_text.isnot(None))
@@ -26,6 +38,13 @@ def generate_pending(session: Session, config: Config, limit: int = 10) -> int:
         .filter(
             (Post.quality_score >= 60) | (Post.quality_score.is_(None))
         )
+    )
+
+    if since is not None:
+        query = query.filter(Post.crawled_at >= since)
+
+    posts = (
+        query
         .order_by(Post.crawled_at.desc())
         .limit(limit)
         .all()

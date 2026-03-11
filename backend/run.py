@@ -6,14 +6,41 @@ import asyncio
 import logging
 import os
 
+import re
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from rich.console import Console
 from rich.table import Table
 from rich.logging import RichHandler
 
 console = Console()
+
+
+def parse_since(value: str) -> datetime:
+    """Parse a human-friendly duration string into a UTC datetime cutoff.
+
+    Supported formats:
+        "5d"  -> 5 days ago
+        "2w"  -> 2 weeks ago
+        "24h" -> 24 hours ago
+
+    Returns:
+        datetime representing the cutoff point (UTC).
+
+    Raises:
+        ValueError: If the format is not recognized.
+    """
+    match = re.fullmatch(r"(\d+)([dhw])", value)
+    if not match:
+        raise ValueError(
+            f"Invalid --since format '{value}'. Use <number><unit> where unit is d(ays), w(eeks), or h(ours). Examples: 5d, 2w, 24h"
+        )
+    amount = int(match.group(1))
+    unit = match.group(2)
+    multipliers = {"h": "hours", "d": "days", "w": "weeks"}
+    delta = timedelta(**{multipliers[unit]: amount})
+    return datetime.utcnow() - delta
 
 
 def setup_logging(verbose: bool = False):
@@ -60,6 +87,11 @@ def cmd_crawl(args):
     try:
         ensure_tags_exist(config.tags, session)
         dry_run = getattr(args, "dry_run", False)
+
+        since = None
+        if getattr(args, "since", None):
+            since = parse_since(args.since)
+            console.print(f"Filtering to posts crawled since [cyan]{since:%Y-%m-%d %H:%M}[/cyan]")
 
         if args.source:
             source = next((s for s in config.sources if s.key == args.source), None)
@@ -112,6 +144,11 @@ def cmd_generate(args):
     session = get_session()
 
     try:
+        since = None
+        if getattr(args, "since", None):
+            since = parse_since(args.since)
+            console.print(f"Filtering to posts crawled since [cyan]{since:%Y-%m-%d %H:%M}[/cyan]")
+
         if args.post_id:
             console.print(f"Generating podcast for post {args.post_id}...")
             success = generate_for_post(session, args.post_id, config)
@@ -122,7 +159,7 @@ def cmd_generate(args):
                 sys.exit(1)
         else:
             console.print(f"Generating podcasts for up to {args.limit} pending posts...")
-            count = generate_pending(session, config, limit=args.limit)
+            count = generate_pending(session, config, limit=args.limit, since=since)
             console.print(f"[green]Generated {count} podcasts[/green]")
     finally:
         session.close()
@@ -620,11 +657,13 @@ def main():
     crawl_parser.add_argument("--source", help="Crawl specific source only (e.g., 'cloudflare')")
     crawl_parser.add_argument("--max-posts", type=int, help="Limit number of new posts to extract")
     crawl_parser.add_argument("--dry-run", action="store_true", help="Discover URLs without extracting or storing")
+    crawl_parser.add_argument("--since", type=str, help="Only process posts crawled within this window (e.g., 5d, 2w, 24h)")
 
     # generate
     gen_parser = subparsers.add_parser("generate", help="Generate podcast audio")
     gen_parser.add_argument("--post-id", type=int, help="Generate for specific post ID")
     gen_parser.add_argument("--limit", type=int, default=10, help="Max posts to process (default: 10)")
+    gen_parser.add_argument("--since", type=str, help="Only generate for posts crawled within this window (e.g., 5d, 2w, 24h)")
 
     # status
     subparsers.add_parser("status", help="Show system status")

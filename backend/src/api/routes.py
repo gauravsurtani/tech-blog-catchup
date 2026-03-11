@@ -661,3 +661,17 @@ def update_me(
         )
     finally:
         session.close()
+
+
+# --- Temporary upload endpoint for seeding audio files ---
+from fastapi import UploadFile, File  # noqa: E402
+
+@router.post("/api/upload-audio/{filename}")
+async def upload_audio(filename: str, file: UploadFile = File(...)):
+    """Temporary endpoint to upload audio files for testing. Remove after seeding."""
+    audio_dir = Path(os.getenv("AUDIO_DIR", "audio"))
+    audio_dir.mkdir(parents=True, exist_ok=True)
+    dest = audio_dir / filename
+    content = await file.read()
+    dest.write_bytes(content)
+    return {"ok": True, "filename": filename, "size": len(content)}

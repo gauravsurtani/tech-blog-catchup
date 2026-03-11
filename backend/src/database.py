@@ -1,12 +1,15 @@
 """SQLAlchemy engine, session factory, and database initialization."""
 
+import logging
 from pathlib import Path
 
-from sqlalchemy import create_engine, event, Engine
+from sqlalchemy import create_engine, event, inspect, text, Engine
 from sqlalchemy.orm import sessionmaker, Session, DeclarativeBase
 from sqlalchemy.pool import NullPool, QueuePool
 
 from src.config import get_config
+
+logger = logging.getLogger(__name__)
 
 
 class Base(DeclarativeBase):
@@ -67,8 +70,31 @@ def get_session_factory(engine: Engine | None = None) -> sessionmaker[Session]:
     return _session_factory
 
 
+def _migrate_missing_columns(engine: Engine) -> None:
+    """Add columns that exist in models but not in the DB (SQLite-safe)."""
+    inspector = inspect(engine)
+    with engine.begin() as conn:
+        for table_name, table in Base.metadata.tables.items():
+            if not inspector.has_table(table_name):
+                continue
+            existing = {col["name"] for col in inspector.get_columns(table_name)}
+            for col in table.columns:
+                if col.name in existing:
+                    continue
+                col_type = col.type.compile(engine.dialect)
+                nullable = "NULL" if col.nullable else "NOT NULL"
+                default = ""
+                if col.server_default is not None:
+                    default = f" DEFAULT {col.server_default.arg}"
+                elif col.nullable:
+                    default = " DEFAULT NULL"
+                sql = f"ALTER TABLE {table_name} ADD COLUMN {col.name} {col_type} {nullable}{default}"
+                conn.execute(text(sql))
+                logger.info("Migrated column: %s.%s", table_name, col.name)
+
+
 def init_db(engine: Engine | None = None) -> None:
-    """Create all tables. Safe to call repeatedly (CREATE IF NOT EXISTS)."""
+    """Create all tables and migrate missing columns."""
     if engine is None:
         engine = get_engine()
 
@@ -76,6 +102,7 @@ def init_db(engine: Engine | None = None) -> None:
     import src.models  # noqa: F401
 
     Base.metadata.create_all(engine)
+    _migrate_missing_columns(engine)
 
 
 def get_session() -> Session:

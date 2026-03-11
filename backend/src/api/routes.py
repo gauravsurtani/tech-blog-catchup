@@ -1,5 +1,6 @@
 """FastAPI route definitions."""
 
+import hashlib
 import json
 import logging
 import os
@@ -7,6 +8,8 @@ import time
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse
+
+import trafilatura
 
 from fastapi import APIRouter, Depends, Query, HTTPException, BackgroundTasks, Request
 from sqlalchemy import func, desc, asc
@@ -21,6 +24,7 @@ from src.api.schemas import (
     StatusInfo, PaginatedPosts, CrawlRequest, GenerateRequest,
     JobInfo, CrawlStatusItem,
     UserMeResponse, UserInfo, UserPreferencesInfo, UpdatePreferencesRequest,
+    SubmitRequest,
 )
 from src.api.rate_limit import limiter
 from src.api.auth_middleware import get_current_user
@@ -397,6 +401,116 @@ def trigger_generate(request: Request, req: GenerateRequest, background_tasks: B
 
     background_tasks.add_task(_do_generate, job_id, req.post_id, req.limit)
     return {"status": "queued", "job_id": job_id, "post_id": req.post_id, "limit": req.limit}
+
+
+@router.post("/posts/submit")
+@limiter.limit("3/hour")
+def submit_post(request: Request, req: SubmitRequest, background_tasks: BackgroundTasks):
+    """Submit user content (URL or text) for podcast generation.
+
+    - URL submission: extracts content via trafilatura, creates a Post, queues generation.
+    - Text submission: stores text directly, creates a Post, queues generation.
+    Returns the new post_id and a background job_id for generation tracking.
+    """
+    session = get_session()
+    try:
+        if req.url:
+            # --- URL submission ---
+            # Check for duplicate URL
+            existing = session.query(Post).filter(Post.url == req.url).first()
+            if existing:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"A post with this URL already exists (post_id={existing.id})",
+                )
+
+            # Extract content via trafilatura
+            downloaded = trafilatura.fetch_url(req.url)
+            if not downloaded:
+                raise HTTPException(
+                    status_code=422,
+                    detail="Could not fetch content from the provided URL",
+                )
+
+            text_content = trafilatura.extract(
+                downloaded,
+                output_format="txt",
+                include_formatting=True,
+                include_comments=False,
+                include_tables=True,
+                include_links=True,
+            )
+            if not text_content:
+                raise HTTPException(
+                    status_code=422,
+                    detail="Could not extract readable content from the provided URL",
+                )
+
+            metadata = trafilatura.extract_metadata(downloaded)
+            extracted_title = metadata.title if metadata else None
+            extracted_author = metadata.author if metadata else None
+
+            title = req.title or extracted_title or "Untitled Submission"
+            word_count = len(text_content.split())
+            content_hash = hashlib.md5(text_content.encode()).hexdigest()
+
+            post = Post(
+                url=req.url,
+                source_key="user",
+                source_name="User Submission",
+                title=title,
+                full_text=text_content,
+                author=extracted_author,
+                crawled_at=datetime.utcnow(),
+                audio_status="pending",
+                word_count=word_count,
+                content_hash=content_hash,
+                extraction_method="trafilatura",
+                is_user_submitted=True,
+                submission_type="url",
+            )
+        else:
+            # --- Text submission ---
+            # Generate a unique URL for text submissions
+            text_hash = hashlib.md5(req.text.encode()).hexdigest()[:12]
+            synthetic_url = f"user://submission/{text_hash}"
+
+            word_count = len(req.text.split())
+            content_hash = hashlib.md5(req.text.encode()).hexdigest()
+
+            post = Post(
+                url=synthetic_url,
+                source_key="user",
+                source_name="User Submission",
+                title=req.title,
+                full_text=req.text,
+                crawled_at=datetime.utcnow(),
+                audio_status="pending",
+                word_count=word_count,
+                content_hash=content_hash,
+                extraction_method="user_text",
+                is_user_submitted=True,
+                submission_type="text",
+            )
+
+        session.add(post)
+        session.commit()
+        post_id = post.id
+
+        # Queue podcast generation as a background job
+        job = Job(
+            job_type="generate",
+            status="queued",
+            params=json.dumps({"post_id": post_id, "source": "user_submit"}),
+        )
+        session.add(job)
+        session.commit()
+        job_id = job.id
+    finally:
+        session.close()
+
+    background_tasks.add_task(_do_generate, job_id, post_id, 1)
+    return {"post_id": post_id, "job_id": job_id, "status": "queued"}
 
 
 @router.get("/status", response_model=StatusInfo)

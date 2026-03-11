@@ -1,6 +1,6 @@
 """Pydantic models for API request/response."""
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 from datetime import datetime
 
 
@@ -126,3 +126,25 @@ class UpdatePreferencesRequest(BaseModel):
     theme: str | None = None
     playback_speed: float | None = None
     notifications: bool | None = None
+
+
+class SubmitRequest(BaseModel):
+    url: str | None = None
+    text: str | None = None
+    title: str | None = None
+
+    @model_validator(mode='after')
+    def validate_input(self) -> "SubmitRequest":
+        # Treat empty strings as None
+        if self.url is not None and self.url.strip() == "":
+            self.url = None
+        if self.text is not None and self.text.strip() == "":
+            self.text = None
+
+        if not self.url and not self.text:
+            raise ValueError("Either 'url' or 'text' must be provided")
+        if self.url and self.text:
+            raise ValueError("Provide either 'url' or 'text', not both")
+        if self.text and not self.title:
+            raise ValueError("'title' is required when submitting text")
+        return self

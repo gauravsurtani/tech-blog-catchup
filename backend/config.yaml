@@ -296,6 +296,13 @@ crawl:
   max_retries: 3
   respect_robots_txt: true
 
+scheduler:
+  crawl_cron: "0 2 * * *"       # daily at 2 AM UTC
+  generate_cron: "0 4 * * *"    # daily at 4 AM UTC
+  crawl_max_posts: 5             # max new posts per source per run
+  generate_batch_size: 50        # max posts to generate per run
+  generate_since_days: 2         # only generate for posts crawled within N days
+
 app:
   db_path: "data/techblog.db"
   audio_dir: "audio"

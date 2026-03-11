@@ -28,13 +28,31 @@ async def lifespan(app: FastAPI):
         try:
             recovered = recover_stuck_processing(session)
             if recovered:
-                import logging
-                logging.getLogger(__name__).info(f"Recovered {recovered} stuck posts on startup")
+                logger.info(f"Recovered {recovered} stuck posts on startup")
         finally:
             session.close()
     except Exception:
         pass  # Recovery is best-effort; don't block startup
+
+    # Start APScheduler for daily crawl + generate (opt-in via ENABLE_SCHEDULER)
+    scheduler = None
+    try:
+        from src.scheduler import should_enable_scheduler, create_scheduler
+        if should_enable_scheduler():
+            from src.config import get_config
+            config = get_config()
+            scheduler = create_scheduler(config)
+            scheduler.start()
+            logger.info("APScheduler started with %d jobs", len(scheduler.get_jobs()))
+    except Exception:
+        logger.exception("Failed to start scheduler")
+
     yield
+
+    # Shutdown scheduler on app teardown
+    if scheduler is not None and scheduler.running:
+        scheduler.shutdown(wait=False)
+        logger.info("APScheduler shut down")
 
 
 def create_app() -> FastAPI:

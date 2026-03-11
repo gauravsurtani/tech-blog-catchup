@@ -40,6 +40,7 @@ class Config:
     crawl: dict
     app: dict
     llm: dict
+    scheduler: dict = field(default_factory=dict)
 
 
 def _slugify(text: str) -> str:
@@ -92,6 +93,7 @@ def load_config(path: str | None = None) -> Config:
         crawl=raw.get("crawl", {}),
         app=raw.get("app", {}),
         llm=raw.get("llm", {}),
+        scheduler=raw.get("scheduler", {}),
     )
 
 

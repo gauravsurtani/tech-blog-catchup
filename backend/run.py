@@ -4,6 +4,7 @@
 import argparse
 import asyncio
 import logging
+import os
 
 import sys
 from datetime import datetime
@@ -592,7 +593,7 @@ def cmd_cleanup(args):
 def cmd_api(args):
     """Start FastAPI server."""
     import uvicorn
-    port = args.port or 8000
+    port = args.port or int(os.environ.get("PORT", 8000))
     console.print(f"Starting FastAPI server on port {port}...")
     uvicorn.run("src.api.app:app", host="0.0.0.0", port=port, reload=args.reload)
 

@@ -47,9 +47,11 @@ class Post(Base):
         Integer, ForeignKey("users.id"), nullable=True
     )
     is_user_submitted: Mapped[bool] = mapped_column(
-        Boolean, default=False, nullable=False, server_default="0"
+        Boolean, nullable=False, server_default="0", index=True
     )
-    submission_type: Mapped[str | None] = mapped_column(String, nullable=True)  # 'url' | 'text'
+    submission_type: Mapped[str | None] = mapped_column(
+        String, nullable=True, info={"valid_values": ["url", "text"]}
+    )
 
     tags: Mapped[list["Tag"]] = relationship(secondary=post_tags, back_populates="posts")
     submitted_by: Mapped["User | None"] = relationship(

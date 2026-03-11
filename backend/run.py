@@ -88,11 +88,6 @@ def cmd_crawl(args):
         ensure_tags_exist(config.tags, session)
         dry_run = getattr(args, "dry_run", False)
 
-        since = None
-        if getattr(args, "since", None):
-            since = parse_since(args.since)
-            console.print(f"Filtering to posts crawled since [cyan]{since:%Y-%m-%d %H:%M}[/cyan]")
-
         if args.source:
             source = next((s for s in config.sources if s.key == args.source), None)
             if not source:
@@ -145,11 +140,6 @@ def cmd_generate(args):
     session = get_session()
 
     try:
-        since = None
-        if getattr(args, "since", None):
-            since = parse_since(args.since)
-            console.print(f"Filtering to posts crawled since [cyan]{since:%Y-%m-%d %H:%M}[/cyan]")
-
         if args.post_id:
             console.print(f"Generating podcast for post {args.post_id}...")
             success = generate_for_post(session, args.post_id, config)
@@ -159,6 +149,10 @@ def cmd_generate(args):
                 console.print("[red]Failed to generate podcast[/red]")
                 sys.exit(1)
         else:
+            since = None
+            if getattr(args, "since", None):
+                since = parse_since(args.since)
+                console.print(f"Filtering to posts crawled since [cyan]{since:%Y-%m-%d %H:%M}[/cyan]")
             batch_size = getattr(args, "batch_size", None) or args.limit
             console.print(f"Generating podcasts for up to {batch_size} pending posts...")
             start_time = time.time()
@@ -667,7 +661,6 @@ def main():
     crawl_parser.add_argument("--source", help="Crawl specific source only (e.g., 'cloudflare')")
     crawl_parser.add_argument("--max-posts", type=int, help="Limit number of new posts to extract")
     crawl_parser.add_argument("--dry-run", action="store_true", help="Discover URLs without extracting or storing")
-    crawl_parser.add_argument("--since", type=str, help="Only process posts crawled within this window (e.g., 5d, 2w, 24h)")
 
     # generate
     gen_parser = subparsers.add_parser("generate", help="Generate podcast audio")

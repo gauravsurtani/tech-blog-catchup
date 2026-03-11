@@ -10,6 +10,7 @@ import {
   Library,
   ListMusic,
   BarChart3,
+  PlusCircle,
   ChevronLeft,
   ChevronRight,
   Search,
@@ -28,6 +29,7 @@ const navItems = [
   { href: "/library", label: "Library", icon: Library },
   { href: "/playlist", label: "Playlist", icon: ListMusic },
   { href: "/status", label: "Status", icon: BarChart3 },
+  { href: "/submit", label: "Submit", icon: PlusCircle },
 ];
 
 export default function Sidebar() {

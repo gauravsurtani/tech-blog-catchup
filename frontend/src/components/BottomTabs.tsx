@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Compass, LayoutGrid, Library, ListMusic } from "lucide-react";
+import { Home, Compass, LayoutGrid, Library, ListMusic, PlusCircle } from "lucide-react";
 
 const tabs = [
   { href: "/", label: "Home", icon: Home },
@@ -10,6 +10,7 @@ const tabs = [
   { href: "/browse", label: "Browse", icon: LayoutGrid },
   { href: "/library", label: "Library", icon: Library },
   { href: "/playlist", label: "Playlist", icon: ListMusic },
+  { href: "/submit", label: "Submit", icon: PlusCircle },
 ];
 
 export default function BottomTabs() {

@@ -57,6 +57,12 @@ export interface Job {
   completed_at: string | null;
 }
 
+export interface SubmitResponse {
+  post_id: number;
+  job_id: number;
+  status: string;
+}
+
 export interface CrawlStatusItem {
   source_key: string;
   source_name: string;

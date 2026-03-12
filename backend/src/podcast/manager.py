@@ -79,12 +79,34 @@ def generate_for_post(session: Session, post_id: int, config: Config) -> bool:
 
 
 def _generate_single(session: Session, post: Post, config: Config) -> bool:
-    """Generate podcast for a single post. Returns True on success."""
+    """Generate podcast for a single post. Returns True on success.
+
+    If the post has no podcast_script, generates one via the LLM content
+    generator before proceeding to TTS audio generation.
+    """
     try:
         logger.info(f"Generating podcast for: [{post.source_key}] {post.title}")
 
         post.audio_status = "processing"
         session.commit()
+
+        # Generate podcast script if missing
+        if not post.podcast_script and post.full_text:
+            logger.info(f"  Generating podcast script for post {post.id} via LLM...")
+            import asyncio
+            from src.extractor.content_generator import generate_content
+            content = asyncio.run(generate_content(post.title, post.full_text))
+            if content.get("podcast_script"):
+                post.podcast_script = content["podcast_script"]
+                if not post.summary and content.get("summary"):
+                    post.summary = content["summary"]
+                session.commit()
+                logger.info(f"  Script generated ({len(post.podcast_script)} chars)")
+            else:
+                logger.error(f"  LLM failed to generate script for post {post.id}")
+                post.audio_status = "failed"
+                session.commit()
+                return False
 
         result = generate_podcast_for_post(post, config)
 

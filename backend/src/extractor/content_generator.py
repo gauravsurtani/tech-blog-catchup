@@ -28,11 +28,14 @@ async def generate_content(title: str, markdown: str) -> dict:
     llm_cfg = config.llm.get("content_generation", {})
     model = llm_cfg.get("model", "gpt-5.2")
 
-    # Scale script length to article size
+    # Scale script length to article size — short articles get short podcasts
     word_count = len(markdown.split())
-    if word_count < 800:
-        script_words = 1000
-        duration_hint = "5-7 minute"
+    if word_count < 500:
+        script_words = 600
+        duration_hint = "3-4 minute"
+    elif word_count < 800:
+        script_words = 800
+        duration_hint = "4-5 minute"
     elif word_count < 1500:
         script_words = 2000
         duration_hint = "10-12 minute"
@@ -58,8 +61,9 @@ async def generate_content(title: str, markdown: str) -> dict:
                         "full markdown content, produce TWO things:\n\n"
                         "1. **summary**: A 2-3 sentence technical summary covering what was built, "
                         "why it matters, and the key result or insight.\n\n"
-                        f"2. **podcast_script**: A ~{script_words} word two-host conversational "
-                        f"podcast script ({duration_hint} when read aloud). "
+                        f"2. **podcast_script**: A two-host conversational podcast script, "
+                        f"STRICTLY {script_words} words or fewer ({duration_hint} when read aloud). "
+                        f"Do NOT exceed {script_words} words — shorter articles must produce shorter podcasts. "
                         "Use <Person1> and <Person2> XML tags to denote speakers. Person1 is the main "
                         "host who explains concepts clearly. Person2 is the co-host who asks insightful "
                         "questions and adds context. The conversation should be engaging, educational, "

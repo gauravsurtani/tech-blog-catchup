@@ -21,7 +21,7 @@ export default function BottomTabs() {
       aria-label="Mobile navigation"
       className="fixed left-0 right-0 flex md:hidden items-center justify-around border-t-[var(--border-w)] border-[var(--border-color)] bg-[var(--nav-bg)] backdrop-blur-[12px]"
       style={{
-        bottom: "var(--player-height)",
+        bottom: "calc(var(--player-height) + var(--safe-bottom))",
         zIndex: "var(--z-nav)",
         height: "3.5rem",
       }}

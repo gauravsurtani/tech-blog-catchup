@@ -67,7 +67,7 @@ export default function Sidebar() {
     <aside
       role="navigation"
       aria-label="Main navigation"
-      className="hidden md:flex flex-col fixed top-0 left-0 h-screen pb-[var(--player-height)] border-r-[var(--border-w)] border-[var(--border-color)] bg-[var(--bg-elevated)] transition-[width] duration-300 ease-in-out"
+      className="hidden md:flex flex-col fixed top-0 left-0 h-dvh pb-[var(--player-height)] border-r-[var(--border-w)] border-[var(--border-color)] bg-[var(--bg-elevated)] transition-[width] duration-300 ease-in-out"
       style={{
         width: collapsed ? 60 : 240,
         zIndex: "var(--z-nav)",

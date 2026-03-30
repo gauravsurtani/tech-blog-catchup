@@ -207,7 +207,7 @@ export default function FullScreenPlayer({
       {/* Content */}
       <div className="relative z-10 flex flex-col h-full">
         {/* Top bar */}
-        <div className="flex items-center justify-between px-6 pt-6 pb-2">
+        <div className="flex items-center justify-between px-4 sm:px-6 pt-6 pb-2">
           <button
             onClick={toggleExpanded}
             className="text-[var(--text-2)] hover:text-[var(--text-1)] transition-colors p-2 -ml-2 nb-hover border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius)]"
@@ -250,7 +250,7 @@ export default function FullScreenPlayer({
         </div>
 
         {/* Artwork area / Transcript panel */}
-        <div className="flex-1 flex items-center justify-center px-8 min-h-0">
+        <div className="flex-1 flex items-center justify-center px-4 sm:px-8 min-h-0">
           {transcriptOpen ? (
             <div
               className="w-full max-w-2xl h-full rounded-[var(--radius)] overflow-hidden nb-card"
@@ -289,7 +289,7 @@ export default function FullScreenPlayer({
         </div>
 
         {/* Track info */}
-        <div className="px-8 pb-4 text-center">
+        <div className="px-4 sm:px-8 pb-4 text-center">
           <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-1)] truncate">
             {currentTrack.title}
           </h2>

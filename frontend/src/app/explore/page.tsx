@@ -193,7 +193,7 @@ export default function ExplorePage() {
     selectedSources.length + selectedTags.length + (debouncedSearch ? 1 : 0);
 
   return (
-    <div className="flex gap-6">
+    <div className="flex gap-6 min-w-0">
       {/* Mobile filter overlay */}
       {sidebarOpen && (
         <div
@@ -205,9 +205,9 @@ export default function ExplorePage() {
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 h-full w-72 bg-[var(--bg)] border-r border-[var(--border-color)] z-50
+          fixed top-0 left-0 h-full w-72 max-w-[85vw] bg-[var(--bg)] border-r border-[var(--border-color)] z-50
           transform transition-transform duration-200 ease-in-out overflow-y-auto
-          lg:static lg:transform-none lg:z-auto lg:h-auto lg:border-r-0 lg:w-64 lg:flex-shrink-0
+          lg:static lg:transform-none lg:z-auto lg:h-auto lg:border-r-0 lg:w-64 lg:max-w-none lg:flex-shrink-0
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         `}
       >

@@ -121,15 +121,16 @@ export default function AudioPlayer() {
   return (
     <>
       <div
-        className="fixed bottom-0 left-0 right-0 z-50 h-[76px] select-none border-t-[var(--border-w)] border-[var(--border-color)]"
+        className="fixed bottom-0 left-0 right-0 z-50 select-none border-t-[var(--border-w)] border-[var(--border-color)]"
         style={{
           backgroundColor: "var(--player-bg)",
           boxShadow: "var(--player-shadow)",
+          paddingBottom: "var(--safe-bottom)",
         }}
       >
-        <div className="h-full max-w-full mx-auto px-4 flex items-center gap-4">
+        <div className="h-[76px] max-w-full mx-auto px-4 flex items-center gap-4">
           {/* Track info */}
-          <div className="flex flex-col min-w-0 w-56 shrink-0" aria-live="polite">
+          <div className="flex flex-col min-w-0 w-40 sm:w-56 shrink-0" aria-live="polite">
             <span className="text-xs text-[var(--text-2)] truncate">
               {currentTrack.source_name}
             </span>

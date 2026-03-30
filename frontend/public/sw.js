@@ -1,4 +1,4 @@
-const CACHE_NAME = "tbc-v1";
+const CACHE_NAME = "tbc-v2";
 const STATIC_ASSETS = ["/", "/favicon.svg", "/manifest.json"];
 
 self.addEventListener("install", (event) => {
@@ -20,6 +20,12 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
+
+  // Network-only for audio files — don't pollute cache with large MP3s
+  if (url.pathname.startsWith("/audio") || url.pathname.endsWith(".mp3")) {
+    event.respondWith(fetch(request));
+    return;
+  }
 
   // Network-first for API calls
   if (url.pathname.startsWith("/api")) {

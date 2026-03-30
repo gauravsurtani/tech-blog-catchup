@@ -214,7 +214,7 @@ export default function SearchDialog({ open, onClose }: SearchDialogProps) {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh]"
+      className="fixed inset-0 z-[100] flex items-start justify-center pt-16 sm:pt-[15vh]"
       onClick={onClose}
       onKeyDown={(e) => {
         if (e.key === "Escape") {
@@ -241,7 +241,7 @@ export default function SearchDialog({ open, onClose }: SearchDialogProps) {
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Search posts..."
-            className="flex-1 py-3.5 bg-transparent text-[var(--text-1)] placeholder:text-[var(--text-3)] outline-none text-sm border-none shadow-none"
+            className="flex-1 py-3.5 bg-transparent text-[var(--text-1)] placeholder:text-[var(--text-3)] outline-none text-base border-none shadow-none"
           />
           {loading && (
             <Loader2 size={16} className="shrink-0 text-[var(--text-3)] animate-spin" />

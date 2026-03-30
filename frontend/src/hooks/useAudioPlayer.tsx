@@ -258,6 +258,28 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  // Update MediaSession for lock screen controls
+  const updateMediaSession = useCallback((track: Post | null, playing: boolean) => {
+    if (!("mediaSession" in navigator) || !track) return;
+
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: track.title,
+      artist: track.source_name || "Catchup",
+      album: "Catchup",
+      artwork: [
+        { src: "/icon-192.png", sizes: "192x192", type: "image/png" },
+        { src: "/icon-512.png", sizes: "512x512", type: "image/png" },
+      ],
+    });
+
+    navigator.mediaSession.playbackState = playing ? "playing" : "paused";
+  }, []);
+
+  // Sync MediaSession when track changes or play state changes
+  useEffect(() => {
+    updateMediaSession(currentTrack, isPlaying);
+  }, [currentTrack, isPlaying, updateMediaSession]);
+
   const play = useCallback(
     (post: Post) => {
       if (currentTrack) {
@@ -439,6 +461,47 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [currentTrack, togglePlay, volume, setVolume]);
 
+  // Register MediaSession action handlers for lock screen / headphone controls
+  useEffect(() => {
+    if (!("mediaSession" in navigator)) return;
+
+    const audio = audioRef.current;
+
+    navigator.mediaSession.setActionHandler("play", () => {
+      audio?.play().catch(() => {});
+      setIsPlaying(true);
+    });
+    navigator.mediaSession.setActionHandler("pause", () => {
+      audio?.pause();
+      setIsPlaying(false);
+    });
+    navigator.mediaSession.setActionHandler("previoustrack", () => {
+      previous();
+    });
+    navigator.mediaSession.setActionHandler("nexttrack", () => {
+      if (queue.length > 0) next();
+    });
+    navigator.mediaSession.setActionHandler("seekbackward", (details) => {
+      if (!audio) return;
+      audio.currentTime = Math.max(0, audio.currentTime - (details.seekOffset || 10));
+    });
+    navigator.mediaSession.setActionHandler("seekforward", (details) => {
+      if (!audio) return;
+      audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + (details.seekOffset || 10));
+    });
+    navigator.mediaSession.setActionHandler("seekto", (details) => {
+      if (!audio || details.seekTime == null) return;
+      audio.currentTime = details.seekTime;
+    });
+
+    return () => {
+      const actions: MediaSessionAction[] = ["play", "pause", "previoustrack", "nexttrack", "seekbackward", "seekforward", "seekto"];
+      actions.forEach((action) => {
+        try { navigator.mediaSession.setActionHandler(action, null); } catch {}
+      });
+    };
+  }, [next, previous, queue.length]);
+
   // Audio element event handlers
   const handleTimeUpdate = useCallback(() => {
     const audio = audioRef.current;
@@ -446,6 +509,16 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     setCurrentTime(audio.currentTime);
     if (audio.duration && isFinite(audio.duration)) {
       setProgress(audio.currentTime / audio.duration);
+      // Report position to MediaSession for lock screen scrubber
+      if ("mediaSession" in navigator && navigator.mediaSession.setPositionState) {
+        try {
+          navigator.mediaSession.setPositionState({
+            duration: audio.duration,
+            playbackRate: audio.playbackRate,
+            position: audio.currentTime,
+          });
+        } catch {}
+      }
     }
   }, []);
 

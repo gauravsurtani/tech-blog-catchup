@@ -20,7 +20,8 @@ test.describe("Mobile Responsive Layout", () => {
     if (isMobile) {
       await expect(sidebar).toBeHidden();
     } else {
-      await expect(sidebar).toBeVisible();
+      // Sidebar is a client component, wait for hydration
+      await expect(sidebar).toBeVisible({ timeout: 10000 });
     }
   });
 

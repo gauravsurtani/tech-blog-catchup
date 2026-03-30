@@ -50,7 +50,7 @@ export default function SidebarLayout({
 
   return (
     <div
-      className="flex flex-col min-h-screen bg-[var(--bg)] text-[var(--text-1)] transition-[margin-left] duration-300 ease-in-out"
+      className="flex flex-col min-h-dvh bg-[var(--bg)] text-[var(--text-1)] transition-[margin-left] duration-300 ease-in-out"
       style={{ marginLeft: `${marginLeft}px` }}
     >
       {children}

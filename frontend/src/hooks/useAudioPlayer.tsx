@@ -495,7 +495,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     });
 
     return () => {
-      const actions: MediaSessionAction[] = ["play", "pause", "previoustrack", "nexttrack", "seekbackward", "seekforward", "seekto"];
+      const actions = ["play", "pause", "previoustrack", "nexttrack", "seekbackward", "seekforward", "seekto"] as const;
       actions.forEach((action) => {
         try { navigator.mediaSession.setActionHandler(action, null); } catch {}
       });

@@ -25,7 +25,7 @@ function LoginContent() {
   const [loadingProvider, setLoadingProvider] = useState<string | null>(null);
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-[var(--bg)]">
+    <div className="min-h-dvh flex items-center justify-center px-4 bg-[var(--bg)]">
       <div className="w-full max-w-sm space-y-8">
         {/* Form card */}
         <div className="bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] p-8 space-y-8">

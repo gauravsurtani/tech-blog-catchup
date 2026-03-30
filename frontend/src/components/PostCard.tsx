@@ -106,7 +106,7 @@ export default function PostCard({ post, onPlay, onAddToQueue, onGenerate }: Pos
         {post.audio_status === "ready" && (
           <button
             onClick={() => onPlay?.(post)}
-            className="inline-flex items-center justify-center w-[42px] h-[42px] bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-[var(--primary-text)] rounded-full border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-sm)] nb-hover transition-all cursor-pointer"
+            className="inline-flex items-center justify-center w-11 h-11 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-[var(--primary-text)] rounded-full border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-sm)] nb-hover transition-all cursor-pointer"
           >
             <Play className="w-4 h-4" fill="currentColor" />
           </button>
@@ -130,7 +130,7 @@ export default function PostCard({ post, onPlay, onAddToQueue, onGenerate }: Pos
         <button
           onClick={() => onAddToQueue?.(post)}
           title="Add to queue"
-          className="inline-flex items-center justify-center w-[34px] h-[34px] bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] text-[var(--text-2)] rounded-[var(--radius)] border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-sm)] transition-all cursor-pointer"
+          className="inline-flex items-center justify-center w-9 h-9 bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] text-[var(--text-2)] rounded-[var(--radius)] border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-sm)] transition-all cursor-pointer"
         >
           <Plus className="w-4 h-4" />
         </button>

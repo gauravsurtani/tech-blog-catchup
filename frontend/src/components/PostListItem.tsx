@@ -40,28 +40,28 @@ export default function PostListItem({
       }`}
     >
       {/* Play / Status icon */}
-      <div className="flex-shrink-0 w-10">
+      <div className="flex-shrink-0 w-11">
         {post.audio_status === "ready" ? (
           <button
             onClick={() => onPlay?.(post)}
-            className="w-[42px] h-[42px] flex items-center justify-center bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-[var(--primary-text)] rounded-full border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-sm)] nb-hover transition-all cursor-pointer"
+            className="w-11 h-11 flex items-center justify-center bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-[var(--primary-text)] rounded-full border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-sm)] nb-hover transition-all cursor-pointer"
           >
             <Play className="w-3.5 h-3.5" fill="currentColor" />
           </button>
         ) : post.audio_status === "processing" ? (
-          <div className="w-[42px] h-[42px] flex items-center justify-center">
+          <div className="w-11 h-11 flex items-center justify-center">
             <Loader className="w-4 h-4 text-[var(--orange)] animate-spin" />
           </div>
         ) : onGenerate && (post.audio_status === "pending" || post.audio_status === "failed") ? (
           <button
             onClick={() => onGenerate(post)}
-            className="w-[42px] h-[42px] flex items-center justify-center bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] text-[var(--text-2)] rounded-full border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-sm)] nb-hover transition-all cursor-pointer"
+            className="w-11 h-11 flex items-center justify-center bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] text-[var(--text-2)] rounded-full border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-sm)] nb-hover transition-all cursor-pointer"
             title="Generate podcast"
           >
             <Mic className="w-3.5 h-3.5" />
           </button>
         ) : (
-          <div className="w-[42px] h-[42px]" />
+          <div className="w-11 h-11" />
         )}
       </div>
 

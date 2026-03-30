@@ -107,7 +107,7 @@ export default function PlaylistPage() {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewName(e.target.value)}
                 placeholder="Playlist name"
                 autoFocus
-                className="bg-[var(--tag-bg)] border-[var(--border-w)] border-[var(--border-color)] text-[var(--text-1)] text-sm rounded-[var(--radius)] px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent w-48"
+                className="bg-[var(--tag-bg)] border-[var(--border-w)] border-[var(--border-color)] text-[var(--text-1)] text-base sm:text-sm rounded-[var(--radius)] px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent w-48"
               />
               <button
                 type="submit"

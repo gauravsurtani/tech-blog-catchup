@@ -56,6 +56,8 @@
 
   /* Audio player */
   --player-height: 76px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
 
   /* Z-index scale */
   --z-nav: 40;
@@ -129,8 +131,9 @@ body {
   color: var(--text-1);
   font-size: 14px;
   line-height: 1.6;
-  min-height: 100vh;
+  min-height: 100dvh;
   transition: background 0.25s, color 0.25s;
+  overscroll-behavior: none;
 }
 
 /* Scrollbar */

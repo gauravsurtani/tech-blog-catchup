@@ -199,7 +199,7 @@ export default function PostDetailPage() {
 
         {/* Title */}
         <div className="flex items-start gap-3 mb-4">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--text-1)] leading-tight flex-1">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--text-1)] leading-tight flex-1 break-words">
             {post.title}
           </h1>
           <ShareButton postId={post.id} title={post.title} className="flex-shrink-0 mt-1" />

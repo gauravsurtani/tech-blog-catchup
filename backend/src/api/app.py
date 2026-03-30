@@ -67,16 +67,22 @@ def create_app() -> FastAPI:
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-    # CORS — configurable via CORS_ORIGINS env var (comma-separated)
+    # CORS — configurable via env vars
+    # CORS_ORIGINS: comma-separated exact origins (e.g. "https://blog2podcast.com,http://localhost:3000")
+    # CORS_ORIGIN_REGEX: regex pattern for dynamic matching (e.g. "https://.*\.blog2podcast\.com")
     origins = os.getenv(
         "CORS_ORIGINS",
         "http://localhost:3000,http://127.0.0.1:3000",
     ).split(",")
     allowed_origins = [o.strip() for o in origins if o.strip()]
+    origin_regex = os.getenv("CORS_ORIGIN_REGEX")
     logger.info("CORS allowed origins: %s", allowed_origins)
+    if origin_regex:
+        logger.info("CORS origin regex: %s", origin_regex)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=allowed_origins,
+        allow_origin_regex=origin_regex,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

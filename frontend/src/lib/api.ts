@@ -111,9 +111,21 @@ export interface PostsParams {
   ids?: number[];
 }
 
+// Map friendly sort names to API column names
+const SORT_ALIASES: Record<string, string> = {
+  newest: "-published_at",
+  oldest: "published_at",
+  shortest: "audio_duration_secs",
+  longest: "-audio_duration_secs",
+};
+
 export function getPosts(params: PostsParams = {}): Promise<PaginatedPosts> {
+  const resolved = { ...params };
+  if (resolved.sort && SORT_ALIASES[resolved.sort]) {
+    resolved.sort = SORT_ALIASES[resolved.sort];
+  }
   const searchParams = new URLSearchParams();
-  Object.entries(params).forEach(([key, value]) => {
+  Object.entries(resolved).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== "") {
       if (Array.isArray(value)) {
         searchParams.set(key, value.join(","));

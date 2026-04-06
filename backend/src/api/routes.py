@@ -95,7 +95,7 @@ def list_posts(
         total = query.count()
 
         # Sort — whitelist allowed columns to prevent attribute enumeration
-        ALLOWED_SORT = {"published_at", "created_at", "title", "word_count", "audio_status"}
+        ALLOWED_SORT = {"published_at", "created_at", "title", "word_count", "audio_status", "audio_duration_secs"}
         sort_col = sort.lstrip("-")
         if sort_col not in ALLOWED_SORT:
             raise HTTPException(status_code=400, detail=f"Invalid sort column: {sort_col}")

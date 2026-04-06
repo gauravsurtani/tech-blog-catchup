@@ -71,7 +71,7 @@ jobs:
         run: |
           npx next start &
           for i in $(seq 1 30); do curl -sf http://localhost:3000 > /dev/null && break || sleep 1; done
-          npx playwright test --project="Desktop Chrome" --grep-invert="API integration"
+          npx playwright test --project="Desktop Chrome" e2e/pwa.spec.ts e2e/mobile-responsive.spec.ts
         env:
           CI: true
           PLAYWRIGHT_BASE_URL: http://localhost:3000

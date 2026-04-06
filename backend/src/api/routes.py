@@ -9,8 +9,6 @@ from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse
 
-import trafilatura
-
 from fastapi import APIRouter, Depends, Query, HTTPException, BackgroundTasks, Request
 from sqlalchemy import func, desc, asc
 from sqlalchemy.orm import joinedload
@@ -53,7 +51,9 @@ def _post_to_summary(post: Post) -> PostSummary:
 
 
 @router.get("/posts", response_model=PaginatedPosts)
+@limiter.limit("60/minute")
 def list_posts(
+    request: Request,
     source: str | None = None,
     tag: str | None = None,
     search: str | None = None,
@@ -94,12 +94,15 @@ def list_posts(
 
         total = query.count()
 
-        # Sort
+        # Sort — whitelist allowed columns to prevent attribute enumeration
+        ALLOWED_SORT = {"published_at", "created_at", "title", "word_count", "audio_status"}
+        sort_col = sort.lstrip("-")
+        if sort_col not in ALLOWED_SORT:
+            raise HTTPException(status_code=400, detail=f"Invalid sort column: {sort_col}")
+        col = getattr(Post, sort_col)
         if sort.startswith("-"):
-            col = getattr(Post, sort[1:], Post.published_at)
             query = query.order_by(desc(col))
         else:
-            col = getattr(Post, sort, Post.published_at)
             query = query.order_by(asc(col))
 
         posts = query.offset(offset).limit(limit).all()
@@ -115,7 +118,8 @@ def list_posts(
 
 
 @router.get("/posts/{post_id}", response_model=PostDetail)
-def get_post(post_id: int):
+@limiter.limit("60/minute")
+def get_post(request: Request, post_id: int):
     session = get_session()
     try:
         post = session.query(Post).options(joinedload(Post.tags)).filter(Post.id == post_id).first()
@@ -143,7 +147,8 @@ def get_post(post_id: int):
 
 
 @router.get("/tags", response_model=list[TagInfo])
-def list_tags():
+@limiter.limit("30/minute")
+def list_tags(request: Request):
     session = get_session()
     try:
         results = (
@@ -159,7 +164,8 @@ def list_tags():
 
 
 @router.get("/sources", response_model=list[SourceInfo])
-def list_sources():
+@limiter.limit("30/minute")
+def list_sources(request: Request):
     session = get_session()
     try:
         results = (
@@ -174,7 +180,9 @@ def list_sources():
 
 
 @router.get("/playlist", response_model=PaginatedPosts)
+@limiter.limit("60/minute")
 def get_playlist(
+    request: Request,
     source: str | None = None,
     tag: str | None = None,
     search: str | None = None,
@@ -184,6 +192,7 @@ def get_playlist(
 ):
     """Same as list_posts but filtered to audio_status=ready only."""
     return list_posts(
+        request=request,
         source=source,
         tag=tag,
         search=search,
@@ -198,7 +207,9 @@ def get_playlist(
 
 
 @router.get("/jobs", response_model=list[JobInfo])
+@limiter.limit("30/minute")
 def list_jobs(
+    request: Request,
     job_type: str | None = None,
     status: str | None = None,
     limit: int = Query(default=50, ge=1, le=200),
@@ -217,7 +228,8 @@ def list_jobs(
 
 
 @router.get("/jobs/{job_id}", response_model=JobInfo)
-def get_job(job_id: int):
+@limiter.limit("30/minute")
+def get_job(request: Request, job_id: int):
     session = get_session()
     try:
         job = session.query(Job).filter(Job.id == job_id).first()
@@ -267,10 +279,10 @@ def _do_crawl(job_id: int, source_key: str | None):
             job.completed_at = datetime.utcnow()
             session.commit()
     except Exception as exc:
-        logger.error("Crawl failed: %s", exc)
+        logger.exception("Crawl job %d failed", job_id)
         if job:
             job.status = "failed"
-            job.error_message = str(exc)
+            job.error_message = "Crawl failed — check server logs for details"
             job.completed_at = datetime.utcnow()
             session.commit()
     finally:
@@ -306,10 +318,10 @@ def _do_generate(job_id: int, post_id: int | None, limit_count: int):
             job.completed_at = datetime.utcnow()
             session.commit()
     except Exception as exc:
-        logger.error("Generate failed: %s", exc)
+        logger.exception("Generate job %d failed", job_id)
         if job:
             job.status = "failed"
-            job.error_message = str(exc)
+            job.error_message = "Generation failed — check server logs for details"
             job.completed_at = datetime.utcnow()
             session.commit()
     finally:
@@ -406,92 +418,39 @@ def trigger_generate(request: Request, req: GenerateRequest, background_tasks: B
 @router.post("/posts/submit")
 @limiter.limit("3/hour")
 def submit_post(request: Request, req: SubmitRequest, background_tasks: BackgroundTasks):
-    """Submit user content (URL or text) for podcast generation.
+    """Submit text content for podcast generation.
 
-    - URL submission: extracts content via trafilatura, creates a Post, queues generation.
-    - Text submission: stores text directly, creates a Post, queues generation.
-    Returns the new post_id and a background job_id for generation tracking.
+    Accepts title + text, creates a Post, and queues generation.
+    Returns the new post_id and a background job_id for tracking.
     """
+    content_hash = hashlib.md5(req.text.encode()).hexdigest()
+    synthetic_url = f"user://submission/{content_hash}"
+
     session = get_session()
     try:
-        if req.url:
-            # --- URL submission ---
-            # Check for duplicate URL
-            existing = session.query(Post).filter(Post.url == req.url).first()
-            if existing:
-                raise HTTPException(
-                    status_code=409,
-                    detail=f"A post with this URL already exists (post_id={existing.id})",
-                )
-
-            # Extract content via trafilatura
-            downloaded = trafilatura.fetch_url(req.url)
-            if not downloaded:
-                raise HTTPException(
-                    status_code=422,
-                    detail="Could not fetch content from the provided URL",
-                )
-
-            text_content = trafilatura.extract(
-                downloaded,
-                output_format="txt",
-                include_formatting=True,
-                include_comments=False,
-                include_tables=True,
-                include_links=True,
+        # Check for duplicate content
+        existing = session.query(Post).filter(Post.content_hash == content_hash).first()
+        if existing:
+            raise HTTPException(
+                status_code=409,
+                detail=f"This content has already been submitted (post_id={existing.id})",
             )
-            if not text_content:
-                raise HTTPException(
-                    status_code=422,
-                    detail="Could not extract readable content from the provided URL",
-                )
 
-            metadata = trafilatura.extract_metadata(downloaded)
-            extracted_title = metadata.title if metadata else None
-            extracted_author = metadata.author if metadata else None
-
-            title = req.title or extracted_title or "Untitled Submission"
-            word_count = len(text_content.split())
-            content_hash = hashlib.md5(text_content.encode()).hexdigest()
-
-            post = Post(
-                url=req.url,
-                source_key="user",
-                source_name="User Submission",
-                title=title,
-                full_text=text_content,
-                author=extracted_author,
-                crawled_at=datetime.utcnow(),
-                audio_status="pending",
-                word_count=word_count,
-                content_hash=content_hash,
-                extraction_method="trafilatura",
-                is_user_submitted=True,
-                submission_type="url",
-            )
-        else:
-            # --- Text submission ---
-            # Generate a unique URL for text submissions
-            text_hash = hashlib.md5(req.text.encode()).hexdigest()[:12]
-            synthetic_url = f"user://submission/{text_hash}"
-
-            word_count = len(req.text.split())
-            content_hash = hashlib.md5(req.text.encode()).hexdigest()
-
-            post = Post(
-                url=synthetic_url,
-                source_key="user",
-                source_name="User Submission",
-                title=req.title,
-                full_text=req.text,
-                crawled_at=datetime.utcnow(),
-                audio_status="pending",
-                word_count=word_count,
-                content_hash=content_hash,
-                extraction_method="user_text",
-                is_user_submitted=True,
-                submission_type="text",
-            )
+        word_count = len(req.text.split())
+        post = Post(
+            url=synthetic_url,
+            source_key="user",
+            source_name="User Submission",
+            title=req.title,
+            full_text=req.text,
+            crawled_at=datetime.utcnow(),
+            audio_status="pending",
+            word_count=word_count,
+            content_hash=content_hash,
+            extraction_method="user_text",
+            is_user_submitted=True,
+            submission_type="text",
+        )
 
         session.add(post)
         session.commit()
@@ -514,7 +473,8 @@ def submit_post(request: Request, req: SubmitRequest, background_tasks: Backgrou
 
 
 @router.get("/status", response_model=StatusInfo)
-def get_status():
+@limiter.limit("20/minute")
+def get_status(request: Request):
     session = get_session()
     try:
         total = session.query(func.count(Post.id)).scalar()
@@ -551,7 +511,8 @@ def get_status():
 
 
 @router.get("/crawl-status", response_model=list[CrawlStatusItem])
-def crawl_status():
+@limiter.limit("20/minute")
+def crawl_status(request: Request):
     """Return scrape status for every configured source (green/red/grey)."""
     from src.config import get_config
 
@@ -612,7 +573,7 @@ def crawl_status():
                 last_crawl_type=log.crawl_type if log else None,
                 posts_added_last=log.posts_added if log else None,
                 urls_found_last=log.urls_found if log else None,
-                error_message=log.error_message if log else None,
+                error_message="Crawl encountered an error" if (log and log.error_message) else None,
             ))
 
         return result
@@ -621,7 +582,8 @@ def crawl_status():
 
 
 @router.get("/health")
-def health():
+@limiter.limit("30/minute")
+def health(request: Request):
     """Health check endpoint with system details."""
     session = get_session()
     try:
@@ -647,7 +609,8 @@ def health():
 
 
 @router.get("/config")
-def get_config_endpoint():
+@limiter.limit("30/minute")
+def get_config_endpoint(request: Request):
     """Public configuration for clients (audio URL, version)."""
     return {
         "audio_base_url": os.getenv("AUDIO_BASE_URL", "/audio"),
@@ -656,7 +619,8 @@ def get_config_endpoint():
 
 
 @router.get("/audio-inventory")
-def audio_inventory():
+@limiter.limit("10/minute")
+def audio_inventory(request: Request):
     """Compare posts with audio_status=ready against actual files on disk."""
     audio_dir_env = os.getenv("AUDIO_DIR")
     audio_dir = Path(audio_dir_env) if audio_dir_env else Path(__file__).parent.parent.parent / "audio"

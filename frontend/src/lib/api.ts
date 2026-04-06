@@ -178,7 +178,7 @@ export function getJobs(params: { job_type?: string; status?: string } = {}): Pr
   return fetchAPI<Job[]>(`/api/jobs${qs ? `?${qs}` : ""}`);
 }
 
-export function submitPost(data: { url?: string; text?: string; title?: string }): Promise<SubmitResponse> {
+export function submitPost(data: { text: string; title: string }): Promise<SubmitResponse> {
   return fetchAPI<SubmitResponse>("/api/posts/submit", {
     method: "POST",
     body: JSON.stringify(data),

@@ -129,22 +129,21 @@ class UpdatePreferencesRequest(BaseModel):
 
 
 class SubmitRequest(BaseModel):
-    url: str | None = None
-    text: str | None = None
-    title: str | None = None
+    text: str
+    title: str
 
     @model_validator(mode='after')
     def validate_input(self) -> "SubmitRequest":
-        # Treat empty strings as None
-        if self.url is not None and self.url.strip() == "":
-            self.url = None
-        if self.text is not None and self.text.strip() == "":
-            self.text = None
-
-        if not self.url and not self.text:
-            raise ValueError("Either 'url' or 'text' must be provided")
-        if self.url and self.text:
-            raise ValueError("Provide either 'url' or 'text', not both")
-        if self.text and not self.title:
-            raise ValueError("'title' is required when submitting text")
+        if not self.title or not self.title.strip():
+            raise ValueError("'title' is required")
+        if not self.text or not self.text.strip():
+            raise ValueError("'text' is required")
+        if len(self.title.strip()) > 500:
+            raise ValueError("Title must be under 500 characters")
+        if len(self.text.strip()) > 50000:
+            raise ValueError("Text must be under 50,000 characters (~10k words)")
+        if len(self.text.strip()) < 100:
+            raise ValueError("Text must be at least 100 characters")
+        self.title = self.title.strip()
+        self.text = self.text.strip()
         return self

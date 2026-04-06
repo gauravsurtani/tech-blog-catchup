@@ -7,7 +7,7 @@ const steps = [
   {
     icon: FileSearch,
     title: "Extract",
-    description: "We fetch and parse the article content from the URL or your pasted text.",
+    description: "We parse and prepare the article content you paste.",
   },
   {
     icon: Scroll,

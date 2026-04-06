@@ -11,6 +11,7 @@ import BottomTabs from "@/components/BottomTabs";
 import Footer from "@/components/Footer";
 import SessionProvider from "@/components/SessionProvider";
 import ThemeToggle from "@/components/ThemeToggle";
+import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -84,6 +85,7 @@ export default function RootLayout({
               </SidebarLayout>
               <BottomTabs />
               <AudioPlayer />
+              <ServiceWorkerRegistration />
             </AudioPlayerProvider>
           </SessionProvider>
         </ThemeProvider>

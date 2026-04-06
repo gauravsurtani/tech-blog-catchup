@@ -1,7 +1,7 @@
-"""Tests for POST /api/posts/submit — user content submission endpoint."""
+"""Tests for POST /api/posts/submit — user content submission endpoint (text-only)."""
 
 import pytest
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -10,6 +10,13 @@ from fastapi.testclient import TestClient
 from src.database import Base
 from src.models import Post
 import src.api.routes as routes_module
+
+# Helper: text long enough to pass the 100-char minimum
+SAMPLE_TEXT = (
+    "This is a detailed article about distributed systems and consensus protocols. "
+    "It covers topics such as Raft, Paxos, and Byzantine fault tolerance in modern "
+    "cloud-native architectures."
+)
 
 
 @pytest.fixture()
@@ -42,7 +49,6 @@ def client(test_db):
             from src.api.app import create_app
             from src.api.rate_limit import limiter as app_limiter
             app = create_app()
-            # Disable rate limiting for tests
             app_limiter.enabled = False
             with TestClient(app) as tc:
                 yield tc, SessionLocal
@@ -59,27 +65,49 @@ class TestSubmitValidation:
         resp = tc.post("/api/posts/submit", json={})
         assert resp.status_code == 422
 
-    def test_both_url_and_text_returns_422(self, client):
+    def test_text_without_title_returns_422(self, client):
         tc, _ = client
         resp = tc.post("/api/posts/submit", json={
-            "url": "https://example.com",
-            "text": "some text",
+            "text": SAMPLE_TEXT,
+        })
+        assert resp.status_code == 422
+
+    def test_title_without_text_returns_422(self, client):
+        tc, _ = client
+        resp = tc.post("/api/posts/submit", json={
+            "title": "Some Title",
+        })
+        assert resp.status_code == 422
+
+    def test_empty_text_returns_422(self, client):
+        tc, _ = client
+        resp = tc.post("/api/posts/submit", json={
+            "text": "",
             "title": "Title",
         })
         assert resp.status_code == 422
 
-    def test_text_without_title_returns_422(self, client):
+    def test_short_text_returns_422(self, client):
         tc, _ = client
         resp = tc.post("/api/posts/submit", json={
-            "text": "some text",
+            "text": "Too short",
+            "title": "Title",
         })
         assert resp.status_code == 422
 
-    def test_empty_url_and_empty_text_returns_422(self, client):
+    def test_long_title_returns_422(self, client):
         tc, _ = client
         resp = tc.post("/api/posts/submit", json={
-            "url": "",
-            "text": "",
+            "text": SAMPLE_TEXT,
+            "title": "x" * 501,
+        })
+        assert resp.status_code == 422
+
+    def test_long_text_returns_422(self, client):
+        tc, _ = client
+        resp = tc.post("/api/posts/submit", json={
+            "text": "x" * 50001,
+            "title": "Title",
         })
         assert resp.status_code == 422
 
@@ -90,7 +118,7 @@ class TestSubmitText:
     def test_submit_text_returns_200_with_post_id(self, client):
         tc, _ = client
         resp = tc.post("/api/posts/submit", json={
-            "text": "Article about distributed systems and consensus protocols.",
+            "text": SAMPLE_TEXT,
             "title": "Distributed Systems 101",
         })
         assert resp.status_code == 200
@@ -101,29 +129,27 @@ class TestSubmitText:
     def test_submit_text_creates_correct_post(self, client):
         tc, SessionLocal = client
         resp = tc.post("/api/posts/submit", json={
-            "text": "Article about testing strategies.",
+            "text": SAMPLE_TEXT,
             "title": "TDD Guide",
         })
         assert resp.status_code == 200
         post_id = resp.json()["post_id"]
 
-        # Verify via GET /api/posts/{id}
         detail = tc.get(f"/api/posts/{post_id}")
         assert detail.status_code == 200
         post = detail.json()
         assert post["source_key"] == "user"
         assert post["title"] == "TDD Guide"
-        assert post["full_text"] == "Article about testing strategies."
+        assert post["full_text"] == SAMPLE_TEXT
 
     def test_submit_text_sets_user_submission_fields(self, client):
         tc, SessionLocal = client
         resp = tc.post("/api/posts/submit", json={
-            "text": "Content about microservices.",
+            "text": SAMPLE_TEXT,
             "title": "Microservices",
         })
         post_id = resp.json()["post_id"]
 
-        # Check DB directly for fields not exposed in API response
         session = SessionLocal()
         post = session.query(Post).filter(Post.id == post_id).first()
         assert post.is_user_submitted is True
@@ -134,22 +160,21 @@ class TestSubmitText:
 
     def test_submit_text_sets_word_count(self, client):
         tc, SessionLocal = client
-        text = "one two three four five"
         resp = tc.post("/api/posts/submit", json={
-            "text": text,
+            "text": SAMPLE_TEXT,
             "title": "Word Count Test",
         })
         post_id = resp.json()["post_id"]
 
         session = SessionLocal()
         post = session.query(Post).filter(Post.id == post_id).first()
-        assert post.word_count == 5
+        assert post.word_count == len(SAMPLE_TEXT.split())
         session.close()
 
     def test_submit_text_queues_generate_job(self, client):
         tc, _ = client
         resp = tc.post("/api/posts/submit", json={
-            "text": "Enough content to generate a podcast episode from.",
+            "text": SAMPLE_TEXT,
             "title": "Podcast Test",
         })
         assert resp.status_code == 200
@@ -157,106 +182,12 @@ class TestSubmitText:
         assert "job_id" in data
         assert data["job_id"] is not None
 
-
-class TestSubmitURL:
-    """URL submission tests — mock trafilatura to avoid network calls."""
-
-    @patch("src.api.routes.trafilatura")
-    def test_submit_url_returns_200(self, mock_traf, client):
+    def test_submit_duplicate_content_returns_409(self, client):
         tc, _ = client
-        mock_traf.fetch_url.return_value = "<html><body>Article</body></html>"
-        mock_traf.extract.return_value = "Extracted article about Kubernetes."
-        mock_meta = type("Meta", (), {"title": "K8s Guide", "author": "Alice", "date": None})()
-        mock_traf.extract_metadata.return_value = mock_meta
+        payload = {"text": SAMPLE_TEXT, "title": "First Submit"}
+        resp1 = tc.post("/api/posts/submit", json=payload)
+        assert resp1.status_code == 200
 
-        resp = tc.post("/api/posts/submit", json={
-            "url": "https://example.com/k8s-guide",
-        })
-        assert resp.status_code == 200
-        data = resp.json()
-        assert "post_id" in data
-
-    @patch("src.api.routes.trafilatura")
-    def test_submit_url_creates_correct_post(self, mock_traf, client):
-        tc, SessionLocal = client
-        mock_traf.fetch_url.return_value = "<html><body>Content</body></html>"
-        mock_traf.extract.return_value = "Detailed article about caching strategies."
-        mock_meta = type("Meta", (), {"title": "Caching 101", "author": "Bob", "date": None})()
-        mock_traf.extract_metadata.return_value = mock_meta
-
-        resp = tc.post("/api/posts/submit", json={
-            "url": "https://example.com/caching",
-        })
-        post_id = resp.json()["post_id"]
-
-        session = SessionLocal()
-        post = session.query(Post).filter(Post.id == post_id).first()
-        assert post.url == "https://example.com/caching"
-        assert post.source_key == "user"
-        assert post.is_user_submitted is True
-        assert post.submission_type == "url"
-        assert post.title == "Caching 101"
-        assert post.author == "Bob"
-        assert post.extraction_method == "trafilatura"
-        session.close()
-
-    @patch("src.api.routes.trafilatura")
-    def test_submit_url_extraction_fails_returns_500(self, mock_traf, client):
-        tc, _ = client
-        mock_traf.fetch_url.return_value = None  # fetch fails
-
-        resp = tc.post("/api/posts/submit", json={
-            "url": "https://example.com/bad-url",
-        })
-        assert resp.status_code == 422
-        assert "extract" in resp.json()["detail"].lower() or "content" in resp.json()["detail"].lower()
-
-    @patch("src.api.routes.trafilatura")
-    def test_submit_url_no_content_returns_422(self, mock_traf, client):
-        tc, _ = client
-        mock_traf.fetch_url.return_value = "<html></html>"
-        mock_traf.extract.return_value = None  # no content extracted
-
-        resp = tc.post("/api/posts/submit", json={
-            "url": "https://example.com/empty",
-        })
-        assert resp.status_code == 422
-
-    @patch("src.api.routes.trafilatura")
-    def test_submit_url_uses_title_override(self, mock_traf, client):
-        tc, SessionLocal = client
-        mock_traf.fetch_url.return_value = "<html><body>Text</body></html>"
-        mock_traf.extract.return_value = "Article content here."
-        mock_meta = type("Meta", (), {"title": "Original Title", "author": None, "date": None})()
-        mock_traf.extract_metadata.return_value = mock_meta
-
-        resp = tc.post("/api/posts/submit", json={
-            "url": "https://example.com/override",
-            "title": "My Custom Title",
-        })
-        post_id = resp.json()["post_id"]
-
-        session = SessionLocal()
-        post = session.query(Post).filter(Post.id == post_id).first()
-        assert post.title == "My Custom Title"
-        session.close()
-
-    @patch("src.api.routes.trafilatura")
-    def test_submit_duplicate_url_returns_409(self, mock_traf, client):
-        tc, SessionLocal = client
-        # Pre-insert a post with this URL
-        session = SessionLocal()
-        session.add(Post(
-            url="https://example.com/exists",
-            source_key="test",
-            source_name="Test",
-            title="Existing Post",
-        ))
-        session.commit()
-        session.close()
-
-        resp = tc.post("/api/posts/submit", json={
-            "url": "https://example.com/exists",
-        })
-        assert resp.status_code == 409
-        assert "already exists" in resp.json()["detail"].lower()
+        resp2 = tc.post("/api/posts/submit", json=payload)
+        assert resp2.status_code == 409
+        assert "already been submitted" in resp2.json()["detail"].lower()

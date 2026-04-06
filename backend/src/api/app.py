@@ -84,8 +84,8 @@ def create_app() -> FastAPI:
         allow_origins=allowed_origins,
         allow_origin_regex=origin_regex,
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
+        allow_headers=["Content-Type", "Authorization"],
     )
 
     # Mount audio directory for serving MP3 files

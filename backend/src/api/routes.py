@@ -94,7 +94,14 @@ def list_posts(
 
         total = query.count()
 
-        # Sort — whitelist allowed columns to prevent attribute enumeration
+        # Sort — map friendly aliases then whitelist columns
+        SORT_ALIASES = {
+            "newest": "-published_at",
+            "oldest": "published_at",
+            "shortest": "audio_duration_secs",
+            "longest": "-audio_duration_secs",
+        }
+        sort = SORT_ALIASES.get(sort, sort)
         ALLOWED_SORT = {"published_at", "created_at", "title", "word_count", "audio_status", "audio_duration_secs"}
         sort_col = sort.lstrip("-")
         if sort_col not in ALLOWED_SORT:

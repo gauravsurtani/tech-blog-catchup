@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { usePosts } from "@/hooks/usePosts";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
@@ -26,9 +27,20 @@ function ListItemSkeleton() {
   );
 }
 
+const VISITED_KEY = "catchup-visited";
+
 export default function Home() {
+  const router = useRouter();
   const [limit, setLimit] = useState(PAGE_SIZE);
   const { play, addToQueue } = useAudioPlayer();
+
+  // First-time visitors go to the landing page
+  useEffect(() => {
+    if (typeof window !== "undefined" && !localStorage.getItem(VISITED_KEY)) {
+      localStorage.setItem(VISITED_KEY, "1");
+      router.replace("/landing");
+    }
+  }, [router]);
 
   // Only show audio-ready posts on the Home (Podcast Feed) page
   const params = useMemo(

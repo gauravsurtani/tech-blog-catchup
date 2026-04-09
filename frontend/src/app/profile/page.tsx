@@ -3,14 +3,13 @@
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { User, Calendar } from "lucide-react";
-import AuthGuard from "@/components/AuthGuard";
 import ListeningStats from "@/components/ListeningStats";
 import { useMemo } from "react";
+import { useAuthEnabled } from "@/hooks/useRequireAuth";
 
 const PLAYBACK_POSITIONS_KEY = "tbc-playback-positions";
 
 function getMemberSince(sessionCreatedAt?: string | null): string | null {
-  // Prefer session creation date if available
   if (sessionCreatedAt) {
     try {
       return new Date(sessionCreatedAt).toLocaleDateString("en-US", {
@@ -19,7 +18,7 @@ function getMemberSince(sessionCreatedAt?: string | null): string | null {
         day: "numeric",
       });
     } catch {
-      // fall through to playback heuristic
+      // fall through
     }
   }
 
@@ -44,6 +43,7 @@ function getMemberSince(sessionCreatedAt?: string | null): string | null {
 
 export default function ProfilePage() {
   const { data: session } = useSession();
+  const authEnabled = useAuthEnabled();
   const user = session?.user;
 
   const memberSince = useMemo(
@@ -62,19 +62,18 @@ export default function ProfilePage() {
   }, [user]);
 
   return (
-    <AuthGuard>
-      <div className="px-4 py-8 sm:px-6 lg:px-8 max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-8">
-          <User className="w-6 h-6 text-[var(--text-3)]" />
-          <h1 className="text-2xl font-extrabold text-[var(--text-1)]">Profile</h1>
-        </div>
+    <div className="px-4 py-8 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-8">
+        <User className="w-6 h-6 text-[var(--text-3)]" />
+        <h1 className="text-2xl font-extrabold text-[var(--text-1)]">Profile</h1>
+      </div>
 
-        {/* User Info Card */}
+      {/* User Info Card — only show when logged in */}
+      {authEnabled && user && (
         <div className="bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] p-6 mb-8">
           <div className="flex items-center gap-5">
-            {/* Avatar */}
-            {user?.image ? (
+            {user.image ? (
               <Image
                 src={user.image}
                 alt={user.name || "User avatar"}
@@ -89,18 +88,12 @@ export default function ProfilePage() {
                 {initials}
               </span>
             )}
-
-            {/* Name / Email / Member since */}
             <div className="min-w-0 flex-1">
-              {user?.name && (
-                <h2 className="text-xl font-semibold text-[var(--text-1)] truncate">
-                  {user.name}
-                </h2>
+              {user.name && (
+                <h2 className="text-xl font-semibold text-[var(--text-1)] truncate">{user.name}</h2>
               )}
-              {user?.email && (
-                <p className="text-sm text-[var(--text-2)] truncate mt-0.5">
-                  {user.email}
-                </p>
+              {user.email && (
+                <p className="text-sm text-[var(--text-2)] truncate mt-0.5">{user.email}</p>
               )}
               {memberSince && (
                 <p className="text-xs text-[var(--text-3)] mt-2 flex items-center gap-1.5">
@@ -111,10 +104,27 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+      )}
 
-        {/* Listening Stats */}
-        <ListeningStats />
-      </div>
-    </AuthGuard>
+      {/* Anonymous user banner */}
+      {!authEnabled && (
+        <div className="bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] p-6 mb-8">
+          <div className="flex items-center gap-5">
+            <span className="w-[72px] h-[72px] rounded-[var(--radius-full)] border-[var(--border-w)] border-[var(--border-color)] shrink-0 bg-[var(--primary)] text-[var(--primary-text)] flex items-center justify-center text-2xl font-bold">
+              L
+            </span>
+            <div>
+              <h2 className="text-xl font-semibold text-[var(--text-1)]">Listener</h2>
+              <p className="text-sm text-[var(--text-2)] mt-0.5">
+                Your listening history and stats are stored locally on this device.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Listening Stats — always show */}
+      <ListeningStats />
+    </div>
   );
 }

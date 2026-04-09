@@ -5,7 +5,7 @@ export default function PrivacyPage() {
         Privacy Policy
       </h1>
       <p className="text-sm text-[var(--text-3)] mb-8">
-        Last updated: February 2026
+        Last updated: April 2026
       </p>
 
       <div className="bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius-xl)] shadow-[var(--shadow)] p-8 prose dark:prose-invert max-w-none space-y-6 text-[var(--text-2)]">

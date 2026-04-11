@@ -128,6 +128,34 @@ class UpdatePreferencesRequest(BaseModel):
     notifications: bool | None = None
 
 
+class ImportPostRequest(BaseModel):
+    url: str
+    source_key: str
+    source_name: str
+    title: str
+    summary: str | None = None
+    full_text: str | None = None
+    author: str | None = None
+    published_at: datetime | None = None
+    crawled_at: datetime | None = None
+    audio_status: str = "pending"
+    audio_duration_secs: int | None = None
+    word_count: int | None = None
+    content_quality: str | None = None
+    quality_score: int | None = None
+    extraction_method: str | None = None
+    content_hash: str | None = None
+    podcast_script: str | None = None
+    tags: list[str] = []
+
+
+class ImportResponse(BaseModel):
+    created: int
+    updated: int
+    skipped: int
+    errors: list[str]
+
+
 class SubmitRequest(BaseModel):
     text: str
     title: str

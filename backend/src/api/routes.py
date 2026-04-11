@@ -9,7 +9,7 @@ from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse
 
-from fastapi import APIRouter, Depends, Query, HTTPException, BackgroundTasks, Request
+from fastapi import APIRouter, Depends, Query, HTTPException, BackgroundTasks, Request, UploadFile, File, Form
 from sqlalchemy import func, desc, asc
 from sqlalchemy.orm import joinedload
 
@@ -22,7 +22,7 @@ from src.api.schemas import (
     StatusInfo, PaginatedPosts, CrawlRequest, GenerateRequest,
     JobInfo, CrawlStatusItem,
     UserMeResponse, UserInfo, UserPreferencesInfo, UpdatePreferencesRequest,
-    SubmitRequest,
+    SubmitRequest, ImportPostRequest, ImportResponse,
 )
 from src.api.rate_limit import limiter
 from src.api.auth_middleware import get_current_user
@@ -744,5 +744,113 @@ def update_me(
             user=UserInfo.model_validate(current_user),
             preferences=prefs_info,
         )
+    finally:
+        session.close()
+
+
+# --- Import endpoint for syncing local data to production ---
+
+@router.post("/import", response_model=ImportResponse)
+async def import_posts(posts: list[ImportPostRequest]):
+    """Bulk import posts (upsert by URL). Audio files uploaded separately via /import/audio."""
+    session = get_session()
+    created = 0
+    updated = 0
+    skipped = 0
+    errors = []
+    try:
+        for post_data in posts:
+            try:
+                existing = session.query(Post).filter(Post.url == post_data.url).first()
+                if existing:
+                    if post_data.audio_status == "ready" and existing.audio_status != "ready":
+                        for field in [
+                            "title", "summary", "full_text", "author", "published_at",
+                            "audio_status", "audio_duration_secs", "word_count",
+                            "content_quality", "quality_score", "extraction_method",
+                            "content_hash", "podcast_script",
+                        ]:
+                            val = getattr(post_data, field)
+                            if val is not None:
+                                setattr(existing, field, val)
+                        updated += 1
+                    else:
+                        skipped += 1
+                else:
+                    new_post = Post(
+                        url=post_data.url,
+                        source_key=post_data.source_key,
+                        source_name=post_data.source_name,
+                        title=post_data.title,
+                        summary=post_data.summary,
+                        full_text=post_data.full_text,
+                        author=post_data.author,
+                        published_at=post_data.published_at,
+                        crawled_at=post_data.crawled_at or datetime.utcnow(),
+                        audio_status=post_data.audio_status,
+                        audio_duration_secs=post_data.audio_duration_secs,
+                        word_count=post_data.word_count,
+                        content_quality=post_data.content_quality,
+                        quality_score=post_data.quality_score,
+                        extraction_method=post_data.extraction_method,
+                        content_hash=post_data.content_hash,
+                        podcast_script=post_data.podcast_script,
+                    )
+                    session.add(new_post)
+                    session.flush()
+
+                    for tag_name in post_data.tags:
+                        tag = session.query(Tag).filter(Tag.name == tag_name).first()
+                        if tag:
+                            new_post.tags.append(tag)
+
+                    created += 1
+            except Exception as e:
+                errors.append(f"{post_data.url}: {str(e)}")
+
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        session.close()
+
+    return ImportResponse(created=created, updated=updated, skipped=skipped, errors=errors)
+
+
+@router.post("/import/audio")
+async def import_audio(
+    url: str = Form(...),
+    audio_filename: str = Form(...),
+    audio_file: UploadFile = File(...),
+):
+    """Upload an audio file and link it to a post by URL."""
+    session = get_session()
+    try:
+        post = session.query(Post).filter(Post.url == url).first()
+        if not post:
+            raise HTTPException(status_code=404, detail=f"Post not found: {url}")
+
+        env_audio_dir = os.getenv("AUDIO_DIR")
+        if env_audio_dir:
+            audio_dir = Path(env_audio_dir)
+        else:
+            audio_dir = Path(__file__).parent.parent.parent / "audio"
+        audio_dir.mkdir(parents=True, exist_ok=True)
+
+        dest = audio_dir / audio_filename
+        content = await audio_file.read()
+        dest.write_bytes(content)
+
+        post.audio_path = f"audio/{audio_filename}"
+        post.audio_status = "ready"
+        session.commit()
+
+        return {"status": "ok", "post_id": post.id, "audio_path": post.audio_path}
+    except HTTPException:
+        raise
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
     finally:
         session.close()

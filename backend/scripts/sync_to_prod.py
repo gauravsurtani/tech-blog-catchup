@@ -22,16 +22,20 @@ from src.database import get_session
 from src.models import Post
 
 
-def get_ready_posts():
-    """Get all posts with audio_status=ready from local DB."""
+def get_posts(all_with_content: bool = False):
+    """Get posts from local DB. If all_with_content, gets all posts with real content."""
     session = get_session()
     try:
-        posts = (
-            session.query(Post)
-            .filter(Post.audio_status == "ready")
-            .order_by(Post.id)
-            .all()
-        )
+        query = session.query(Post).order_by(Post.id)
+        if all_with_content:
+            from sqlalchemy import func
+            query = query.filter(
+                (Post.audio_status == "ready") |
+                (Post.full_text != None)
+            ).filter(func.length(Post.full_text) > 500)
+        else:
+            query = query.filter(Post.audio_status == "ready")
+        posts = query.all()
         result = []
         for p in posts:
             result.append({
@@ -162,10 +166,12 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="Show what would be synced")
     parser.add_argument("--audio-only", action="store_true", help="Only upload audio (skip post metadata)")
     parser.add_argument("--metadata-only", action="store_true", help="Only sync metadata (skip audio)")
+    parser.add_argument("--all", action="store_true", help="Sync all posts with content (not just audio-ready)")
     args = parser.parse_args()
 
-    posts = get_ready_posts()
-    print(f"Found {len(posts)} posts with audio locally")
+    posts = get_posts(all_with_content=args.all)
+    label = "posts with content" if args.all else "posts with audio"
+    print(f"Found {len(posts)} {label} locally")
 
     if not posts:
         print("Nothing to sync.")
@@ -178,12 +184,9 @@ def main():
     for src, cnt in sources.most_common():
         print(f"  {src}: {cnt}")
 
-    total_size = sum(
-        resolve_audio_path(p["audio_path"]).stat().st_size
-        for p in posts
-        if resolve_audio_path(p.get("audio_path", ""))
-    )
-    print(f"Total audio: {total_size / (1024*1024):.0f} MB")
+    audio_posts = [p for p in posts if resolve_audio_path(p.get("audio_path", ""))]
+    total_size = sum(resolve_audio_path(p["audio_path"]).stat().st_size for p in audio_posts)
+    print(f"Audio files: {len(audio_posts)} ({total_size / (1024*1024):.0f} MB)")
 
     # Step 1: Sync post metadata
     if not args.audio_only:

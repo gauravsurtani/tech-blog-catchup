@@ -10,6 +10,7 @@ deduplicates, then only extracts URLs that are not yet in the database.
 
 import asyncio
 import logging
+import os
 import re
 from datetime import datetime
 
@@ -73,7 +74,8 @@ def _scrape_blog_page_urls(
     """ % max_scrolls
 
     # Validate pagination_pattern to prevent SSRF via crafted URL paths
-    if pagination_pattern and not re.match(r'^/[\w\-/{}.]+$', pagination_pattern):
+    # Allow both path patterns (/page/{n}/) and query param patterns (?page={n})
+    if pagination_pattern and not re.match(r'^[/?][\w\-/{}.=&?]+$', pagination_pattern):
         logger.warning("Invalid pagination_pattern format: %s — ignoring", pagination_pattern)
         pagination_pattern = None
 
@@ -231,8 +233,11 @@ def discover_urls(source: BlogSource) -> tuple[list[str], dict[str, list[str]]]:
         except Exception as exc:
             logger.warning("Sitemap failed for %s: %s", source.key, exc)
 
+    # Check if we're in RSS-only mode (skip browser-dependent discovery)
+    rss_only = os.getenv("CRAWL_MODE", "").lower() == "rss_only"
+
     # 2. Medium archive (year-by-year browser scrape)
-    if source.platform == "medium":
+    if source.platform == "medium" and not rss_only:
         archive_base = source.archive_url or source.feed_url
         if archive_base:
             # Derive base URL: strip /feed or /archive suffix
@@ -247,8 +252,8 @@ def discover_urls(source: BlogSource) -> tuple[list[str], dict[str, list[str]]]:
             except Exception as exc:
                 logger.warning("Medium archive failed for %s: %s", source.key, exc)
 
-    # 3. Blog page scrape with scroll
-    if source.blog_page_url:
+    # 3. Blog page scrape with scroll (needs browser)
+    if source.blog_page_url and not rss_only:
         try:
             console.print(f"  [dim]Blog page: {source.blog_page_url}[/dim]")
             blog_urls = _scrape_blog_page_urls(

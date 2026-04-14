@@ -24,6 +24,8 @@ sources:
     name: "AWS Architecture"
     feed_url: "https://aws.amazon.com/blogs/architecture/feed"
     sitemap_url: "https://aws.amazon.com/blogs/architecture/sitemap.xml"
+    blog_page_url: "https://aws.amazon.com/blogs/architecture/"
+    pagination_pattern: "/page/{n}/"
     enabled: true
   discord:
     name: "Discord Engineering"
@@ -35,9 +37,11 @@ sources:
   netflix:
     name: "Netflix TechBlog"
     feed_url: "https://netflixtechblog.medium.com/feed"
-    archive_url: "https://netflixtechblog.medium.com/archive"
+    sitemap_url: "https://netflixtechblog.medium.com/sitemap/sitemap.xml"
+    archive_url: "https://netflixtechblog.com/archive"
     blog_url_pattern: "netflixtechblog"
     platform: "medium"
+    needs_browser: true
     enabled: true
   google:
     name: "Google Research"
@@ -48,7 +52,7 @@ sources:
   nvidia:
     name: "NVIDIA Developer"
     feed_url: "https://developer.nvidia.com/blog/feed"
-    sitemap_url: "https://developer.nvidia.com/sitemap.xml"
+    sitemap_url: "https://developer.nvidia.com/blog/wp-sitemap.xml"
     blog_url_pattern: "/blog/"
     enabled: true
   cloudflare:
@@ -60,6 +64,9 @@ sources:
     name: "Slack Engineering"
     feed_url: "https://slack.engineering/feed"
     sitemap_url: "https://slack.engineering/sitemap.xml"
+    blog_page_url: "https://slack.engineering/articles/"
+    blog_url_pattern: "/"
+    pagination_pattern: "/page/{n}/"
     enabled: true
   figma:
     name: "Figma Tech Blog"
@@ -70,20 +77,26 @@ sources:
     needs_browser: true
   shopify:
     name: "Shopify Engineering"
-    feed_url: "https://shopify.engineering/blog.atom"
+    feed_url: ""
     sitemap_url: "https://shopify.engineering/sitemap.xml"
+    blog_page_url: "https://shopify.engineering/latest"
+    blog_url_pattern: "/"
+    pagination_pattern: "?page={n}"
     enabled: true
   stripe:
     name: "Stripe Engineering"
     feed_url: "https://stripe.com/blog/feed.rss"
     sitemap_url: "https://stripe.com/sitemap.xml"
+    blog_page_url: "https://stripe.dev/blog"
     blog_url_pattern: "/blog/"
     enabled: true
   microsoft:
     name: "Microsoft DevBlogs"
     feed_url: "https://devblogs.microsoft.com/engineering-at-microsoft/feed"
     sitemap_url: "https://devblogs.microsoft.com/sitemap.xml"
+    blog_page_url: "https://devblogs.microsoft.com/engineering-at-microsoft/"
     blog_url_pattern: "/engineering-at-microsoft/"
+    pagination_pattern: "/page/{n}/"
     enabled: true
   github:
     name: "GitHub Engineering"

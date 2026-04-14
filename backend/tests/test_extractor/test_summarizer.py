@@ -5,11 +5,12 @@ from unittest.mock import AsyncMock, patch, MagicMock
 
 
 class TestGenerateContent:
-    async def test_raises_without_api_key(self):
+    async def test_fallback_without_api_key(self):
         with patch.dict("os.environ", {}, clear=True):
             from src.extractor.content_generator import generate_content
-            with pytest.raises(ValueError, match="OPENAI_API_KEY"):
-                await generate_content("Title", "Some markdown content")
+            result = await generate_content("Title", "Some markdown content\n\nSecond paragraph")
+            assert result["summary"] == "Some markdown content"
+            assert result["podcast_script"] is None
 
     async def test_returns_summary_and_script(self):
         mock_response = MagicMock()
@@ -54,11 +55,11 @@ class TestGenerateContent:
 
 
 class TestGenerateSummaryOnly:
-    async def test_raises_without_api_key(self):
+    async def test_fallback_without_api_key(self):
         with patch.dict("os.environ", {}, clear=True):
             from src.extractor.content_generator import generate_summary_only
-            with pytest.raises(ValueError, match="OPENAI_API_KEY"):
-                await generate_summary_only("Title", "Content")
+            result = await generate_summary_only("Title", "First paragraph\n\nSecond paragraph")
+            assert result == "First paragraph"
 
     async def test_returns_summary(self):
         mock_response = MagicMock()

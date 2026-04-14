@@ -22,7 +22,9 @@ async def generate_content(title: str, markdown: str) -> dict:
     """
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
-        raise ValueError("OPENAI_API_KEY is required for content generation")
+        logger.warning("OPENAI_API_KEY not set — returning basic summary without LLM")
+        first_para = markdown.split("\n\n")[0][:500] if markdown else ""
+        return {"summary": first_para, "podcast_script": None}
 
     config = get_config()
     llm_cfg = config.llm.get("content_generation", {})
@@ -104,7 +106,8 @@ async def generate_summary_only(title: str, markdown: str) -> str:
     """Generate only a summary (no podcast script). Convenience wrapper."""
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
-        raise ValueError("OPENAI_API_KEY is required for content generation")
+        logger.warning("OPENAI_API_KEY not set — returning first paragraph as summary")
+        return markdown.split("\n\n")[0][:500] if markdown else ""
 
     config = get_config()
     llm_cfg = config.llm.get("content_generation", {})

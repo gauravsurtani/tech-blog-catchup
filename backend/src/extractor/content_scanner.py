@@ -18,7 +18,8 @@ async def is_useful_content(title: str, text: str, url: str) -> bool:
     """
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
-        raise ValueError("OPENAI_API_KEY is required for content scanning")
+        logger.warning("OPENAI_API_KEY not set — skipping content scanning (assuming article)")
+        return True
 
     config = get_config()
     llm_cfg = config.llm.get("content_scanner", {})

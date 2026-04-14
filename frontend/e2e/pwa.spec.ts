@@ -40,10 +40,10 @@ test.describe("PWA Configuration", () => {
     const appTitle = page.locator('meta[name="apple-mobile-web-app-title"]');
     await expect(appTitle).toHaveAttribute("content", "Catchup");
 
-    const statusBar = page.locator('meta[name="apple-mobile-web-app-status-bar-style"]');
+    const statusBar = page.locator('meta[name="apple-mobile-web-app-status-bar-style"]').first();
     await expect(statusBar).toHaveAttribute("content", "black-translucent");
 
-    const themeColor = page.locator('meta[name="theme-color"]');
+    const themeColor = page.locator('meta[name="theme-color"]').first();
     await expect(themeColor).toHaveAttribute("content");
 
     const viewport = page.locator('meta[name="viewport"]');

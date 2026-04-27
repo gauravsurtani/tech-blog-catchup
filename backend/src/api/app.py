@@ -19,6 +19,10 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    from src.env_check import validate_environment
+    env_status = validate_environment()
+    app.state.env_status = env_status
+
     init_db()
     # Recover posts stuck in "processing" from previous crashes
     try:
@@ -84,7 +88,7 @@ def create_app() -> FastAPI:
         allow_origins=allowed_origins,
         allow_origin_regex=origin_regex,
         allow_credentials=True,
-        allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
+        allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
         allow_headers=["Content-Type", "Authorization"],
     )
 

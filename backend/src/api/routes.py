@@ -5,18 +5,21 @@ import json
 import logging
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timezone
+from email.utils import format_datetime
 from pathlib import Path
 from urllib.parse import urlparse
+from xml.etree.ElementTree import Element, SubElement, tostring
 
 from fastapi import APIRouter, Depends, Query, HTTPException, BackgroundTasks, Request, UploadFile, File, Form
+from fastapi.responses import Response
 from sqlalchemy import func, desc, asc
 from sqlalchemy.orm import joinedload
 
 logger = logging.getLogger(__name__)
 
 from src.database import get_session
-from src.models import Post, Tag, CrawlLog, post_tags, Job, User, UserPreferences
+from src.models import Post, Tag, CrawlLog, post_tags, Job, User, UserPreferences, UserFavorite
 from src.api.schemas import (
     PostSummary, PostDetail, TagInfo, SourceInfo,
     StatusInfo, PaginatedPosts, CrawlRequest, GenerateRequest,
@@ -25,7 +28,7 @@ from src.api.schemas import (
     SubmitRequest, ImportPostRequest, ImportResponse,
 )
 from src.api.rate_limit import limiter
-from src.api.auth_middleware import get_current_user
+from src.api.auth_middleware import get_current_user, get_optional_user
 
 router = APIRouter(prefix="/api")
 
@@ -612,6 +615,8 @@ def health(request: Request):
         "audio_ready_count": audio_ready,
         "version": "0.1.0",
         "audio_base_url": os.getenv("AUDIO_BASE_URL", "/audio"),
+        "auth_configured": bool(os.getenv("NEXTAUTH_SECRET")),
+        "generation_configured": bool(os.getenv("OPENAI_API_KEY")),
     }
 
 
@@ -682,6 +687,163 @@ def audio_inventory(request: Request):
         session.close()
 
 
+# ---------- RSS Podcast Feed ----------
+
+
+@router.get("/feed.xml")
+@limiter.limit("120/minute")
+def podcast_feed(
+    request: Request,
+    source: str | None = None,
+    tag: str | None = None,
+):
+    """RSS 2.0 podcast feed with iTunes extensions."""
+    site_url = os.getenv("SITE_URL", "http://localhost:3000")
+    audio_base = os.getenv("AUDIO_BASE_URL", str(request.base_url).rstrip("/") + "/audio")
+
+    ITUNES_NS = "http://www.itunes.com/dtds/podcast-1.0.dtd"
+    ATOM_NS = "http://www.w3.org/2005/Atom"
+
+    rss = Element("rss", version="2.0")
+    rss.set("xmlns:itunes", ITUNES_NS)
+    rss.set("xmlns:atom", ATOM_NS)
+
+    channel = SubElement(rss, "channel")
+    SubElement(channel, "title").text = "Catchup — Tech Blog Podcasts"
+    SubElement(channel, "link").text = site_url
+    SubElement(channel, "description").text = (
+        "Listen to top tech engineering blogs as AI-generated conversational podcasts."
+    )
+    SubElement(channel, "language").text = "en-us"
+    SubElement(channel, "generator").text = "Tech Blog Catchup"
+
+    atom_link = SubElement(channel, "{%s}link" % ATOM_NS)
+    atom_link.set("href", f"{str(request.base_url).rstrip('/')}/api/feed.xml")
+    atom_link.set("rel", "self")
+    atom_link.set("type", "application/rss+xml")
+
+    itunes_author = SubElement(channel, "{%s}author" % ITUNES_NS)
+    itunes_author.text = "Catchup"
+    itunes_cat = SubElement(channel, "{%s}category" % ITUNES_NS)
+    itunes_cat.set("text", "Technology")
+    itunes_explicit = SubElement(channel, "{%s}explicit" % ITUNES_NS)
+    itunes_explicit.text = "false"
+
+    session = get_session()
+    try:
+        query = (
+            session.query(Post)
+            .filter(Post.audio_status == "ready", Post.audio_path.isnot(None))
+            .order_by(desc(Post.published_at))
+        )
+        if source:
+            query = query.filter(Post.source_key == source)
+        if tag:
+            query = query.join(Post.tags).filter(Tag.name == tag)
+
+        posts = query.limit(100).all()
+
+        for post in posts:
+            item = SubElement(channel, "item")
+            SubElement(item, "title").text = post.title
+            SubElement(item, "description").text = post.summary or ""
+            SubElement(item, "link").text = post.url
+
+            guid = SubElement(item, "guid")
+            guid.set("isPermaLink", "false")
+            guid.text = f"techblog-catchup-{post.id}"
+
+            if post.published_at:
+                pub_dt = post.published_at.replace(tzinfo=timezone.utc) if post.published_at.tzinfo is None else post.published_at
+                SubElement(item, "pubDate").text = format_datetime(pub_dt, usegmt=True)
+
+            audio_filename = Path(post.audio_path).name
+            enclosure = SubElement(item, "enclosure")
+            enclosure.set("url", f"{audio_base}/{audio_filename}")
+            enclosure.set("type", "audio/mpeg")
+            enclosure.set("length", "0")
+
+            SubElement(item, "{%s}author" % ITUNES_NS).text = post.source_name
+            if post.audio_duration_secs:
+                mins, secs = divmod(post.audio_duration_secs, 60)
+                hours, mins = divmod(mins, 60)
+                duration_str = f"{hours:02d}:{mins:02d}:{secs:02d}" if hours else f"{mins:02d}:{secs:02d}"
+                SubElement(item, "{%s}duration" % ITUNES_NS).text = duration_str
+            if post.summary:
+                SubElement(item, "{%s}summary" % ITUNES_NS).text = post.summary
+    finally:
+        session.close()
+
+    xml_bytes = tostring(rss, encoding="unicode", xml_declaration=False)
+    xml_str = '<?xml version="1.0" encoding="UTF-8"?>\n' + xml_bytes
+    return Response(content=xml_str, media_type="application/rss+xml")
+
+
+# ---------- Favorites endpoints ----------
+
+
+@router.get("/favorites")
+@limiter.limit("60/minute")
+def list_favorites(request: Request, current_user: User = Depends(get_current_user)):
+    """Return the authenticated user's favorite post IDs."""
+    session = get_session()
+    try:
+        favs = (
+            session.query(UserFavorite.post_id)
+            .filter(UserFavorite.user_id == current_user.id)
+            .order_by(desc(UserFavorite.created_at))
+            .all()
+        )
+        return {"post_ids": [f[0] for f in favs]}
+    finally:
+        session.close()
+
+
+@router.post("/favorites/{post_id}", status_code=201)
+@limiter.limit("30/minute")
+def add_favorite(request: Request, post_id: int, current_user: User = Depends(get_current_user)):
+    """Add a post to the user's favorites. Idempotent."""
+    session = get_session()
+    try:
+        post = session.query(Post).filter(Post.id == post_id).first()
+        if not post:
+            raise HTTPException(status_code=404, detail="Post not found")
+
+        existing = (
+            session.query(UserFavorite)
+            .filter(UserFavorite.user_id == current_user.id, UserFavorite.post_id == post_id)
+            .first()
+        )
+        if existing:
+            return {"status": "already_favorited", "post_id": post_id}
+
+        fav = UserFavorite(user_id=current_user.id, post_id=post_id, created_at=datetime.utcnow())
+        session.add(fav)
+        session.commit()
+        return {"status": "favorited", "post_id": post_id}
+    finally:
+        session.close()
+
+
+@router.delete("/favorites/{post_id}", status_code=200)
+@limiter.limit("30/minute")
+def remove_favorite(request: Request, post_id: int, current_user: User = Depends(get_current_user)):
+    """Remove a post from the user's favorites."""
+    session = get_session()
+    try:
+        fav = (
+            session.query(UserFavorite)
+            .filter(UserFavorite.user_id == current_user.id, UserFavorite.post_id == post_id)
+            .first()
+        )
+        if fav:
+            session.delete(fav)
+            session.commit()
+        return {"status": "removed", "post_id": post_id}
+    finally:
+        session.close()
+
+
 # ---------- User endpoints ----------
 
 
@@ -744,6 +906,115 @@ def update_me(
             user=UserInfo.model_validate(current_user),
             preferences=prefs_info,
         )
+    finally:
+        session.close()
+
+
+# ---------- Admin monitoring endpoints ----------
+
+
+@router.get("/admin/stats")
+@limiter.limit("20/minute")
+def admin_stats(request: Request, current_user: User = Depends(get_current_user)):
+    """Aggregated monitoring stats for authenticated admins."""
+    session = get_session()
+    try:
+        total_users = session.query(func.count(User.id)).scalar() or 0
+        total_posts = session.query(func.count(Post.id)).scalar() or 0
+        total_favorites = session.query(func.count(UserFavorite.id)).scalar() or 0
+
+        audio_rows = (
+            session.query(Post.audio_status, func.count(Post.id))
+            .group_by(Post.audio_status)
+            .all()
+        )
+        audio_counts = {row[0]: row[1] for row in audio_rows}
+
+        recent_users = (
+            session.query(User)
+            .order_by(desc(User.created_at))
+            .limit(20)
+            .all()
+        )
+
+        popular_posts_q = (
+            session.query(
+                UserFavorite.post_id,
+                Post.title,
+                func.count(UserFavorite.id).label("fav_count"),
+            )
+            .join(Post, Post.id == UserFavorite.post_id)
+            .group_by(UserFavorite.post_id, Post.title)
+            .order_by(desc("fav_count"))
+            .limit(20)
+            .all()
+        )
+
+        job_stats_q = (
+            session.query(Job.status, func.count(Job.id))
+            .filter(Job.job_type == "generate")
+            .group_by(Job.status)
+            .all()
+        )
+        job_dict = {row[0]: row[1] for row in job_stats_q}
+
+        # Listening activity: posts played (based on audio_status=ready count per source)
+        source_audio = (
+            session.query(Post.source_name, func.count(Post.id))
+            .filter(Post.audio_status == "ready")
+            .group_by(Post.source_name)
+            .order_by(desc(func.count(Post.id)))
+            .limit(15)
+            .all()
+        )
+
+        # Posts per day (last 30 days)
+        from sqlalchemy import cast, Date
+        daily_posts = (
+            session.query(
+                cast(Post.crawled_at, Date).label("day"),
+                func.count(Post.id),
+            )
+            .group_by("day")
+            .order_by(desc("day"))
+            .limit(30)
+            .all()
+        )
+
+        return {
+            "total_users": total_users,
+            "total_posts": total_posts,
+            "total_favorites": total_favorites,
+            "audio_counts": audio_counts,
+            "recent_users": [
+                {
+                    "email": u.email,
+                    "name": u.name,
+                    "provider": u.provider,
+                    "created_at": u.created_at.isoformat() if u.created_at else None,
+                }
+                for u in recent_users
+            ],
+            "popular_posts": [
+                {"post_id": r[0], "title": r[1], "favorite_count": r[2]}
+                for r in popular_posts_q
+            ],
+            "generation_jobs": {
+                "total": sum(job_dict.values()),
+                "completed": job_dict.get("completed", 0),
+                "failed": job_dict.get("failed", 0),
+                "running": job_dict.get("running", 0),
+                "queued": job_dict.get("queued", 0),
+            },
+            "source_audio": [
+                {"source": r[0], "ready_count": r[1]}
+                for r in source_audio
+            ],
+            "daily_posts": [
+                {"date": str(r[0]), "count": r[1]}
+                for r in daily_posts
+            ],
+        }
     finally:
         session.close()
 

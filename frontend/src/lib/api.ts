@@ -200,3 +200,51 @@ export function submitPost(data: { text: string; title: string }): Promise<Submi
 export function getAudioUrl(audioPath: string): string {
   return `${API_BASE}/${audioPath}`;
 }
+
+export function getFeedUrl(): string {
+  return `${API_BASE}/api/feed.xml`;
+}
+
+// --- Auth-aware API helpers ---
+
+function authHeaders(token: string): Record<string, string> {
+  return { Authorization: `Bearer ${token}` };
+}
+
+export function getFavorites(token: string): Promise<{ post_ids: number[] }> {
+  return fetchAPI<{ post_ids: number[] }>("/api/favorites", {
+    headers: authHeaders(token),
+  });
+}
+
+export function addFavorite(postId: number, token: string): Promise<{ status: string; post_id: number }> {
+  return fetchAPI("/api/favorites/" + postId, {
+    method: "POST",
+    headers: authHeaders(token),
+  });
+}
+
+export function removeFavorite(postId: number, token: string): Promise<{ status: string; post_id: number }> {
+  return fetchAPI("/api/favorites/" + postId, {
+    method: "DELETE",
+    headers: authHeaders(token),
+  });
+}
+
+export interface MonitoringStats {
+  total_users: number;
+  total_posts: number;
+  total_favorites: number;
+  audio_counts: Record<string, number>;
+  recent_users: Array<{ email: string; name: string | null; provider: string; created_at: string }>;
+  popular_posts: Array<{ post_id: number; title: string; favorite_count: number }>;
+  generation_jobs: { total: number; completed: number; failed: number; running: number; queued?: number };
+  source_audio: Array<{ source: string; ready_count: number }>;
+  daily_posts: Array<{ date: string; count: number }>;
+}
+
+export function getMonitoringStats(token: string): Promise<MonitoringStats> {
+  return fetchAPI<MonitoringStats>("/api/admin/stats", {
+    headers: authHeaders(token),
+  });
+}

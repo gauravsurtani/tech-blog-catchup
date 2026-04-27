@@ -14,6 +14,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Search,
+  Shield,
 } from "lucide-react";
 import Logo from "./Logo";
 import UserMenu from "./UserMenu";
@@ -30,6 +31,7 @@ const navItems = [
   { href: "/playlist", label: "Playlist", icon: ListMusic },
   { href: "/status", label: "Status", icon: BarChart3 },
   { href: "/submit", label: "Submit", icon: PlusCircle },
+  { href: "/admin", label: "Admin", icon: Shield },
 ];
 
 export default function Sidebar() {

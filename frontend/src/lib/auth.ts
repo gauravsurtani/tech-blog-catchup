@@ -29,4 +29,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   providers,
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
+  callbacks: {
+    jwt({ token, account, user }) {
+      if (account) {
+        token.provider = account.provider;
+      }
+      if (user?.email) {
+        token.email = user.email;
+      }
+      return token;
+    },
+    session({ session, token }) {
+      if (token.sub) {
+        (session as unknown as Record<string, unknown>).accessToken = token;
+      }
+      return session;
+    },
+  },
 });

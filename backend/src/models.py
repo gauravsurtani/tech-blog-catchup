@@ -2,6 +2,7 @@
 
 from datetime import datetime
 
+import sqlalchemy as sa
 from sqlalchemy import (
     Boolean, Column, DateTime, Float, ForeignKey,
     Integer, String, Table, Text,
@@ -125,6 +126,25 @@ class User(Base):
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, email={self.email!r}, provider={self.provider})>"
+
+
+class UserFavorite(Base):
+    __tablename__ = "user_favorites"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    post_id: Mapped[int] = mapped_column(Integer, ForeignKey("posts.id"), nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        sa.UniqueConstraint("user_id", "post_id", name="uq_user_favorite"),
+    )
+
+    user: Mapped["User"] = relationship("User", backref="favorites")
+    post: Mapped["Post"] = relationship("Post")
+
+    def __repr__(self) -> str:
+        return f"<UserFavorite(user_id={self.user_id}, post_id={self.post_id})>"
 
 
 class UserPreferences(Base):

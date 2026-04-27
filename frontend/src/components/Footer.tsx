@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Rss } from "lucide-react";
+import { getFeedUrl } from "@/lib/api";
 
 const navLinks = [
   { href: "/about", label: "About" },
@@ -41,6 +43,16 @@ export default function Footer() {
               className="text-sm text-[var(--text-3)] hover:text-[var(--blue)] hover:underline transition-colors"
             >
               GitHub
+            </a>
+            <a
+              href={getFeedUrl()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-sm text-[var(--text-3)] hover:text-[var(--orange)] transition-colors"
+              title="Subscribe to podcast RSS feed"
+            >
+              <Rss className="w-3.5 h-3.5" />
+              RSS
             </a>
           </nav>
         </div>

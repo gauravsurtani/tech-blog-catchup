@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
-import { Github, Loader } from "lucide-react";
+import { Github, Loader, Heart, Shield, Rss, ArrowRight } from "lucide-react";
 import Logo from "@/components/Logo";
 
 function GoogleIcon({ className }: { className?: string }) {
@@ -18,26 +18,43 @@ function GoogleIcon({ className }: { className?: string }) {
   );
 }
 
+const SIGN_IN_BENEFITS = [
+  { icon: Heart, text: "Sync favorites across devices" },
+  { icon: Shield, text: "Access your admin dashboard" },
+  { icon: Rss, text: "Personalized podcast feed" },
+];
+
 function LoginContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
   const error = searchParams.get("error");
   const [loadingProvider, setLoadingProvider] = useState<string | null>(null);
 
   return (
     <div className="min-h-dvh flex items-center justify-center px-4 bg-[var(--bg)]">
-      <div className="w-full max-w-sm space-y-8">
+      <div className="w-full max-w-sm space-y-6">
         {/* Form card */}
-        <div className="bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] p-8 space-y-8">
+        <div className="bg-[var(--bg-elevated)] border-[var(--border-w)] border-[var(--border-color)] rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] p-8 space-y-6">
           {/* Logo */}
-          <div className="flex flex-col items-center gap-4">
+          <div className="flex flex-col items-center gap-3">
             <Logo variant="icon" className="h-16 w-16" />
             <h1 className="text-2xl font-extrabold text-[var(--text-1)]">
-              Welcome back
+              Welcome to Catchup
             </h1>
-            <p className="text-sm text-[var(--text-2)]">
-              Sign in to Catchup
+            <p className="text-sm text-[var(--text-2)] text-center">
+              Sign in to unlock the full experience
             </p>
+          </div>
+
+          {/* Benefits */}
+          <div className="space-y-2 py-2">
+            {SIGN_IN_BENEFITS.map(({ icon: Icon, text }) => (
+              <div key={text} className="flex items-center gap-3 text-sm text-[var(--text-2)]">
+                <Icon className="w-4 h-4 text-[var(--primary)] flex-shrink-0" />
+                <span>{text}</span>
+              </div>
+            ))}
           </div>
 
           {/* Error message */}
@@ -88,6 +105,17 @@ function LoginContent() {
                 <Github className="h-5 w-5" />
               )}
               {loadingProvider === "github" ? "Redirecting..." : "Continue with GitHub"}
+            </button>
+          </div>
+
+          {/* Continue as guest */}
+          <div className="pt-2">
+            <button
+              onClick={() => router.push("/")}
+              className="w-full flex items-center justify-center gap-2 text-sm text-[var(--text-3)] hover:text-[var(--text-2)] transition-colors cursor-pointer py-2"
+            >
+              Continue as guest
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

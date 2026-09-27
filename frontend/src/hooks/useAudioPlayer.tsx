@@ -411,9 +411,9 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   // Keyboard shortcuts
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      // Don't intercept when typing in inputs
+      // Preserve native keyboard behavior for focused controls.
       const target = e.target as HTMLElement;
-      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT" || target.isContentEditable) {
+      if (e.defaultPrevented || target.isContentEditable || target.closest('input, textarea, select, button, a, [role="button"], [role="slider"]')) {
         return;
       }
 

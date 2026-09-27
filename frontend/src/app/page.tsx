@@ -1,5 +1,5 @@
 import Link from "next/link";
-import ArticleStory from "@/components/landing/ArticleStory";
+import WordToSound from "@/components/landing/WordToSound";
 export default function Home() {
   return (
     <>
@@ -25,7 +25,7 @@ export default function Home() {
           </p>
         </div>
         <div id="how-it-works" className="hero-motion">
-          <ArticleStory />
+          <WordToSound />
         </div>
       </section>
       <section className="format-strip" aria-label="What you can do">

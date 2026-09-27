@@ -52,7 +52,17 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
         </nav>
       </header>
       <main id="main-content">{children}</main>
-      <footer className="site-footer">
+      <footer className="site-footer" data-home-footer={path === "/" ? "" : undefined}>
+        {path === "/" && (
+          <div className="footer-signoff">
+            <svg viewBox="0 0 1000 100" fill="none" aria-hidden="true">
+              <path pathLength="1" d="M0 50H200C240 50 240 15 280 15S320 85 360 85S400 5 440 5S480 95 520 95S560 25 600 25S640 65 680 65S720 50 760 50H1000" />
+            </svg>
+            <h2>Take a good idea<br />with you.</h2>
+            <Link href="/listen" className="site-button">Find your next listen <span aria-hidden="true">↗</span></Link>
+            <p>Public listening. Thoughtful creation.</p>
+          </div>
+        )}
         <p>
           Made for curious people.
           <br />

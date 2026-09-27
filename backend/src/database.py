@@ -1,6 +1,7 @@
 """SQLAlchemy engine, session factory, and database initialization."""
 
 import logging
+import os
 from pathlib import Path
 
 from sqlalchemy import create_engine, event, inspect, text, Engine
@@ -26,6 +27,7 @@ def _set_sqlite_pragma(dbapi_connection, connection_record):
     cursor.execute("PRAGMA journal_mode=WAL;")
     cursor.execute("PRAGMA busy_timeout=30000;")
     cursor.execute("PRAGMA synchronous=NORMAL;")
+    cursor.execute("PRAGMA foreign_keys=ON;")
     cursor.close()
 
 
@@ -37,7 +39,7 @@ def get_engine(db_path: str | None = None) -> Engine:
 
     if db_path is None:
         config = get_config()
-        db_path = config.app.get("db_path", "data/techblog.db")
+        db_path = os.getenv("DATABASE_PATH") or config.app.get("db_path", "data/techblog.db")
 
     # Resolve relative to backend/ directory
     db_file = Path(__file__).parent.parent / db_path
@@ -70,39 +72,21 @@ def get_session_factory(engine: Engine | None = None) -> sessionmaker[Session]:
     return _session_factory
 
 
-def _migrate_missing_columns(engine: Engine) -> None:
-    """Add columns that exist in models but not in the DB (SQLite-safe)."""
-    inspector = inspect(engine)
-    with engine.begin() as conn:
-        for table_name, table in Base.metadata.tables.items():
-            if not inspector.has_table(table_name):
-                continue
-            existing = {col["name"] for col in inspector.get_columns(table_name)}
-            for col in table.columns:
-                if col.name in existing:
-                    continue
-                col_type = col.type.compile(engine.dialect)
-                nullable = "NULL" if col.nullable else "NOT NULL"
-                default = ""
-                if col.server_default is not None:
-                    default = f" DEFAULT {col.server_default.arg}"
-                elif col.nullable:
-                    default = " DEFAULT NULL"
-                sql = f"ALTER TABLE {table_name} ADD COLUMN {col.name} {col_type} {nullable}{default}"
-                conn.execute(text(sql))
-                logger.info("Migrated column: %s.%s", table_name, col.name)
-
-
 def init_db(engine: Engine | None = None) -> None:
-    """Create all tables and migrate missing columns."""
-    if engine is None:
-        engine = get_engine()
-
-    # Import models so they register with Base.metadata
-    import src.models  # noqa: F401
-
-    Base.metadata.create_all(engine)
-    _migrate_missing_columns(engine)
+    """Migrate the mounted database under one SQLite write lock."""
+    from alembic.config import Config as AlembicConfig
+    from alembic import command
+    engine = engine or get_engine()
+    cfg = AlembicConfig(str(Path(__file__).parent.parent / "alembic.ini"))
+    with engine.connect() as connection:
+        connection.exec_driver_sql("BEGIN IMMEDIATE")
+        try:
+            cfg.attributes["connection"] = connection
+            command.upgrade(cfg, "head")
+            connection.commit()
+        except Exception:
+            connection.rollback()
+            raise
 
 
 def get_session() -> Session:

@@ -10,7 +10,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends, Query, HTTPException, BackgroundTasks, Request, UploadFile, File, Form
-from sqlalchemy import func, desc, asc
+from sqlalchemy import func, desc, asc, or_
 from sqlalchemy.orm import joinedload
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ from src.api.schemas import (
     SubmitRequest, ImportPostRequest, ImportResponse,
 )
 from src.api.rate_limit import limiter
-from src.api.auth_middleware import get_current_user
+from src.api.auth_middleware import get_current_user, get_optional_user, require_member, require_admin, require_generation_enabled
 
 router = APIRouter(prefix="/api")
 
@@ -66,7 +66,7 @@ def list_posts(
 ):
     session = get_session()
     try:
-        query = session.query(Post).options(joinedload(Post.tags))
+        query = session.query(Post).options(joinedload(Post.tags)).filter(Post.visibility == "public")
 
         if ids:
             id_list = [int(x.strip()) for x in ids.split(",") if x.strip().isdigit()]
@@ -82,9 +82,9 @@ def list_posts(
         if tag:
             tag_names = [t.strip() for t in tag.split(",")]
             if len(tag_names) == 1:
-                query = query.join(Post.tags).filter(Tag.name == tag_names[0])
+                query = query.join(Post.tags).filter(or_(Tag.name == tag_names[0], Tag.slug == tag_names[0]))
             else:
-                query = query.join(Post.tags).filter(Tag.name.in_(tag_names))
+                query = query.join(Post.tags).filter(or_(Tag.name.in_(tag_names), Tag.slug.in_(tag_names)))
         if search:
             query = query.filter(Post.title.ilike(f"%{search}%"))
         if audio_status:
@@ -92,6 +92,7 @@ def list_posts(
         if quality_min is not None:
             query = query.filter(Post.quality_score >= quality_min)
 
+        query = query.distinct()
         total = query.count()
 
         # Sort — map friendly aliases then whitelist columns
@@ -102,7 +103,7 @@ def list_posts(
             "longest": "-audio_duration_secs",
         }
         sort = SORT_ALIASES.get(sort, sort)
-        ALLOWED_SORT = {"published_at", "created_at", "title", "word_count", "audio_status", "audio_duration_secs"}
+        ALLOWED_SORT = {"published_at", "crawled_at", "quality_score", "title", "word_count", "audio_status", "audio_duration_secs"}
         sort_col = sort.lstrip("-")
         if sort_col not in ALLOWED_SORT:
             raise HTTPException(status_code=400, detail=f"Invalid sort column: {sort_col}")
@@ -127,19 +128,25 @@ def list_posts(
 @router.get("/posts/{post_id}", response_model=PostDetail)
 @limiter.limit("60/minute")
 def get_post(request: Request, post_id: int):
+    user = get_optional_user(request)
     session = get_session()
     try:
         post = session.query(Post).options(joinedload(Post.tags)).filter(Post.id == post_id).first()
-        if not post:
+        if not post or (post.visibility != "public" and (not user or (user.role != "admin" and post.submitted_by_user_id != user.id))):
             raise HTTPException(status_code=404, detail="Post not found")
+        published_job=session.get(Job,post.published_job_id) if post.published_job_id else None
+        artifact=json.loads(published_job.artifact) if published_job and published_job.artifact else {}
         return PostDetail(
+            transcript=artifact.get("turns",[]),
+            transcript_sample_rate=artifact.get("sample_rate",24000),
+            podcast_script=post.podcast_script,
             id=post.id,
             url=post.url,
             source_key=post.source_key,
             source_name=post.source_name,
             title=post.title,
             summary=post.summary,
-            full_text=post.full_text,
+            full_text=None,
             author=post.author,
             published_at=post.published_at,
             crawled_at=post.crawled_at,
@@ -159,8 +166,8 @@ def list_tags(request: Request):
     session = get_session()
     try:
         results = (
-            session.query(Tag.name, Tag.slug, func.count(post_tags.c.post_id).label("post_count"))
-            .outerjoin(post_tags, Tag.id == post_tags.c.tag_id)
+            session.query(Tag.name, Tag.slug, func.count(Post.id).label("post_count"))
+            .join(post_tags, Tag.id == post_tags.c.tag_id).join(Post, Post.id == post_tags.c.post_id).filter(Post.visibility == "public")
             .group_by(Tag.id)
             .order_by(desc("post_count"))
             .all()
@@ -177,7 +184,7 @@ def list_sources(request: Request):
     try:
         results = (
             session.query(Post.source_key, Post.source_name, func.count(Post.id).label("post_count"))
-            .group_by(Post.source_key, Post.source_name)
+            .filter(Post.visibility == "public").group_by(Post.source_key, Post.source_name)
             .order_by(desc("post_count"))
             .all()
         )
@@ -221,9 +228,12 @@ def list_jobs(
     status: str | None = None,
     limit: int = Query(default=50, ge=1, le=200),
 ):
+    user = get_current_user(request)
     session = get_session()
     try:
         query = session.query(Job).order_by(desc(Job.created_at))
+        if user.role != "admin":
+            query = query.filter(Job.owner_id == user.id)
         if job_type:
             query = query.filter(Job.job_type == job_type)
         if status:
@@ -237,10 +247,11 @@ def list_jobs(
 @router.get("/jobs/{job_id}", response_model=JobInfo)
 @limiter.limit("30/minute")
 def get_job(request: Request, job_id: int):
+    user = get_current_user(request)
     session = get_session()
     try:
         job = session.query(Job).filter(Job.id == job_id).first()
-        if not job:
+        if not job or (user.role != "admin" and job.owner_id != user.id):
             raise HTTPException(status_code=404, detail="Job not found")
         return JobInfo.model_validate(job)
     finally:
@@ -296,48 +307,10 @@ def _do_crawl(job_id: int, source_key: str | None):
         session.close()
 
 
-def _do_generate(job_id: int, post_id: int | None, limit_count: int):
-    """Background task: run podcast generation and update job status."""
-    from src.podcast.manager import generate_pending, generate_for_post
-    from src.config import get_config
-
-    config = get_config()
-    session = get_session()
-    try:
-        job = session.query(Job).filter(Job.id == job_id).first()
-        if job:
-            job.status = "running"
-            job.started_at = datetime.utcnow()
-            session.commit()
-
-        if post_id:
-            success = generate_for_post(session, post_id, config)
-            result_data = {"post_id": post_id, "success": success}
-            logger.info("Generate post %d: %s", post_id, "ok" if success else "failed")
-        else:
-            count = generate_pending(session, config, limit=limit_count)
-            result_data = {"generated": count}
-            logger.info("Generated %d podcasts", count)
-
-        if job:
-            job.status = "completed"
-            job.result = json.dumps(result_data)
-            job.completed_at = datetime.utcnow()
-            session.commit()
-    except Exception as exc:
-        logger.exception("Generate job %d failed", job_id)
-        if job:
-            job.status = "failed"
-            job.error_message = "Generation failed — check server logs for details"
-            job.completed_at = datetime.utcnow()
-            session.commit()
-    finally:
-        session.close()
-
-
 @router.post("/crawl")
 @limiter.limit("5/minute")
-def trigger_crawl(request: Request, req: CrawlRequest, background_tasks: BackgroundTasks):
+def trigger_crawl(request: Request, req: CrawlRequest, background_tasks: BackgroundTasks, user: User = Depends(require_admin)):
+    require_generation_enabled()
     """Trigger a crawl. Returns immediately -- crawl runs in background."""
     from src.config import get_config
 
@@ -366,117 +339,34 @@ def trigger_crawl(request: Request, req: CrawlRequest, background_tasks: Backgro
 
 @router.post("/generate")
 @limiter.limit("5/minute")
-def trigger_generate(request: Request, req: GenerateRequest, background_tasks: BackgroundTasks):
-    """Trigger podcast generation. Returns immediately -- generation runs in background."""
-    session = get_session()
-    try:
-        # Guard: if a specific post is requested, check if audio already exists
-        if req.post_id:
-            post = session.query(Post).filter(Post.id == req.post_id).first()
-            if not post:
-                raise HTTPException(status_code=404, detail=f"Post {req.post_id} not found")
-            if post.audio_status == "ready":
-                raise HTTPException(
-                    status_code=409,
-                    detail=f"Post {req.post_id} already has audio generated",
-                )
-
-        # Guard: check for duplicate queued/running generate jobs
-        active_jobs = (
-            session.query(Job)
-            .filter(Job.job_type == "generate", Job.status.in_(["queued", "running"]))
-            .all()
-        )
-        for existing in active_jobs:
-            existing_params = json.loads(existing.params) if existing.params else {}
-            existing_post_id = existing_params.get("post_id")
-            if req.post_id:
-                # Specific post: match if an active job targets the same post_id
-                if existing_post_id == req.post_id:
-                    raise HTTPException(
-                        status_code=409,
-                        detail=f"Generation already in progress for post {req.post_id}",
-                        headers={"X-Existing-Job-Id": str(existing.id)},
-                    )
-            else:
-                # Batch job: match if another batch generate job is active
-                if existing_post_id is None:
-                    raise HTTPException(
-                        status_code=409,
-                        detail="A batch generation job is already queued or running",
-                        headers={"X-Existing-Job-Id": str(existing.id)},
-                    )
-
-        job = Job(
-            job_type="generate",
-            status="queued",
-            params=json.dumps({"post_id": req.post_id, "limit": req.limit}),
-        )
-        session.add(job)
-        session.commit()
-        job_id = job.id
-    finally:
-        session.close()
-
-    background_tasks.add_task(_do_generate, job_id, req.post_id, req.limit)
-    return {"status": "queued", "job_id": job_id, "post_id": req.post_id, "limit": req.limit}
+def trigger_generate(request: Request, req: GenerateRequest, background_tasks: BackgroundTasks, user: User = Depends(require_member)):
+    require_generation_enabled()
+    from src.jobs import admit_generation
+    if req.post_id is None:
+        require_admin(request)
+        raise HTTPException(400, "Select an individual source during the private beta")
+    with get_session() as session:
+        post=session.get(Post,req.post_id)
+        if not post or (post.visibility != "public" and user.role != "admin" and post.submitted_by_user_id != user.id):
+            raise HTTPException(404,"Post not found")
+        job=admit_generation(session,f"user:{user.id}",post.id,request.headers.get("Idempotency-Key"),
+            {"model":os.getenv("OLLAMA_MODEL","gemma4:31b"),"speech":"kokoro-v1-int8","prompt":"v1"},user.id)
+        return {"status":job.status,"job_id":job.id,"post_id":post.id}
 
 
 @router.post("/posts/submit")
 @limiter.limit("3/hour")
-def submit_post(request: Request, req: SubmitRequest, background_tasks: BackgroundTasks):
-    """Submit text content for podcast generation.
-
-    Accepts title + text, creates a Post, and queues generation.
-    Returns the new post_id and a background job_id for tracking.
-    """
-    content_hash = hashlib.md5(req.text.encode()).hexdigest()
-    synthetic_url = f"user://submission/{content_hash}"
-
-    session = get_session()
-    try:
-        # Check for duplicate content
-        existing = session.query(Post).filter(Post.content_hash == content_hash).first()
-        if existing:
-            raise HTTPException(
-                status_code=409,
-                detail=f"This content has already been submitted (post_id={existing.id})",
-            )
-
-        word_count = len(req.text.split())
-        post = Post(
-            url=synthetic_url,
-            source_key="user",
-            source_name="User Submission",
-            title=req.title,
-            full_text=req.text,
-            crawled_at=datetime.utcnow(),
-            audio_status="pending",
-            word_count=word_count,
-            content_hash=content_hash,
-            extraction_method="user_text",
-            is_user_submitted=True,
-            submission_type="text",
-        )
-
-        session.add(post)
-        session.commit()
-        post_id = post.id
-
-        # Queue podcast generation as a background job
-        job = Job(
-            job_type="generate",
-            status="queued",
-            params=json.dumps({"post_id": post_id, "source": "user_submit"}),
-        )
-        session.add(job)
-        session.commit()
-        job_id = job.id
-    finally:
-        session.close()
-
-    background_tasks.add_task(_do_generate, job_id, post_id, 1)
-    return {"post_id": post_id, "job_id": job_id, "status": "queued"}
+def submit_post(request: Request, req: SubmitRequest, background_tasks: BackgroundTasks, user: User = Depends(require_member)):
+    require_generation_enabled()
+    from src.jobs import admit_generation
+    key=request.headers.get("Idempotency-Key")
+    if not key or not 8 <= len(key) <= 128:
+        raise HTTPException(400,"An 8–128 character Idempotency-Key is required")
+    with get_session() as session:
+        job=admit_generation(session,f"user:{user.id}",None,key,
+            {"model":os.getenv("OLLAMA_MODEL","gemma4:31b"),"speech":"kokoro-v1-int8","prompt":"v1"},user.id,
+            source={"title":req.title,"text":req.text})
+        return {"post_id":job.post_id,"job_id":job.id,"status":job.status}
 
 
 @router.get("/status", response_model=StatusInfo)
@@ -484,26 +374,26 @@ def submit_post(request: Request, req: SubmitRequest, background_tasks: Backgrou
 def get_status(request: Request):
     session = get_session()
     try:
-        total = session.query(func.count(Post.id)).scalar()
+        total = session.query(func.count(Post.id)).filter(Post.visibility == "public").scalar()
 
         sources = (
             session.query(Post.source_key, Post.source_name, func.count(Post.id))
-            .group_by(Post.source_key, Post.source_name)
+            .filter(Post.visibility == "public").group_by(Post.source_key, Post.source_name)
             .order_by(desc(func.count(Post.id)))
             .all()
         )
 
         audio = (
             session.query(Post.audio_status, func.count(Post.id))
-            .group_by(Post.audio_status)
+            .filter(Post.visibility == "public").group_by(Post.audio_status)
             .all()
         )
 
         tag_counts = (
-            session.query(Tag.name, Tag.slug, func.count(post_tags.c.post_id))
-            .outerjoin(post_tags, Tag.id == post_tags.c.tag_id)
+            session.query(Tag.name, Tag.slug, func.count(Post.id))
+            .join(post_tags, Tag.id == post_tags.c.tag_id).join(Post, Post.id == post_tags.c.post_id).filter(Post.visibility == "public")
             .group_by(Tag.id)
-            .order_by(desc(func.count(post_tags.c.post_id)))
+            .order_by(desc(func.count(Post.id)))
             .all()
         )
 
@@ -519,7 +409,7 @@ def get_status(request: Request):
 
 @router.get("/crawl-status", response_model=list[CrawlStatusItem])
 @limiter.limit("20/minute")
-def crawl_status(request: Request):
+def crawl_status(request: Request, user: User = Depends(require_admin)):
     """Return scrape status for every configured source (green/red/grey)."""
     from src.config import get_config
 
@@ -529,7 +419,7 @@ def crawl_status(request: Request):
         # Get post counts per source
         post_counts = dict(
             session.query(Post.source_key, func.count(Post.id))
-            .group_by(Post.source_key)
+            .filter(Post.visibility == "public").group_by(Post.source_key)
             .all()
         )
 
@@ -594,8 +484,8 @@ def health(request: Request):
     """Health check endpoint with system details."""
     session = get_session()
     try:
-        total_posts = session.query(func.count(Post.id)).scalar() or 0
-        audio_ready = session.query(func.count(Post.id)).filter(Post.audio_status == "ready").scalar() or 0
+        total_posts = session.query(func.count(Post.id)).filter(Post.visibility == "public").scalar() or 0
+        audio_ready = session.query(func.count(Post.id)).filter(Post.audio_status == "ready", Post.visibility == "public").scalar() or 0
         db_ok = True
     except Exception:
         total_posts = 0
@@ -627,7 +517,7 @@ def get_config_endpoint(request: Request):
 
 @router.get("/audio-inventory")
 @limiter.limit("10/minute")
-def audio_inventory(request: Request):
+def audio_inventory(request: Request, user: User = Depends(require_admin)):
     """Compare posts with audio_status=ready against actual files on disk."""
     audio_dir_env = os.getenv("AUDIO_DIR")
     audio_dir = Path(audio_dir_env) if audio_dir_env else Path(__file__).parent.parent.parent / "audio"
@@ -650,25 +540,25 @@ def audio_inventory(request: Request):
                     "expected_path": None,
                 })
                 continue
-            filename = Path(post.audio_path).name
+            filename = post.audio_path.removeprefix("audio/")
             expected_files[filename] = post
             full_path = audio_dir / filename
             if not full_path.exists():
                 missing.append({
                     "post_id": post.id,
                     "title": post.title,
-                    "expected_path": str(full_path),
+                    "expected_path": filename,
                 })
 
         orphaned = []
         if audio_dir.is_dir():
-            for entry in audio_dir.iterdir():
-                if entry.is_file() and entry.name not in expected_files:
-                    orphaned.append(entry.name)
+            for entry in audio_dir.rglob("*.mp3"):
+                if entry.is_file() and entry.relative_to(audio_dir).as_posix() not in expected_files:
+                    orphaned.append(entry.relative_to(audio_dir).as_posix())
 
         files_on_disk = sum(
             1 for post in ready_posts
-            if post.audio_path and (audio_dir / Path(post.audio_path).name).exists()
+            if post.audio_path and (audio_dir / post.audio_path.removeprefix("audio/")).is_file()
         )
 
         return {
@@ -676,7 +566,6 @@ def audio_inventory(request: Request):
             "files_on_disk": files_on_disk,
             "missing": missing,
             "orphaned": sorted(orphaned),
-            "audio_dir": str(audio_dir.resolve()),
         }
     finally:
         session.close()
@@ -751,7 +640,7 @@ def update_me(
 # --- Import endpoint for syncing local data to production ---
 
 @router.post("/import", response_model=ImportResponse)
-async def import_posts(posts: list[ImportPostRequest]):
+async def import_posts(posts: list[ImportPostRequest], user: User = Depends(require_admin)):
     """Bulk import posts (upsert by URL). Audio files uploaded separately via /import/audio."""
     session = get_session()
     created = 0
@@ -762,6 +651,9 @@ async def import_posts(posts: list[ImportPostRequest]):
         for post_data in posts:
             try:
                 existing = session.query(Post).filter(Post.url == post_data.url).first()
+                if existing and existing.visibility == "public":
+                    skipped += 1
+                    continue
                 if existing:
                     if post_data.audio_status == "ready" and existing.audio_status != "ready":
                         for field in [
@@ -823,34 +715,36 @@ async def import_audio(
     url: str = Form(...),
     audio_filename: str = Form(...),
     audio_file: UploadFile = File(...),
+    user: User = Depends(require_admin),
 ):
-    """Upload an audio file and link it to a post by URL."""
-    session = get_session()
-    try:
-        post = session.query(Post).filter(Post.url == url).first()
-        if not post:
-            raise HTTPException(status_code=404, detail=f"Post not found: {url}")
+    # Legacy arbitrary-file import cannot establish provenance or publication state.
+    raise HTTPException(409, "Audio import is disabled. Use a reviewed generation job.")
 
-        env_audio_dir = os.getenv("AUDIO_DIR")
-        if env_audio_dir:
-            audio_dir = Path(env_audio_dir)
-        else:
-            audio_dir = Path(__file__).parent.parent.parent / "audio"
-        audio_dir.mkdir(parents=True, exist_ok=True)
 
-        dest = audio_dir / audio_filename
-        content = await audio_file.read()
-        dest.write_bytes(content)
+@router.post("/jobs/{job_id}/publish")
+def publish(job_id: int, user: User = Depends(require_admin)):
+    from src.jobs import publish_job
+    with get_session() as session:
+        return publish_job(session,job_id)
 
-        post.audio_path = f"audio/{audio_filename}"
-        post.audio_status = "ready"
+
+@router.post("/posts/{post_id}/withdraw")
+def withdraw(post_id: int, user: User = Depends(require_admin)):
+    from src.models import AudioArtifact
+    with get_session() as session:
+        post=session.get(Post,post_id)
+        if not post: raise HTTPException(404,"Post not found")
+        post.visibility="private"
+        session.query(AudioArtifact).filter_by(post_id=post_id).update({"public":False})
         session.commit()
+        return {"status":"withdrawn"}
 
-        return {"status": "ok", "post_id": post.id, "audio_path": post.audio_path}
-    except HTTPException:
-        raise
-    except Exception as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        session.close()
+
+@router.post("/jobs/{job_id}/cancel")
+def cancel_job(job_id: int, user: User = Depends(require_member)):
+    with get_session() as session:
+        job=session.get(Job,job_id)
+        if not job or (user.role!="admin" and job.owner_id!=user.id): raise HTTPException(404,"Job not found")
+        if job.status not in ("queued","running","retrying"): raise HTTPException(409,"Job is no longer active")
+        job.status="cancelled"; job.completed_at=datetime.utcnow(); session.commit()
+        return {"status":"cancelled"}

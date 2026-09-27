@@ -6,13 +6,13 @@ interface LogoProps {
 }
 
 /**
- * Headphones + audio waveform logo for Catchup.
+ * Headphones + audio waveform logo for Blog2Podcast.
  * Uses currentColor for theme adaptability (light/dark).
  *
  * Variants:
  *  - "icon"    — headphones icon only (square)
- *  - "full"    — icon + "Catchup" wordmark
- *  - "compact" — icon + "CU" shortform
+ *  - "full"    — icon + "Blog2Podcast" wordmark
+ *  - "compact" — icon + "B2P" shortform
  */
 export default function Logo({ variant = "icon", className }: LogoProps) {
   const icon = (
@@ -60,7 +60,7 @@ export default function Logo({ variant = "icon", className }: LogoProps) {
     return icon;
   }
 
-  const label = variant === "compact" ? "CU" : "Catchup";
+  const label = variant === "compact" ? "B2P" : "Blog2Podcast";
 
   return (
     <span className={`inline-flex items-center gap-2 ${className ?? ""}`}>

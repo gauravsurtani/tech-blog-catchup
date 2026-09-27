@@ -1,88 +1,86 @@
-"""JWT authentication middleware for user endpoints."""
+"""Short-lived server-to-server identity tokens; membership is always read live."""
 
-import logging
 import os
-
 import jwt
 from fastapi import Request, HTTPException
-
+from sqlalchemy.exc import IntegrityError
 from src.database import get_session
 from src.models import User
 
-logger = logging.getLogger(__name__)
-
-
-def _get_secret() -> str:
-    """Return the JWT secret used by NextAuth for token signing."""
-    secret = os.environ.get("NEXTAUTH_SECRET")
-    if not secret:
-        raise HTTPException(status_code=500, detail="Auth not configured")
-    return secret
-
-
-def _extract_token(request: Request) -> str | None:
-    """Extract Bearer token from Authorization header."""
-    auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
-        return None
-    return auth_header[7:]  # strip "Bearer "
-
 
 def get_current_user(request: Request) -> User:
-    """FastAPI dependency: validate JWT and return the authenticated User.
-
-    Raises 401 if token is missing, invalid, or user not found.
-    """
-    token = _extract_token(request)
-    if not token:
-        raise HTTPException(status_code=401, detail="Missing authorization token")
-
+    header = request.headers.get("Authorization", "")
+    if not header.startswith("Bearer "):
+        raise HTTPException(401, "Sign in required")
+    secret = os.getenv("API_SIGNING_SECRET")
+    if not secret or len(secret) < 32:
+        raise HTTPException(503, "Member access is not configured")
     try:
-        payload = jwt.decode(token, _get_secret(), algorithms=["HS256"])
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-
-    email: str | None = payload.get("email")
-    if not email:
-        raise HTTPException(status_code=401, detail="Token missing email claim")
-
-    session = get_session()
-    try:
-        user = session.query(User).filter(User.email == email).first()
-        if not user:
-            raise HTTPException(status_code=401, detail="User not found")
-        # Expunge so user can be used after session closes
+        claims = jwt.decode(
+            header[7:],
+            secret,
+            algorithms=["HS256"],
+            issuer="blog2podcast-web",
+            audience="blog2podcast-api",
+            options={"require": ["exp", "iat", "sub", "iss", "aud"]},
+        )
+        subject = claims["sub"]
+        if not isinstance(subject, str) or not subject.startswith(
+            ("google:", "github:")
+        ):
+            raise ValueError()
+        if (
+            claims["exp"] - claims["iat"] > 90
+            or claims.get("email_verified") is not True
+        ):
+            raise ValueError()
+        email = claims.get("email")
+        if not isinstance(email, str) or "@" not in email:
+            raise ValueError()
+    except (jwt.InvalidTokenError, ValueError, TypeError):
+        raise HTTPException(401, "Invalid member token")
+    with get_session() as session:
+        user = session.query(User).filter(User.subject == subject).first()
+        if user is None:
+            # Never attach a new provider subject to an existing email automatically.
+            user = User(
+                subject=subject,
+                email=email,
+                provider=subject.split(":")[0],
+                role="pending",
+            )
+            session.add(user)
+            try:
+                session.commit()
+            except IntegrityError:
+                session.rollback()
+                user = session.query(User).filter(User.subject == subject).first()
+                if user is None:
+                    raise HTTPException(409, "Identity requires operator review")
+        if user.disabled_at is not None:
+            raise HTTPException(403, "Member access revoked")
         session.expunge(user)
         return user
-    finally:
-        session.close()
 
 
 def get_optional_user(request: Request) -> User | None:
-    """FastAPI dependency: return User if valid token present, else None.
+    return get_current_user(request) if request.headers.get("Authorization") else None
 
-    For public endpoints that optionally personalize for logged-in users.
-    """
-    token = _extract_token(request)
-    if not token:
-        return None
 
-    try:
-        payload = jwt.decode(token, _get_secret(), algorithms=["HS256"])
-    except jwt.InvalidTokenError:
-        return None
+def require_member(request: Request) -> User:
+    user = get_current_user(request)
+    if user.role not in ("member", "admin"):
+        raise HTTPException(403, "Generation is available to approved members")
+    return user
 
-    email: str | None = payload.get("email")
-    if not email:
-        return None
 
-    session = get_session()
-    try:
-        user = session.query(User).filter(User.email == email).first()
-        if user:
-            session.expunge(user)
-        return user
-    finally:
-        session.close()
+def require_admin(request: Request) -> User:
+    user = get_current_user(request)
+    if user.role != "admin":
+        raise HTTPException(403, "Administrator access required")
+    return user
+
+
+def require_generation_enabled():
+    if os.getenv("ENABLE_GENERATION", "").lower() != "true":
+        raise HTTPException(503, "Generation is temporarily unavailable")

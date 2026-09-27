@@ -15,6 +15,9 @@ export interface Post {
 }
 
 export interface PostDetail extends Post {
+  podcast_script: string | null;
+  transcript: {speaker:string;text:string;start_sample:number;end_sample:number}[];
+  transcript_sample_rate: number;
   full_text: string | null;
   crawled_at: string;
 }

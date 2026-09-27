@@ -1,0 +1,93 @@
+import { test, expect } from "@playwright/test";
+test("homepage explains access and walkthrough responds to controls", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(
+    page.getByRole("heading", { name: "Good ideas deserve a little airtime." }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Illustrative demo, no live generation"),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "2 Outline", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Keep the ideas that matter." }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Play demo", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Pause", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Pause", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Play demo", exact: true }),
+  ).toBeVisible();
+  await page.screenshot({
+    path: `../../outputs/blog2podcast-${test.info().project.name.replaceAll(" ", "-")}.png`,
+    fullPage: true,
+  });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+});
+test("reduced motion uses a manual stepper", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  await expect(
+    page.getByRole("button", { name: "Next step", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Next step", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Keep the ideas that matter." }),
+  ).toBeVisible();
+});
+test("login unavailable state preserves public access", async ({ page }) => {
+  await page.goto("/login");
+  await expect(
+    page.getByRole("heading", { name: "A little room for learning." }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(
+      "Member sign-in is being configured. The public library is open.",
+    ),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Browse the library", exact: true }),
+  ).toHaveAttribute("href", "/listen");
+});
+test("gateway rejects anonymous and cross-origin mutation", async ({
+  request,
+}) => {
+  expect((await request.get("/api/backend/jobs")).status()).toBe(401);
+  expect(
+    (
+      await request.post("/api/backend/generate", {
+        data: { post_id: 1 },
+        headers: { Origin: "https://other.example" },
+      })
+    ).status(),
+  ).toBe(403);
+  expect((await request.get("/api/backend/import")).status()).toBe(404);
+});
+test("unknown episode returns real 404", async ({ request }) => {
+  expect((await request.get("/post/999999999")).status()).toBe(404);
+});
+
+test('public generation action routes anonymous readers to sign-in',async({page})=>{
+  test.skip(process.env.BETA_FIXTURE !== 'true', 'Requires candidate fixture');
+  await page.goto('/explore');
+  // This acceptance case uses the controlled candidate backend fixture.
+  const card=page.getByRole('heading',{name:'A draftable public source'});
+  await expect(card).toBeVisible();
+  await page.getByRole('button',{name:'Create private draft',exact:true}).click();
+  await expect(page).toHaveURL(/\/login/);
+  await expect(page.getByRole('heading',{name:'A little room for learning.'})).toBeVisible();
+});
+
+test('desktop article playback button is not covered by navigation',async({page})=>{
+  test.skip(process.env.BETA_FIXTURE !== 'true','Requires candidate fixture');
+  await page.goto('/post/1');
+  await page.getByRole('button',{name:'Play Podcast',exact:true}).click();
+  await expect.poll(()=>page.locator('audio').evaluate((audio:HTMLAudioElement)=>audio.paused)).toBe(false);
+});

@@ -1,150 +1,63 @@
-"""LLM-based content generation — summary + podcast script in one call."""
+"""Source-grounded summary and two-speaker script, through Ollama Cloud."""
 
-import json
-import logging
-import os
-
-from src.config import get_config
-
-logger = logging.getLogger(__name__)
+import xml.etree.ElementTree as ET
+from src.text_client import json_completion
+from src.podcast.script import parse_script
 
 
-async def generate_content(title: str, markdown: str) -> dict:
-    """Generate summary and podcast script from article content.
-
-    Uses a single OpenAI API call to produce both a concise summary and a
-    two-host podcast script. Script length scales with article length to
-    avoid padding short articles or truncating long ones.
-
-    Model is configured via config.yaml llm.content_generation.model.
-
-    Returns dict with keys: summary (str), podcast_script (str | None).
-    """
-    api_key = os.environ.get("OPENAI_API_KEY")
-    if not api_key:
-        logger.warning("OPENAI_API_KEY not set — returning basic summary without LLM")
-        first_para = markdown.split("\n\n")[0][:500] if markdown else ""
-        return {"summary": first_para, "podcast_script": None}
-
-    config = get_config()
-    llm_cfg = config.llm.get("content_generation", {})
-    model = llm_cfg.get("model", "gpt-5.2")
-
-    # Scale script length to article size — short articles get short podcasts
-    word_count = len(markdown.split())
-    if word_count < 500:
-        script_words = 600
-        duration_hint = "3-4 minute"
-    elif word_count < 800:
-        script_words = 800
-        duration_hint = "4-5 minute"
-    elif word_count < 1500:
-        script_words = 2000
-        duration_hint = "10-12 minute"
-    elif word_count < 3000:
-        script_words = 3000
-        duration_hint = "15-18 minute"
-    else:
-        script_words = 4000
-        duration_hint = "20-25 minute"
-
-    try:
-        from openai import AsyncOpenAI
-
-        client = AsyncOpenAI()
-        response = await client.chat.completions.create(
-            model=model,
-            response_format={"type": "json_object"},
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "You are a technical content processor. Given a blog post title and its "
-                        "full markdown content, produce TWO things:\n\n"
-                        "1. **summary**: A 2-3 sentence technical summary covering what was built, "
-                        "why it matters, and the key result or insight.\n\n"
-                        f"2. **podcast_script**: A two-host conversational podcast script, "
-                        f"STRICTLY {script_words} words or fewer ({duration_hint} when read aloud). "
-                        f"Do NOT exceed {script_words} words — shorter articles must produce shorter podcasts. "
-                        "Use <Person1> and <Person2> XML tags to denote speakers. Person1 is the main "
-                        "host who explains concepts clearly. Person2 is the co-host who asks insightful "
-                        "questions and adds context. The conversation should be engaging, educational, "
-                        "and technically accurate.\n\n"
-                        "IMPORTANT: Cover every key point from the article — do not skip or oversimplify "
-                        "any technical detail. Use natural conversation (rephrasing, examples, reactions) "
-                        "to make the content accessible, but stay faithful to the source material. "
-                        "Do not invent facts, statistics, or examples not present in the original article. "
-                        "The depth should match the article — short articles get concise discussions, "
-                        "long detailed articles get thorough deep dives.\n\n"
-                        'Return JSON: {"summary": "...", "podcast_script": "<Person1>...</Person1>..."}'
-                    ),
-                },
-                {
-                    "role": "user",
-                    "content": f"Title: {title}\n\nContent:\n{markdown}",
-                },
-            ],
-            temperature=0.7,
+async def generate_content(title: str, markdown: str, model: str | None = None) -> dict:
+    if not 100 <= len(markdown) <= 50000:
+        raise ValueError("Source body must contain 100–50,000 characters")
+    budget = min(1600, max(120, len(markdown.split())))
+    data = await json_completion(
+        "Create a concise educational conversation from only the supplied article. Preserve names, numbers and caveats. "
+        "Do not invent examples, claims or endorsements. Cite the source in the opening. "
+        f"Use at most {budget} spoken words, 2–80 alternating turns, each at most 1500 characters. "
+        "Return JSON with summary (2 sentences), turns (array of objects with speaker equal to Person1 or Person2 and plain text in text), "
+        "and evidence (a list of 1–8 exact source quotations supporting the principal claims). "
+        'Return exactly this shape, without Markdown fences: {"summary":"...","turns":[{"speaker":"Person1","text":"..."},{"speaker":"Person2","text":"..."}],"evidence":["exact source quotation"]}.',
+        f"Title: {title}\nSource article:\n{markdown}",
+        model=model,
+    )
+    raw_turns = data.get("turns")
+    if not isinstance(raw_turns, list):
+        raise ValueError("Expected structured speaker turns")
+    elements = []
+    for turn in raw_turns:
+        if (
+            not isinstance(turn, dict)
+            or turn.get("speaker") not in ("Person1", "Person2")
+            or not isinstance(turn.get("text"), str)
+        ):
+            raise ValueError("Invalid speaker turn")
+        element = ET.Element(turn["speaker"])
+        element.text = turn["text"]
+        elements.append(ET.tostring(element, encoding="unicode"))
+    script = "".join(elements)
+    turns = parse_script(script)
+    if sum(len(t["text"].split()) for t in turns) > budget:
+        raise ValueError("Script exceeds source budget")
+    summary = data.get("summary")
+    evidence = data.get("evidence")
+    if not isinstance(summary, str) or not 1 <= len(summary) <= 2000:
+        raise ValueError("Invalid summary")
+    if (
+        not isinstance(evidence, list)
+        or not 1 <= len(evidence) <= 8
+        or any(
+            not isinstance(q, str) or len(q) < 10 or q not in markdown for q in evidence
         )
-
-        raw = response.choices[0].message.content
-        if not raw:
-            return {"summary": markdown[:500], "podcast_script": None}
-
-        data = json.loads(raw)
-        return {
-            "summary": data.get("summary", ""),
-            "podcast_script": data.get("podcast_script"),
-        }
-
-    except Exception:
-        logger.exception("Content generation failed for %s", title[:60])
-        return {"summary": markdown[:500], "podcast_script": None}
+    ):
+        raise ValueError("Evidence must quote the captured source")
+    return {"summary": summary, "podcast_script": script, "evidence": evidence}
 
 
 async def generate_summary_only(title: str, markdown: str) -> str:
-    """Generate only a summary (no podcast script). Convenience wrapper."""
-    api_key = os.environ.get("OPENAI_API_KEY")
-    if not api_key:
-        logger.warning("OPENAI_API_KEY not set — returning first paragraph as summary")
-        return markdown.split("\n\n")[0][:500] if markdown else ""
-
-    config = get_config()
-    llm_cfg = config.llm.get("content_generation", {})
-    model = llm_cfg.get("model", "gpt-5.2")
-
-    try:
-        from openai import AsyncOpenAI
-
-        client = AsyncOpenAI()
-        response = await client.chat.completions.create(
-            model=model,
-            response_format={"type": "json_object"},
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "You are a technical content processor. Given a blog post title and its "
-                        "full markdown content, produce a 2-3 sentence technical summary covering "
-                        "what was built, why it matters, and the key result or insight.\n\n"
-                        'Return JSON: {"summary": "..."}'
-                    ),
-                },
-                {
-                    "role": "user",
-                    "content": f"Title: {title}\n\nContent:\n{markdown}",
-                },
-            ],
-            temperature=0.7,
-        )
-
-        raw = response.choices[0].message.content
-        if not raw:
-            return markdown[:500]
-
-        data = json.loads(raw)
-        return data.get("summary", markdown[:500])
-
-    except Exception:
-        logger.exception("Summary generation failed for %s", title[:60])
-        return markdown[:500]
+    data = await json_completion(
+        "Summarize only the supplied source in two sentences. Return JSON with summary.",
+        f"{title}\n{markdown}",
+    )
+    summary = data.get("summary")
+    if not isinstance(summary, str) or not summary.strip():
+        raise ValueError("Empty summary")
+    return summary

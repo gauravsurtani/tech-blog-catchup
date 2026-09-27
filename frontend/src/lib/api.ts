@@ -39,10 +39,12 @@ async function parseErrorBody(res: Response): Promise<string | null> {
 }
 
 async function fetchAPI<T>(path: string, options?: RequestInit): Promise<T> {
-  const url = `${API_BASE}${path}`;
+  const privatePath = options?.method && options.method !== "GET" || /^\/api\/(jobs|users)(\/|\?|$)/.test(path);
+  const url = privatePath ? `/api/backend${path.slice(4)}` : `${API_BASE}${path}`;
+  const retries = options?.method && options.method !== "GET" ? 1 : MAX_RETRIES;
   let lastError: Error | null = null;
 
-  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+  for (let attempt = 0; attempt < retries; attempt++) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
 
@@ -52,6 +54,7 @@ async function fetchAPI<T>(path: string, options?: RequestInit): Promise<T> {
         signal: controller.signal,
         headers: {
           "Content-Type": "application/json",
+          ...(options?.method === "POST" ? {"Idempotency-Key": crypto.randomUUID()} : {}),
           ...options?.headers,
         },
       });
@@ -65,7 +68,7 @@ async function fetchAPI<T>(path: string, options?: RequestInit): Promise<T> {
       const detail = await parseErrorBody(res);
       const message = detail || `${res.status} ${res.statusText}`;
 
-      if (isRetryable(res.status) && attempt < MAX_RETRIES - 1) {
+      if (isRetryable(res.status) && attempt < retries - 1) {
         lastError = new ApiError(res.status, message, detail);
         await sleep(INITIAL_BACKOFF_MS * Math.pow(2, attempt));
         continue;
@@ -88,7 +91,7 @@ async function fetchAPI<T>(path: string, options?: RequestInit): Promise<T> {
 
       lastError = new ApiError(0, networkMessage, null);
 
-      if (attempt < MAX_RETRIES - 1) {
+      if (attempt < retries - 1) {
         await sleep(INITIAL_BACKOFF_MS * Math.pow(2, attempt));
         continue;
       }

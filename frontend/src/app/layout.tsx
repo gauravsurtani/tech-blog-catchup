@@ -1,16 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { DM_Sans } from "next/font/google";
 import "./globals.css";
-import Sidebar from "@/components/Sidebar";
-import SidebarLayout from "@/components/SidebarLayout";
+import SiteShell from "@/components/SiteShell";
 import ThemeProvider from "@/components/ThemeProvider";
 import { AudioPlayerProvider } from "@/hooks/useAudioPlayer";
 import AudioPlayer from "@/components/AudioPlayer";
-import GenerationBanner from "@/components/GenerationBanner";
-import BottomTabs from "@/components/BottomTabs";
-import Footer from "@/components/Footer";
 import SessionProvider from "@/components/SessionProvider";
-import ThemeToggle from "@/components/ThemeToggle";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 
 const dmSans = DM_Sans({
@@ -27,26 +22,27 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://blog2podcast.com"),
   title: {
-    default: "Catchup",
-    template: "%s | Catchup",
+    default: "Blog2Podcast",
+    template: "%s | Blog2Podcast",
   },
   description: "Listen to tech engineering blogs as conversational podcasts",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Catchup",
+    title: "Blog2Podcast",
   },
   openGraph: {
     type: "website",
-    siteName: "Catchup",
-    title: "Catchup",
+    siteName: "Blog2Podcast",
+    title: "Blog2Podcast",
     description: "Listen to tech engineering blogs as conversational podcasts",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Catchup",
+    title: "Blog2Podcast",
     description: "Listen to tech engineering blogs as conversational podcasts",
   },
   icons: {
@@ -72,18 +68,7 @@ export default function RootLayout({
         <ThemeProvider>
           <SessionProvider>
             <AudioPlayerProvider>
-              <div className="fixed top-4 right-4 z-[var(--z-nav)] hidden md:block">
-                <ThemeToggle />
-              </div>
-              <Sidebar />
-              <SidebarLayout>
-                <GenerationBanner />
-                <main id="main-content" className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 pb-36 md:pb-24">
-                  {children}
-                </main>
-                <Footer />
-              </SidebarLayout>
-              <BottomTabs />
+              <SiteShell>{children}</SiteShell>
               <AudioPlayer />
               <ServiceWorkerRegistration />
             </AudioPlayerProvider>

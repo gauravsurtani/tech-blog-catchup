@@ -255,7 +255,7 @@ class TestCrawlAll:
         mock_crawl.return_value = 0
 
         crawl_all(db_session, minimal_config, dry_run=True)
-        mock_crawl.assert_called_once_with(db_session, sources[0], minimal_config, dry_run=True)
+        mock_crawl.assert_called_once_with(db_session, sources[0], minimal_config, dry_run=True, max_posts=None)
 
     @patch("src.crawler.crawl_manager.crawl_source")
     def test_error_handling(self, mock_crawl, db_session, minimal_config):

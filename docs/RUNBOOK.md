@@ -1,3 +1,5 @@
+> **Legacy deployment reference.** The private-beta architecture replaces the OpenAI/optional-auth assumptions below. Use [PRIVATE_BETA_RUNBOOK.md](PRIVATE_BETA_RUNBOOK.md) for current credentials, access controls, migrations and release gates.
+
 # Railway Deployment Runbook
 
 ## Architecture

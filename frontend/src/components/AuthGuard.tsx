@@ -7,7 +7,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
   // When no OAuth providers are configured, allow anonymous access
   if (authEnabled === false) {
-    return <>{children}</>;
+    return <p>Member sign-in is currently unavailable. <a href="/listen">Browse public episodes</a>.</p>;
   }
 
   if (loading) {

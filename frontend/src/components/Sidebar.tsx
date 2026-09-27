@@ -23,7 +23,7 @@ import { useAuthEnabled } from "@/hooks/useRequireAuth";
 const STORAGE_KEY = "sidebar-collapsed";
 
 const navItems = [
-  { href: "/", label: "Home", icon: Home },
+  { href: "/listen", label: "Home", icon: Home },
   { href: "/explore", label: "Explore", icon: Compass },
   { href: "/browse", label: "Browse", icon: LayoutGrid },
   { href: "/library", label: "Library", icon: Library },
@@ -75,7 +75,7 @@ export default function Sidebar() {
     >
       {/* Logo + Collapse toggle */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-[var(--border-color)]">
-        <Link href="/" className="text-[var(--text-1)] text-xl">
+        <Link href="/listen" className="text-[var(--text-1)] text-xl">
           <Logo
             variant={collapsed ? "icon" : "full"}
             className={collapsed ? "h-8 w-8" : "text-xl"}

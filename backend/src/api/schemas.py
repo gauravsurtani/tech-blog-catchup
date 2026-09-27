@@ -23,6 +23,9 @@ class PostSummary(BaseModel):
 
 
 class PostDetail(PostSummary):
+    transcript: list[dict] = []
+    transcript_sample_rate: int = 24000
+    podcast_script: str | None = None
     full_text: str | None
     audio_path: str | None
     crawled_at: datetime
@@ -85,6 +88,8 @@ class CrawlStatusItem(BaseModel):
 
 
 class JobInfo(BaseModel):
+    stage: str | None = None
+    artifact: str | None = None
     id: int
     job_type: str
     status: str
@@ -99,6 +104,8 @@ class JobInfo(BaseModel):
 
 
 class UserInfo(BaseModel):
+    role: str
+    disabled_at: datetime | None = None
     id: int
     email: str
     name: str | None

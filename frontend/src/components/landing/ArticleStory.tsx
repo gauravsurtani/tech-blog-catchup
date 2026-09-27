@@ -1,5 +1,17 @@
 "use client";
 import { useEffect, useState } from "react";
+import {
+  FileText,
+  ListChecks,
+  AudioLines,
+  Headphones,
+  Play,
+  Pause,
+  RotateCcw,
+  Link2,
+  Check,
+  LockKeyhole,
+} from "lucide-react";
 const steps = [
   {
     name: "Source",
@@ -38,7 +50,7 @@ export default function ArticleStory() {
     const q = matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => {
       setReduced(q.matches);
-      if (q.matches) setPlaying(false);
+      setPlaying(!q.matches);
     };
     update();
     q.addEventListener("change", update);
@@ -63,47 +75,154 @@ export default function ArticleStory() {
   return (
     <section className="article-story" aria-label="How Blog2Podcast works">
       <div className="story-top">
-        <span>Product walkthrough</span>
+        <span className="story-window-title">
+          <AudioLines size={16} /> Inside Blog2Podcast
+        </span>
         <span>Illustrative demo, no live generation</span>
       </div>
       <div
         className={`story-stage step-${step} ${playing ? "is-playing" : ""}`}
+        aria-hidden="true"
       >
-        <div className="source-sheet" aria-hidden="true">
-          <div className="sheet-icon">B</div>
-          <i />
-          <i />
-          <i />
-          <i />
-          <div className="sheet-block" />
-          <i />
-          <i />
+        <div className="story-grid" />
+        <div className="stage-caption">
+          <span className="stage-dot" />
+          {
+            [
+              "Start with a source",
+              "Find the key ideas",
+              "Make it a conversation",
+              "Preview before publishing",
+            ][step]
+          }
+          <span className="stage-count">0{step + 1} / 04</span>
         </div>
-        <div className="story-track" aria-hidden="true">
-          <span />
-          <span />
-          <span />
-          <span />
-          <span />
-          <span />
-          <span />
-          <span />
-          <span />
-          <span />
+        <div className="motion-source motion-object">
+          <div className="object-top">
+            <FileText size={16} />
+            <span>Original article</span>
+            <span className="paper-fold" />
+          </div>
+          <h3>
+            A quick guide
+            <br />
+            to caching
+          </h3>
+          <p className="article-excerpt">
+            <span className="highlight-one">
+              Keep recently used data close.
+            </span>
+            <br />
+            <span className="highlight-two">Remember it can become stale.</span>
+          </p>
+          <div className="paper-lines">
+            <i />
+            <i />
+            <i />
+          </div>
+          <span className="source-credit">
+            <Link2 size={12} /> Original source attached
+          </span>
+        </div>
+        <div className="motion-outline motion-object">
+          <div className="object-top">
+            <ListChecks size={16} />
+            <span>The useful bits</span>
+          </div>
+          <p>
+            <Check size={15} /> Reuse recent data
+          </p>
+          <p>
+            <Check size={15} /> Keep the caveat
+          </p>
+          <p>
+            <Check size={15} /> Check the source
+          </p>
+        </div>
+        <div className="motion-speakers motion-object">
+          <div className="speaker-line speaker-one">
+            <span className="speaker-avatar">01</span>
+            <p>What does a cache do?</p>
+          </div>
+          <div className="speaker-line speaker-two">
+            <p>
+              Keeps useful data close.
+              <br />
+              But freshness still matters.
+            </p>
+            <span className="speaker-avatar">02</span>
+          </div>
+          <div className="speaker-tracks">
+            <span>Voice 01</span>
+            <div>
+              {Array.from({ length: 23 }, (_, i) => (
+                <i
+                  key={i}
+                  style={{
+                    height: `${20 + ((i * 17) % 74)}%`,
+                    animationDelay: `${i * 37}ms`,
+                  }}
+                />
+              ))}
+            </div>
+            <span>Voice 02</span>
+            <div>
+              {Array.from({ length: 23 }, (_, i) => (
+                <i
+                  key={i}
+                  style={{
+                    height: `${18 + ((i * 23) % 77)}%`,
+                    animationDelay: `${i * 53}ms`,
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="motion-episode motion-object">
+          <div className="episode-cover">
+            <Headphones size={42} />
+            <span>
+              A quick guide
+              <br />
+              to caching
+            </span>
+          </div>
+          <div className="episode-info">
+            <span className="draft-chip">
+              <LockKeyhole size={11} /> Private draft
+            </span>
+            <h3>
+              Ready for
+              <br />a closer listen.
+            </h3>
+            <div className="episode-wave">
+              {Array.from({ length: 21 }, (_, i) => (
+                <i key={i} style={{ height: `${18 + ((i * 19) % 78)}%` }} />
+              ))}
+            </div>
+            <span className="episode-source">
+              <Check size={12} /> Source · script · audio
+            </span>
+          </div>
+        </div>
+        <div className="motion-path">
           <span />
           <span />
           <span />
           <span />
           <span />
         </div>
-        <div className="story-note">
-          <small>{current.label}</small>
-          <p>{current.line}</p>
+        <div className="stage-footnote">
+          Original example written for this demo. No audio autoplays.
         </div>
       </div>
       <div className="story-content" aria-live="polite">
         <h2>{current.title}</h2>
         <p>{current.body}</p>
+        <p className="sr-only">
+          {current.label}. {current.line}
+        </p>
       </div>
       <div className="story-controls">
         <div role="group" aria-label="Walkthrough steps">
@@ -132,6 +251,13 @@ export default function ArticleStory() {
             setPlaying((p) => !p);
           }}
         >
+          {playing ? (
+            <Pause size={14} />
+          ) : step === 3 ? (
+            <RotateCcw size={14} />
+          ) : (
+            <Play size={14} />
+          )}
           {reduced
             ? "Next step"
             : playing

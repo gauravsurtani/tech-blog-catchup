@@ -1,6 +1,8 @@
 "use client";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import Logo from "./Logo";
+import ThemeToggle from "./ThemeToggle";
 import Sidebar from "./Sidebar";
 import SidebarLayout from "./SidebarLayout";
 import BottomTabs from "./BottomTabs";
@@ -38,10 +40,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
     <div className="site">
       <header className="site-header">
         <Link href="/" className="site-brand" aria-label="Blog2Podcast home">
-          <span aria-hidden="true" className="brand-sound">
-            ▂▆▃▇▂
-          </span>{" "}
-          Blog2Podcast
+          <Logo variant="full" className="site-wordmark" />
         </Link>
         <nav aria-label="Main navigation">
           <Link href="/listen">Library</Link>
@@ -49,6 +48,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
           <Link href="/login" className="site-login">
             Member sign-in
           </Link>
+          <ThemeToggle />
         </nav>
       </header>
       <main id="main-content">{children}</main>

@@ -21,6 +21,9 @@ test("homepage explains access and walkthrough responds to controls", async ({
   await expect(
     page.getByRole("button", { name: "Play demo", exact: true }),
   ).toBeVisible();
+  await page.locator(".motion-outline").evaluate(async element => {
+    await Promise.all(element.getAnimations().map(animation => animation.finished.catch(() => {})));
+  });
   await page.screenshot({
     path: `../../outputs/blog2podcast-${test.info().project.name.replaceAll(" ", "-")}.png`,
     fullPage: true,
@@ -90,4 +93,25 @@ test('desktop article playback button is not covered by navigation',async({page}
   await page.goto('/post/1');
   await page.getByRole('button',{name:'Play Podcast',exact:true}).click();
   await expect.poll(()=>page.locator('audio').evaluate((audio:HTMLAudioElement)=>audio.paused)).toBe(false);
+});
+
+test('homepage shares app theme and motion can be stopped',async({page})=>{
+  await page.goto('/');
+  await page.getByRole('button',{name:'Pause',exact:true}).click();
+  const sourceBounds = await page.locator('.motion-source').boundingBox();
+  const captionBounds = await page.locator('.stage-footnote').boundingBox();
+  expect(sourceBounds!.y + sourceBounds!.height + 5).toBeLessThan(captionBounds!.y);
+  const selected=await page.locator('[aria-label="Walkthrough steps"] [aria-pressed="true"]').textContent();
+  await expect(page.locator('.story-stage')).not.toHaveClass(/is-playing/);
+  await page.waitForTimeout(4500);
+  expect(await page.locator('[aria-label="Walkthrough steps"] [aria-pressed="true"]').textContent()).toBe(selected);
+  expect(await page.locator('audio').evaluate((a:HTMLAudioElement)=>a.paused)).toBe(true);
+  const dark=await page.locator('.site').evaluate(el=>({site:getComputedStyle(el).backgroundColor,body:getComputedStyle(document.body).backgroundColor}));
+  expect(dark.site).toBe(dark.body);
+  await page.getByRole('button',{name:'Switch to light theme',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Switch to dark theme',exact:true})).toBeVisible();
+  await expect.poll(()=>page.locator('.site').evaluate(el=>getComputedStyle(el).backgroundColor===getComputedStyle(document.body).backgroundColor)).toBe(true);
+  const light=await page.locator('.site').evaluate(el=>({site:getComputedStyle(el).backgroundColor,body:getComputedStyle(document.body).backgroundColor}));
+  expect(light.site).toBe(light.body);expect(light.site).not.toBe(dark.site);
+  await page.screenshot({path:`../../outputs/blog2podcast-motion-light-${test.info().project.name.replaceAll(' ','-')}.png`,fullPage:true});
 });

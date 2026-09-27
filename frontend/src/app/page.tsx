@@ -9,10 +9,7 @@ export default function Home() {
             <span />
             Public listening. Private creation.
           </p>
-          <h1>
-            Good ideas deserve
-            <br />a little airtime.
-          </h1>
+          <h1>Good ideas deserve a little airtime.</h1>
           <p className="hero-description">
             Turn a blog post into a conversation you can listen to. Keep
             learning when your eyes need a break.
@@ -27,41 +24,65 @@ export default function Home() {
             An educational project, quietly open to a small group of creators.
           </p>
         </div>
-        <div className="hero-art" aria-hidden="true">
-          <div className="record">
-            <div className="record-label">
-              <span>Read it.</span>
-              <strong>Hear it.</strong>
-              <span>Think it through.</span>
-            </div>
-          </div>
-          <div className="article-slip">
-            <span>From the original article</span>
-            <i />
-            <i />
-            <i />
-            <b>
-              A different way
-              <br />
-              to take it in.
-            </b>
-          </div>
+        <div id="how-it-works" className="hero-motion">
+          <ArticleStory />
         </div>
       </section>
-      <div id="how-it-works" className="story-section">
+      <section className="format-strip" aria-label="What you can do">
+        <span>Read the source</span>
+        <span aria-hidden="true">↗</span>
+        <span>Hear the conversation</span>
+        <span aria-hidden="true">↗</span>
+        <span>Keep the idea</span>
+      </section>
+      <section className="product-notes">
         <div className="section-intro">
           <h2>
-            From a page
+            A reading habit.
             <br />
-            to a point of view.
+            With a play button.
           </h2>
           <p>
-            The source stays in the story. Here is what happens between choosing
-            an article and pressing play.
+            For the articles you saved, the tabs you left open, and the ideas
+            you want to spend more time with.
           </p>
         </div>
-        <ArticleStory />
-      </div>
+        <div className="product-features">
+          <article>
+            <span className="feature-mark" aria-hidden="true">
+              ↗
+            </span>
+            <h3>Follow your curiosity</h3>
+            <p>
+              Explore engineering articles by source and topic. The original
+              link stays attached, so you can always go deeper.
+            </p>
+            <Link href="/browse">Browse topics</Link>
+          </article>
+          <article>
+            <span className="feature-mark" aria-hidden="true">
+              ≋
+            </span>
+            <h3>Make room to listen</h3>
+            <p>
+              Build a queue, change playback speed and pick up where you left
+              off. Your episode stays with you as you browse.
+            </p>
+            <Link href="/listen">Open the player</Link>
+          </article>
+          <article>
+            <span className="feature-mark" aria-hidden="true">
+              ✳
+            </span>
+            <h3>Create with care</h3>
+            <p>
+              Approved members turn permitted source text into private drafts.
+              Listen, check the claims, then submit for review.
+            </p>
+            <Link href="/login">Member studio</Link>
+          </article>
+        </div>
+      </section>
       <section className="listening-notes">
         <div>
           <h2>

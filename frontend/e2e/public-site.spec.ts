@@ -115,3 +115,14 @@ test('homepage shares app theme and motion can be stopped',async({page})=>{
   expect(light.site).toBe(light.body);expect(light.site).not.toBe(dark.site);
   await page.screenshot({path:`../../outputs/blog2podcast-motion-light-${test.info().project.name.replaceAll(' ','-')}.png`,fullPage:true});
 });
+
+test('touch input operates walkthrough controls',async({page,isMobile})=>{
+  test.skip(!isMobile,'Touch-device profiles only');
+  await page.goto('/');
+  await page.getByRole('button',{name:'2 Outline',exact:true}).tap();
+  await expect(page.getByRole('heading',{name:'Keep the ideas that matter.'})).toBeVisible();
+  await page.getByRole('button',{name:'Play demo',exact:true}).tap();
+  await expect(page.getByRole('button',{name:'Pause',exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'Pause',exact:true}).tap();
+  await expect(page.locator('.story-stage')).not.toHaveClass(/is-playing/);
+});

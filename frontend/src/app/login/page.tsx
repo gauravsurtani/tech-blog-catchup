@@ -7,7 +7,7 @@ export default async function Login() {
   const host = (await headers()).get("host");
   if (host === "www.blog2podcast.com")
     redirect("https://blog2podcast.com/login");
-  if (await auth()) redirect("/member");
+  if (authEnabled && await auth()) redirect("/member");
   const providers = [
     process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
       ? "google"

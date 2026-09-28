@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { auth, authEnabled } from "@/lib/auth";
 import { createHmac } from "node:crypto";
 import { NextRequest } from "next/server";
 
@@ -29,7 +29,7 @@ async function gateway(
   const site = process.env.AUTH_URL || "https://blog2podcast.com";
   if (method !== "GET" && req.headers.get("origin") !== new URL(site).origin)
     return Response.json({ detail: "Invalid origin" }, { status: 403 });
-  const session = await auth();
+  const session = authEnabled ? await auth() : null;
   if (!session?.user?.providerSubject || !session.user.verifiedEmail)
     return Response.json({ detail: "Sign in required" }, { status: 401 });
   const secret = process.env.API_SIGNING_SECRET;

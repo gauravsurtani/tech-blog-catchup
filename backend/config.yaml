@@ -298,9 +298,9 @@ podcast:
 llm:
   # Model config per task — swap models without touching code
   content_generation:
-    model: "gpt-5.2"     # Summary + podcast script in one call
+    model: "gemma4:31b"     # Summary + podcast script in one call
   content_scanner:
-    model: "gpt-5.2"     # Article vs junk classification
+    model: "gemma4:31b"     # Article vs junk classification
 
 crawl:
   delay_between_requests: 1.5

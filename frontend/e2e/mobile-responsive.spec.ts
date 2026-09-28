@@ -5,7 +5,7 @@ const MD_BREAKPOINT = 768;
 
 test.describe("Mobile Responsive Layout", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/listen");
     await page.waitForLoadState("load");
   });
 
@@ -85,7 +85,7 @@ test.describe("Mobile Navigation", () => {
       test.skip();
       return;
     }
-    await page.goto("/");
+    await page.goto("/listen");
     await page.waitForLoadState("load");
 
     const nav = page.locator('nav[aria-label="Mobile navigation"]');
@@ -106,12 +106,16 @@ test.describe("Search Dialog", () => {
       test.skip();
       return;
     }
-    await page.goto("/");
+    await page.goto("/listen");
     await page.waitForLoadState("load");
 
-    // Cmd+K / Ctrl+K opens search on desktop
-    await page.keyboard.press("Meta+k");
+    // First exercise a visible control so hydration has completed before the shortcut.
     const dialog = page.locator('div[role="dialog"][aria-label="Search"]');
+    await page.getByRole("button", { name: "Search posts", exact: true }).click();
+    await expect(dialog).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+    await page.keyboard.press("Meta+k");
     await expect(dialog).toBeVisible({ timeout: 5000 });
 
     const input = dialog.locator("input");

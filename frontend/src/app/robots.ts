@@ -6,6 +6,6 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: "*",
       allow: "/",
     },
-    sitemap: "https://techblog.up.railway.app/sitemap.xml",
+    sitemap: "https://blog2podcast.com/sitemap.xml",
   };
 }

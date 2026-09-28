@@ -1,12 +1,13 @@
 """FastAPI application setup."""
 
+import asyncio
+import contextlib
 import logging
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
 
@@ -47,7 +48,12 @@ async def lifespan(app: FastAPI):
     except Exception:
         logger.exception("Failed to start scheduler")
 
+    from src.jobs import worker_loop
+    worker = asyncio.create_task(worker_loop())
     yield
+    worker.cancel()
+    with contextlib.suppress(asyncio.CancelledError):
+        await worker
 
     # Shutdown scheduler on app teardown
     if scheduler is not None and scheduler.running:
@@ -96,7 +102,14 @@ def create_app() -> FastAPI:
         audio_dir = Path(__file__).parent.parent.parent / "audio"
     audio_dir.mkdir(parents=True, exist_ok=True)
     logger.info("Serving audio from: %s", audio_dir.resolve())
-    app.mount("/audio", StaticFiles(directory=str(audio_dir)), name="audio")
+    from src.api.audio import serve_audio
+    app.add_api_route("/audio/{filename:path}", serve_audio, methods=["GET", "HEAD"])
+    @app.middleware("http")
+    async def no_private_cache(request, call_next):
+        response = await call_next(request)
+        # Public projections can change on withdrawal; never cache dynamic responses.
+        response.headers["Cache-Control"] = "no-store"
+        return response
 
     # Include API routes
     app.include_router(router)

@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { Home, Compass, LayoutGrid, Library, ListMusic, PlusCircle } from "lucide-react";
 
 const tabs = [
-  { href: "/", label: "Home", icon: Home },
+  { href: "/listen", label: "Home", icon: Home },
   { href: "/explore", label: "Explore", icon: Compass },
   { href: "/browse", label: "Browse", icon: LayoutGrid },
   { href: "/library", label: "Library", icon: Library },

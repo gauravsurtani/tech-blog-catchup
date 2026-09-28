@@ -65,16 +65,18 @@ jobs:
           NEXT_PUBLIC_API_URL: http://localhost:8000
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium webkit
 
       - name: Run E2E tests (frontend-only)
         run: |
           npx next start &
           for i in $(seq 1 30); do curl -sf http://localhost:3000 > /dev/null && break || sleep 1; done
-          npx playwright test --project="Desktop Chrome" e2e/pwa.spec.ts e2e/mobile-responsive.spec.ts
+          npx playwright test
         env:
           CI: true
           PLAYWRIGHT_BASE_URL: http://localhost:3000
+          AUTH_URL: http://localhost:3000
+          AUTH_SECRET: ci-fixture-session-secret-not-for-production
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4

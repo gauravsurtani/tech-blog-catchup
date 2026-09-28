@@ -105,6 +105,7 @@ export default function PostCard({ post, onPlay, onAddToQueue, onGenerate }: Pos
       <div className="flex items-center gap-2 mt-auto pt-2 border-t border-[var(--split)]">
         {post.audio_status === "ready" && (
           <button
+            aria-label={`Play ${post.title}`}
             onClick={() => onPlay?.(post)}
             className="inline-flex items-center justify-center w-11 h-11 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-[var(--primary-text)] rounded-full border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-sm)] nb-hover transition-all cursor-pointer"
           >
@@ -117,7 +118,7 @@ export default function PostCard({ post, onPlay, onAddToQueue, onGenerate }: Pos
             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-[var(--primary-text)] text-sm font-bold rounded-[var(--radius)] border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-sm)] transition-all cursor-pointer"
           >
             <Mic className="w-4 h-4" />
-            Generate
+            Create private draft
           </button>
         )}
         {post.audio_status === "processing" && (

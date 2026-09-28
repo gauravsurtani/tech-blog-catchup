@@ -126,6 +126,10 @@ class TestSchedulerDisabled:
 # ---------------------------------------------------------------------------
 
 class TestJobFunctions:
+    @pytest.fixture(autouse=True)
+    def enabled(self, monkeypatch):
+        monkeypatch.setenv("ENABLE_GENERATION", "true")
+
     def test_crawl_job_is_callable(self):
         """The scheduled crawl function should be importable and callable."""
         from src.scheduler import scheduled_crawl
@@ -242,3 +246,11 @@ class TestJobFunctions:
 
         mock_ensure_tags.assert_called_once()
         mock_auto_tag.assert_called_once()
+
+
+def test_crawl_disabled_never_fetches(monkeypatch):
+    from src.scheduler import scheduled_crawl
+    monkeypatch.setenv("ENABLE_GENERATION", "false")
+    with patch("src.scheduler.crawl_all") as crawl:
+        scheduled_crawl(None)
+        crawl.assert_not_called()

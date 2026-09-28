@@ -37,3 +37,8 @@ Thumbs.db
 
 # Claude worktrees
 .claude/worktrees/
+
+.superpowers/
+frontend/test-results/
+frontend/playwright-report/
+backend/models/

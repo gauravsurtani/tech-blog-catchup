@@ -24,7 +24,7 @@ export default function GenerationBanner() {
           <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[var(--primary-text)] border-[1.5px] border-[var(--border-color)]" />
         </span>
         <span className="flex-1">
-          Generating podcasts&hellip; (Job #{activeJob.id} running)
+          Draft #{activeJob.id}: {activeJob.status}. View progress in the member studio.
         </span>
         <button
           onClick={handleDismiss}

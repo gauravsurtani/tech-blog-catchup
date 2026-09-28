@@ -87,6 +87,7 @@ export default function FullScreenPlayer({
 
   // Transcript state
   const [transcriptOpen, setTranscriptOpen] = useState(false);
+  const [transcript, setTranscript] = useState<import("@/lib/types").PostDetail | null>(null);
   const [fullText, setFullText] = useState<string | null>(null);
   const [transcriptLoading, setTranscriptLoading] = useState(false);
   const lastFetchedPostIdRef = useRef<number | null>(null);
@@ -113,7 +114,8 @@ export default function FullScreenPlayer({
       try {
         const detail = await getPost(currentTrack.id);
         if (!cancelled) {
-          setFullText(detail.full_text);
+          setFullText(detail.podcast_script || detail.full_text);
+          setTranscript(detail);
           lastFetchedPostIdRef.current = detail.id;
         }
       } catch {
@@ -264,6 +266,8 @@ export default function FullScreenPlayer({
                 </div>
               ) : fullText ? (
                 <TranscriptPanel
+                  turns={transcript?.transcript}
+                  sampleRate={transcript?.transcript_sample_rate}
                   fullText={fullText}
                   currentTime={currentTime}
                   duration={duration}

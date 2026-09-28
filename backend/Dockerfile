@@ -7,8 +7,8 @@ RUN apt-get update && \
 
 WORKDIR /build
 
-COPY pyproject.toml .
-RUN pip install --no-cache-dir --prefix=/install .
+COPY pyproject.toml requirements-speech.txt ./
+RUN pip install --no-cache-dir --prefix=/install . -r requirements-speech.txt
 
 # Stage 2: Runtime — slim image with only what's needed
 FROM python:3.11-slim
@@ -31,7 +31,10 @@ COPY --from=builder /install /usr/local
 COPY . .
 
 # Create data and audio directories
-RUN mkdir -p data audio
+RUN mkdir -p data audio models/kokoro && python scripts/install_speech_assets.py models/kokoro
+ENV KOKORO_ASSET_DIR=/app/models/kokoro
+ENV ENABLE_GENERATION=false
+ENV ENABLE_SCHEDULER=false
 
 # Crawl4AI browser setup (Playwright Chromium for JS-rendered sites)
 RUN crawl4ai-setup

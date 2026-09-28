@@ -1,5 +1,6 @@
 """Tests for User model, auth middleware, and user API endpoints."""
 
+import time
 import jwt
 import pytest
 from unittest.mock import patch
@@ -13,7 +14,7 @@ from src.models import User, UserPreferences
 import src.api.routes as routes_module
 import src.api.auth_middleware as auth_module
 
-TEST_SECRET = "test-jwt-secret-for-unit-tests"
+TEST_SECRET = "test-jwt-secret-for-unit-tests-32bytes"
 
 
 @pytest.fixture()
@@ -44,7 +45,7 @@ def client(test_db):
     try:
         with patch("src.api.app.init_db"), \
              patch("src.podcast.manager.recover_stuck_processing", return_value=0), \
-             patch.dict("os.environ", {"NEXTAUTH_SECRET": TEST_SECRET}):
+             patch.dict("os.environ", {"API_SIGNING_SECRET": TEST_SECRET}):
             from src.api.app import create_app
             app = create_app()
             with TestClient(app) as tc:
@@ -55,12 +56,12 @@ def client(test_db):
 
 
 def _make_token(email: str, secret: str = TEST_SECRET) -> str:
-    return jwt.encode({"email": email}, secret, algorithm="HS256")
+    return jwt.encode({"email": email,"email_verified":True,"sub":"google:"+email,"iss":"blog2podcast-web","aud":"blog2podcast-api","iat":int(time.time()),"exp":int(time.time())+60}, secret, algorithm="HS256")
 
 
 def _seed_user(session_factory, email: str = "test@example.com", provider: str = "google") -> User:
     session = session_factory()
-    user = User(email=email, name="Test User", provider=provider)
+    user = User(subject="google:"+email,email=email, name="Test User", provider=provider)
     session.add(user)
     session.commit()
     session.refresh(user)
@@ -163,17 +164,18 @@ class TestGetMe:
     def test_get_me_wrong_secret(self, client):
         tc, SessionLocal = client
         _seed_user(SessionLocal)
-        token = _make_token("test@example.com", secret="wrong-secret")
+        token = _make_token("test@example.com", secret="wrong-secret-but-at-least-thirty-two-bytes")
 
         resp = tc.get("/api/users/me", headers={"Authorization": f"Bearer {token}"})
         assert resp.status_code == 401
 
-    def test_get_me_user_not_found(self, client):
+    def test_get_me_new_user_is_pending(self, client):
         tc, _SessionLocal = client
         token = _make_token("nonexistent@example.com")
 
         resp = tc.get("/api/users/me", headers={"Authorization": f"Bearer {token}"})
-        assert resp.status_code == 401
+        assert resp.status_code == 200
+        assert resp.json()["user"]["role"] == "pending"
 
 
 class TestUpdateMe:

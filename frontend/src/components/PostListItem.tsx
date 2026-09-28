@@ -43,6 +43,7 @@ export default function PostListItem({
       <div className="flex-shrink-0 w-11">
         {post.audio_status === "ready" ? (
           <button
+            aria-label={`Play ${post.title}`}
             onClick={() => onPlay?.(post)}
             className="w-11 h-11 flex items-center justify-center bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-[var(--primary-text)] rounded-full border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-sm)] nb-hover transition-all cursor-pointer"
           >
@@ -131,6 +132,7 @@ export default function PostListItem({
           <span className="text-xs font-bold text-[var(--primary)] px-2 py-1">In Queue</span>
         ) : (
           <button
+            aria-label={`Add ${post.title} to queue`}
             onClick={() => onAddToQueue?.(post)}
             className="w-8 h-8 flex items-center justify-center bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] text-[var(--text-2)] rounded-[var(--radius)] border-[var(--border-w)] border-[var(--border-color)] shadow-[var(--shadow-sm)] transition-all cursor-pointer"
           >

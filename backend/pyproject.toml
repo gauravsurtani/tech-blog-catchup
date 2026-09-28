@@ -17,7 +17,6 @@ dependencies = [
     "python-dateutil>=2.9",
     "rich>=13.0",
     "openai>=1.0",
-    "podcastfy>=0.2",
     "mutagen>=1.47",
     "slowapi>=0.1",
     "alembic>=1.13",

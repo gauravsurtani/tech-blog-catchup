@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "Catchup",
-  "short_name": "Catchup",
+  "name": "Blog2Podcast",
+  "short_name": "Blog2Podcast",
   "description": "Listen to tech engineering blogs as conversational podcasts",
   "start_url": "/",
   "scope": "/",

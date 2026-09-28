@@ -69,7 +69,7 @@ class TestListPosts:
         """GET /api/posts should return posts after insertion."""
         tc, SessionLocal = client
         session = SessionLocal()
-        post = Post(
+        post = Post(visibility="public",
             url="https://example.com/test",
             source_key="test",
             source_name="Test Blog",
@@ -98,7 +98,7 @@ class TestGetPost:
         """GET /api/posts/{id} should return the post details."""
         tc, SessionLocal = client
         session = SessionLocal()
-        post = Post(
+        post = Post(visibility="public",
             url="https://example.com/detail-test",
             source_key="test",
             source_name="Test Blog",
@@ -115,7 +115,7 @@ class TestGetPost:
         assert resp.status_code == 200
         data = resp.json()
         assert data["title"] == "Detail Test Post"
-        assert data["full_text"] == "Full article text goes here."
+        assert data["full_text"] is None
 
 
 class TestListTags:
@@ -124,7 +124,7 @@ class TestListTags:
         tc, SessionLocal = client
         session = SessionLocal()
         tag = Tag(name="Infrastructure", slug="infrastructure")
-        session.add(tag)
+        session.add(Post(visibility="public", url="https://example.test/tagged", title="Tagged article", source_key="demo", source_name="Demo", tags=[tag]))
         session.commit()
         session.close()
 
@@ -149,7 +149,7 @@ class TestListSources:
         tc, SessionLocal = client
         session = SessionLocal()
         for i in range(3):
-            session.add(Post(
+            session.add(Post(visibility="public",
                 url=f"https://example.com/post-{i}",
                 source_key="uber",
                 source_name="Uber Engineering",
@@ -191,7 +191,7 @@ class TestGetStatus:
         """GET /api/status should reflect post and tag data."""
         tc, SessionLocal = client
         session = SessionLocal()
-        session.add(Post(
+        session.add(Post(visibility="public",
             url="https://example.com/status-test",
             source_key="test",
             source_name="Test Blog",

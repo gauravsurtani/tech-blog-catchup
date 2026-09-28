@@ -20,9 +20,8 @@ logger = logging.getLogger(__name__)
 
 def _build_fallback_chain(needs_browser: bool = False):
     """Build the extraction strategy chain based on source requirements."""
-    if needs_browser:
-        return [Crawl4AIStrategy(), LLMStrategy(), TrafilaturaStrategy(), BS4Strategy()]
-    return [LLMStrategy(), TrafilaturaStrategy(), BS4Strategy()]
+    # One bounded, destination-validated fetch. Browser fallbacks bypass redirect checks.
+    return [LLMStrategy()]
 
 
 async def extract_article(

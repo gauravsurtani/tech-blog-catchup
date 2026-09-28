@@ -4,7 +4,7 @@ from datetime import datetime
 
 from sqlalchemy import (
     Boolean, Column, DateTime, Float, ForeignKey,
-    Integer, String, Table, Text,
+    Integer, String, Table, Text, UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -41,6 +41,9 @@ class Post(Base):
     extraction_method: Mapped[str | None] = mapped_column(String, nullable=True)  # "trafilatura", "crawl4ai", "bs4"
     content_hash: Mapped[str | None] = mapped_column(String, nullable=True)
     podcast_script: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    visibility: Mapped[str] = mapped_column(String, nullable=False, default="private", server_default="private", index=True)
+    published_job_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     # User submission fields
     submitted_by_user_id: Mapped[int | None] = mapped_column(
@@ -94,6 +97,20 @@ class CrawlLog(Base):
 
 class Job(Base):
     __tablename__ = "jobs"
+    __table_args__ = (UniqueConstraint("actor_key", "idempotency_key", name="uq_job_request"),)
+    actor_key: Mapped[str] = mapped_column(String, nullable=False, server_default="system:legacy", default="system:legacy")
+    owner_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("users.id"))
+    post_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("posts.id"))
+    idempotency_key: Mapped[str | None] = mapped_column(String)
+    request_digest: Mapped[str | None] = mapped_column(String)
+    source_snapshot: Mapped[str | None] = mapped_column(Text)
+    run_spec: Mapped[str | None] = mapped_column(Text)
+    artifact: Mapped[str | None] = mapped_column(Text)
+    stage: Mapped[str | None] = mapped_column(String)
+    worker_id: Mapped[str | None] = mapped_column(String)
+    attempt: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    lease_until: Mapped[datetime | None] = mapped_column(DateTime)
+
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     job_type: Mapped[str] = mapped_column(String, nullable=False)  # "crawl" or "generate"
@@ -111,6 +128,10 @@ class Job(Base):
 
 class User(Base):
     __tablename__ = "users"
+    subject: Mapped[str | None] = mapped_column(String, unique=True)
+    role: Mapped[str] = mapped_column(String, nullable=False, default="pending", server_default="pending")
+    disabled_at: Mapped[datetime | None] = mapped_column(DateTime)
+
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     email: Mapped[str] = mapped_column(String, unique=True, nullable=False, index=True)
@@ -140,3 +161,11 @@ class UserPreferences(Base):
 
     def __repr__(self) -> str:
         return f"<UserPreferences(id={self.id}, user_id={self.user_id})>"
+
+
+class AudioArtifact(Base):
+    __tablename__ = "audio_artifacts"
+    path: Mapped[str] = mapped_column(String, primary_key=True)
+    post_id: Mapped[int] = mapped_column(Integer, ForeignKey("posts.id"), nullable=False)
+    job_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("jobs.id"))
+    public: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)

@@ -6,8 +6,8 @@ test.describe("PWA Configuration", () => {
     expect(response.status()).toBe(200);
 
     const manifest = await response.json();
-    expect(manifest.name).toBe("Catchup");
-    expect(manifest.short_name).toBe("Catchup");
+    expect(manifest.name).toBe("Blog2Podcast");
+    expect(manifest.short_name).toBe("Blog2Podcast");
     expect(manifest.display).toBe("standalone");
     expect(manifest.start_url).toBe("/");
     expect(manifest.scope).toBe("/");
@@ -38,7 +38,7 @@ test.describe("PWA Configuration", () => {
     // Next.js 16 renders apple-mobile-web-app-title and status-bar-style
     // (not apple-mobile-web-app-capable) when appleWebApp metadata is set
     const appTitle = page.locator('meta[name="apple-mobile-web-app-title"]');
-    await expect(appTitle).toHaveAttribute("content", "Catchup");
+    await expect(appTitle).toHaveAttribute("content", "Blog2Podcast");
 
     const statusBar = page.locator('meta[name="apple-mobile-web-app-status-bar-style"]').first();
     await expect(statusBar).toHaveAttribute("content", "black-translucent");

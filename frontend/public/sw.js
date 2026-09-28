@@ -1,51 +1,17 @@
-const CACHE_NAME = "tbc-v2";
-const STATIC_ASSETS = ["/", "/favicon.svg", "/manifest.json"];
-
-self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
-  );
-  self.skipWaiting();
+// Only immutable build assets are cached. Never HTML, API, sessions, or audio.
+const CACHE_NAME = "b2p-static-v3";
+self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("activate", event => {
+  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
-
-self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    )
-  );
-  self.clients.claim();
-});
-
-self.addEventListener("fetch", (event) => {
-  const { request } = event;
-  const url = new URL(request.url);
-
-  // Network-only for audio files — don't pollute cache with large MP3s
-  if (url.pathname.startsWith("/audio") || url.pathname.endsWith(".mp3")) {
-    event.respondWith(fetch(request));
-    return;
-  }
-
-  // Network-first for API calls
-  if (url.pathname.startsWith("/api")) {
-    event.respondWith(
-      fetch(request).catch(() => caches.match(request))
-    );
-    return;
-  }
-
-  // Cache-first for static assets
-  event.respondWith(
-    caches.match(request).then((cached) => {
-      if (cached) return cached;
-      return fetch(request).then((response) => {
-        if (response.ok && request.method === "GET") {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-        }
-        return response;
-      });
-    })
-  );
+self.addEventListener("fetch", event => {
+  const request=event.request;
+  const url=new URL(request.url);
+  if(request.method!=="GET" || url.origin!==self.location.origin || !url.pathname.startsWith("/_next/static/"))return;
+  event.respondWith(caches.open(CACHE_NAME).then(async cache => {
+    const cached=await cache.match(request);if(cached)return cached;
+    const response=await fetch(request);
+    if(response.ok)await cache.put(request,response.clone());
+    return response;
+  }));
 });

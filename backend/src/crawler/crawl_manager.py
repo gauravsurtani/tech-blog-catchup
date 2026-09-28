@@ -501,6 +501,7 @@ def crawl_all(
     session: Session,
     config: Config,
     dry_run: bool = False,
+    max_posts: int | None = None,
 ) -> dict[str, int]:
     """Crawl all enabled sources and return per-source new-post counts.
 
@@ -534,7 +535,7 @@ def crawl_all(
             console.print(f"\n[bold cyan]{source.name}[/bold cyan] ({source.key})")
 
             try:
-                count = crawl_source(session, source, config, dry_run=dry_run)
+                count = crawl_source(session, source, config, dry_run=dry_run, max_posts=max_posts)
                 results[source.key] = count
             except Exception as exc:
                 logger.error("Error crawling %s: %s", source.key, exc)

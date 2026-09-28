@@ -3,15 +3,15 @@ import type { MetadataRoute } from "next";
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     {
-      url: "https://techblog.up.railway.app",
+      url: "https://blog2podcast.com",
       lastModified: new Date(),
     },
     {
-      url: "https://techblog.up.railway.app/explore",
+      url: "https://blog2podcast.com/explore",
       lastModified: new Date(),
     },
     {
-      url: "https://techblog.up.railway.app/about",
+      url: "https://blog2podcast.com/about",
       lastModified: new Date(),
     },
   ];

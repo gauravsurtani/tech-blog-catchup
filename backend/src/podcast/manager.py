@@ -79,58 +79,14 @@ def generate_for_post(session: Session, post_id: int, config: Config) -> bool:
 
 
 def _generate_single(session: Session, post: Post, config: Config) -> bool:
-    """Generate podcast for a single post. Returns True on success.
-
-    If the post has no podcast_script, generates one via the LLM content
-    generator before proceeding to TTS audio generation.
-    """
+    from src.jobs import admit_generation
+    import os
     try:
-        logger.info(f"Generating podcast for: [{post.source_key}] {post.title}")
-
-        post.audio_status = "processing"
-        session.commit()
-
-        # Generate podcast script if missing
-        if not post.podcast_script and post.full_text:
-            logger.info(f"  Generating podcast script for post {post.id} via LLM...")
-            import asyncio
-            from src.extractor.content_generator import generate_content
-            content = asyncio.run(generate_content(post.title, post.full_text))
-            if content.get("podcast_script"):
-                post.podcast_script = content["podcast_script"]
-                if not post.summary and content.get("summary"):
-                    post.summary = content["summary"]
-                session.commit()
-                logger.info(f"  Script generated ({len(post.podcast_script)} chars)")
-            else:
-                logger.error(f"  LLM failed to generate script for post {post.id}")
-                post.audio_status = "failed"
-                session.commit()
-                return False
-
-        result = generate_podcast_for_post(post, config)
-
-        if result:
-            audio_path, duration = result
-            post.audio_status = "ready"
-            post.audio_path = audio_path
-            post.audio_duration_secs = duration
-            session.commit()
-            logger.info(f"  -> Success: {audio_path} ({duration}s)")
-            return True
-        else:
-            post.audio_status = "failed"
-            session.commit()
-            logger.warning(f"  -> Failed for post {post.id}")
-            return False
+        admit_generation(session,"system:scheduler",post.id,f"daily-{datetime.utcnow():%Y%m%d}-{post.id}",
+            {"model":os.getenv("OLLAMA_MODEL","gemma4:31b"),"speech":"kokoro-v1-int8","prompt":"v1"})
+        return True
     except Exception:
-        logger.exception(f"Unexpected error generating podcast for post {post.id}")
-        try:
-            post.audio_status = "failed"
-            session.commit()
-        except Exception:
-            logger.exception(f"Failed to mark post {post.id} as failed")
-            session.rollback()
+        session.rollback()
         return False
 
 

@@ -47,11 +47,11 @@ def create_scheduler(config: Config) -> AsyncIOScheduler:
     crawl_cron = sched_cfg.get("crawl_cron", _DEFAULTS["crawl_cron"])
     generate_cron = sched_cfg.get("generate_cron", _DEFAULTS["generate_cron"])
 
-    scheduler = AsyncIOScheduler()
+    scheduler = AsyncIOScheduler(timezone="UTC")
 
     scheduler.add_job(
         scheduled_crawl,
-        trigger=CronTrigger.from_crontab(crawl_cron),
+        trigger=CronTrigger.from_crontab(crawl_cron, timezone="UTC"),
         id="scheduled_crawl",
         name="Daily blog crawl",
         args=[config],
@@ -60,7 +60,7 @@ def create_scheduler(config: Config) -> AsyncIOScheduler:
 
     scheduler.add_job(
         scheduled_generate,
-        trigger=CronTrigger.from_crontab(generate_cron),
+        trigger=CronTrigger.from_crontab(generate_cron, timezone="UTC"),
         id="scheduled_generate",
         name="Daily podcast generation",
         args=[config],
@@ -80,11 +80,13 @@ def scheduled_crawl(config: Config) -> None:
     Called by the scheduler at the configured cron interval.
     Exceptions are caught so the scheduler keeps running.
     """
+    if os.getenv("ENABLE_GENERATION", "").lower() != "true":
+        return
     logger.info("Scheduled crawl starting")
     init_db()
     session = get_session()
     try:
-        results = crawl_all(session, config, dry_run=False)
+        results = crawl_all(session, config, dry_run=False, max_posts=(config.scheduler or {}).get("crawl_max_posts",5))
         total = sum(results.values())
         logger.info("Scheduled crawl finished — %d new posts", total)
 

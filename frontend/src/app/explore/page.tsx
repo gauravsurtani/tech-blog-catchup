@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Search, SlidersHorizontal, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { usePosts } from "@/hooks/usePosts";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
-import { getTags, getSources, triggerGenerate } from "@/lib/api";
+import { getTags, getSources, triggerGenerate, ApiError } from "@/lib/api";
 import PostCard from "@/components/PostCard";
 import SourceFilter from "@/components/SourceFilter";
 import TagFilter from "@/components/TagFilter";
@@ -18,7 +19,7 @@ const SORT_OPTIONS = [
   { value: "title", label: "Title A-Z" },
   { value: "shortest", label: "Shortest First" },
   { value: "longest", label: "Longest First" },
-  { value: "quality", label: "Highest Quality" },
+  { value: "quality", label: "Article completeness" },
 ];
 
 function PostCardSkeleton() {
@@ -48,6 +49,8 @@ function PostCardSkeleton() {
 }
 
 export default function ExplorePage() {
+  const router = useRouter();
+  const [generationError, setGenerationError] = useState<string | null>(null);
   // Filter state
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -175,10 +178,13 @@ export default function ExplorePage() {
   const handleGenerate = useCallback(async (post: Post) => {
     try {
       await triggerGenerate(post.id);
+      router.push("/member");
     } catch (err) {
-      console.error("Generate failed:", err);
+      if (err instanceof ApiError && err.status === 401) router.push("/login");
+      else if (err instanceof ApiError && err.status === 403) router.push("/member");
+      else setGenerationError(err instanceof Error ? err.message : "Generation unavailable");
     }
-  }, []);
+  }, [router]);
 
   // Pagination
   const totalPages = Math.ceil(total / PAGE_SIZE);
@@ -194,6 +200,7 @@ export default function ExplorePage() {
 
   return (
     <div className="flex gap-6 min-w-0">
+      {generationError && <p role="alert">{generationError}</p>}
       {/* Mobile filter overlay */}
       {sidebarOpen && (
         <div

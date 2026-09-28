@@ -141,12 +141,12 @@ def cmd_generate(args):
 
     try:
         if args.post_id:
-            console.print(f"Generating podcast for post {args.post_id}...")
+            console.print(f"Queueing a private generation for post {args.post_id}...")
             success = generate_for_post(session, args.post_id, config)
             if success:
-                console.print("[green]Podcast generated successfully![/green]")
+                console.print("[green]Generation queued. Keep the API worker running; inspect the job for its result.[/green]")
             else:
-                console.print("[red]Failed to generate podcast[/red]")
+                console.print("[red]Generation was not admitted[/red]")
                 sys.exit(1)
         else:
             since = None
@@ -164,7 +164,7 @@ def cmd_generate(args):
                 console.print(f"[yellow]Elapsed: {elapsed:.1f}s[/yellow]")
                 sys.exit(130)
             elapsed = time.time() - start_time
-            console.print(f"[green]Generated {count} podcasts in {elapsed:.1f}s[/green]")
+            console.print(f"[green]Queued {count} generation requests in {elapsed:.1f}s. The API worker renders them.[/green]")
     finally:
         session.close()
 
@@ -324,7 +324,7 @@ def cmd_reextract(args):
     session = get_session()
 
     try:
-        query = session.query(Post)
+        query = session.query(Post).filter(Post.visibility != "public")
 
         if args.source:
             source = next((s for s in config.sources if s.key == args.source), None)
@@ -426,116 +426,26 @@ def cmd_reextract(args):
 
 
 def cmd_regenerate(args):
-    """Regenerate summaries and podcast scripts for posts with bad/missing content."""
-    from src.config import get_config
-    from src.database import get_session, init_db
+    """Queue a new version; never edit the public summary/script in place."""
+    from src.database import init_db, get_session
     from src.models import Post
-    from sqlalchemy import or_
-
-    config = get_config()
+    from src.jobs import admit_generation
+    from datetime import datetime
     init_db()
-    session = get_session()
-
-    try:
-        query = session.query(Post)
-
-        if args.source:
-            source = next((s for s in config.sources if s.key == args.source), None)
-            if not source:
-                console.print(f"[red]Source '{args.source}' not found[/red]")
-                sys.exit(1)
-            query = query.filter(Post.source_key == args.source)
-            console.print(f"Filtering to source: [cyan]{source.name}[/cyan]")
-
-        summary_only = getattr(args, "summary_only", False)
-
-        # Find posts with bad summaries or missing podcast_script
-        conditions = [
-            Post.summary.contains("[Skip to"),
-            Post.summary.is_(None),
-            Post.summary == "",
-        ]
-        if not summary_only:
-            conditions.append(Post.podcast_script.is_(None))
-
-        query = query.filter(or_(*conditions))
-
-        # Merge both queries via union of IDs
-        bad_ids = {p.id for p in query.all()}
-        # For short summaries, just do a Python filter since SQLite lacks LEN on text easily
-        all_posts_for_len_check = session.query(Post)
-        if args.source:
-            all_posts_for_len_check = all_posts_for_len_check.filter(Post.source_key == args.source)
-        for p in all_posts_for_len_check.all():
-            if p.summary and len(p.summary) < 50 and "[Skip to" not in p.summary:
-                bad_ids.add(p.id)
-            if not summary_only and p.podcast_script is None:
-                bad_ids.add(p.id)
-
-        if not bad_ids:
-            console.print("[green]No posts need regeneration[/green]")
-            return
-
-        posts = session.query(Post).filter(Post.id.in_(bad_ids))
-        if args.limit:
-            posts = posts.limit(args.limit)
-        posts = posts.all()
-
-        console.print(f"Found [bold]{len(posts)}[/bold] posts to regenerate")
-
+    if args.summary_only:
+        raise SystemExit("Summary-only replacement is disabled. Queue a complete reviewed version.")
+    with get_session() as session:
+        query=session.query(Post).filter(Post.full_text.isnot(None))
+        if args.source: query=query.filter(Post.source_key==args.source)
+        ids=[p.id for p in query.order_by(Post.id).limit(args.limit or 10)]
         if args.dry_run:
-            table = Table(title="Posts to Regenerate (Dry Run)")
-            table.add_column("ID", justify="right")
-            table.add_column("Source", style="cyan")
-            table.add_column("Title")
-            table.add_column("Summary", style="dim")
-            table.add_column("Has Script", justify="center")
-            for post in posts:
-                summary_preview = (post.summary[:40] + "...") if post.summary and len(post.summary) > 40 else (post.summary or "N/A")
-                has_script = "Yes" if post.podcast_script else "No"
-                table.add_row(
-                    str(post.id),
-                    post.source_key,
-                    (post.title[:50] + "...") if len(post.title) > 50 else post.title,
-                    summary_preview,
-                    has_script,
-                )
-            console.print(table)
+            console.print(f"Would queue private versions for post IDs: {ids}")
             return
-
-        updated = 0
-        failed = 0
-        for i, post in enumerate(posts):
-            console.print(f"[{i+1}/{len(posts)}] Regenerating: {post.title[:60]}...")
-
-            if not post.full_text:
-                console.print(f"  [yellow]SKIP: no full_text[/yellow]")
-                failed += 1
-                continue
-
-            try:
-                if summary_only:
-                    from src.extractor.content_generator import generate_summary_only
-                    new_summary = asyncio.run(generate_summary_only(post.title, post.full_text))
-                    post.summary = new_summary
-                    console.print(f"  [green]Summary updated[/green]")
-                else:
-                    from src.extractor.content_generator import generate_content
-                    content = asyncio.run(generate_content(post.title, post.full_text))
-                    post.summary = content.get("summary", post.summary)
-                    post.podcast_script = content.get("podcast_script", post.podcast_script)
-                    has_script = "yes" if post.podcast_script else "no"
-                    console.print(f"  [green]Updated (script={has_script})[/green]")
-                updated += 1
-            except Exception as exc:
-                console.print(f"  [red]ERROR: {exc}[/red]")
-                failed += 1
-
-        session.commit()
-        console.print(f"\n[bold]Regeneration complete: {updated} updated, {failed} failed[/bold]")
-
-    finally:
-        session.close()
+        for post_id in ids:
+            job=admit_generation(session,"system:operator",post_id,f"regenerate-{datetime.utcnow():%Y%m%d}-{post_id}",
+                {"model":os.getenv("OLLAMA_MODEL","gemma4:31b"),"speech":"kokoro-v1-int8","prompt":"v1"})
+            console.print(f"Queued job {job.id} for post {post_id}. Publication is unchanged.")
+        console.print("Keep the API worker running to process these requests.")
 
 
 def cmd_cleanup(args):
@@ -645,6 +555,21 @@ def cmd_serve(args):
     cmd_api(args)
 
 
+def cmd_member(args):
+    """Explicit operator-only membership management. Requires a pre-existing identity."""
+    from src.models import User
+    from datetime import datetime
+    init_db()
+    with get_session() as session:
+        user=session.query(User).filter(User.subject==args.subject).first()
+        if not user:
+            raise SystemExit("Identity not found. The member must first sign in.")
+        if args.role=="revoked": user.disabled_at=datetime.utcnow()
+        else: user.role=args.role; user.disabled_at=None
+        session.commit()
+        console.print(f"Membership updated for user {user.id}: {args.role}")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Tech Blog Catchup - Scrape tech blogs, generate podcasts",
@@ -652,6 +577,10 @@ def main():
     )
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
+
+    member_parser = subparsers.add_parser("member", help="Set membership for a verified provider subject")
+    member_parser.add_argument("--subject", required=True)
+    member_parser.add_argument("--role", choices=["pending","member","admin","revoked"], required=True)
 
     # init
     subparsers.add_parser("init", help="Initialize database and create directories")
@@ -714,6 +643,7 @@ def main():
         sys.exit(1)
 
     commands = {
+        "member": cmd_member,
         "init": cmd_init,
         "crawl": cmd_crawl,
         "generate": cmd_generate,

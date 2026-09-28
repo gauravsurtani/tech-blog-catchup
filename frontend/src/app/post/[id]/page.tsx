@@ -83,6 +83,7 @@ export default function PostDetailPage() {
   const [post, setPost] = useState<PostDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [generationError, setGenerationError] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
 
   const { play, addToQueue } = useAudioPlayer();
@@ -93,9 +94,11 @@ export default function PostDetailPage() {
     setGenerating(true);
     try {
       await triggerGenerate(post.id);
-      setPost({ ...post, audio_status: "processing" });
+      router.push("/member");
     } catch (err) {
-      console.error("Generate failed:", err);
+      if (err instanceof ApiError && err.status === 401) router.push("/login");
+      else if (err instanceof ApiError && err.status === 403) router.push("/member");
+      else setGenerationError(err instanceof Error ? err.message : "Generation unavailable");
     } finally {
       setGenerating(false);
     }
@@ -231,6 +234,7 @@ export default function PostDetailPage() {
           </div>
         )}
 
+        {generationError && <p role="alert" className="mb-4">{generationError}</p>}
         {/* Audio controls */}
         <div className="flex items-center gap-3 mb-6">
           {post.audio_status === "ready" && (
@@ -253,7 +257,7 @@ export default function PostDetailPage() {
               ) : (
                 <Mic className="w-4 h-4" />
               )}
-              {generating ? "Generating..." : "Generate Podcast"}
+              {generating ? "Submitting..." : "Create private draft"}
             </button>
           )}
           {post.audio_status === "processing" && (

@@ -1,7 +1,8 @@
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-const SITE_URL = "https://techblog.up.railway.app";
+const SITE_URL = "https://blog2podcast.com";
 
 interface PostResponse {
   id: number;
@@ -15,7 +16,7 @@ interface PostResponse {
 async function fetchPost(id: string): Promise<PostResponse | null> {
   try {
     const res = await fetch(`${API_BASE}/api/posts/${id}`, {
-      next: { revalidate: 3600 },
+      cache: "no-store",
     });
     if (!res.ok) return null;
     return res.json();
@@ -44,7 +45,7 @@ export async function generateMetadata({
     description,
     openGraph: {
       type: "article",
-      siteName: "Catchup",
+      siteName: "Blog2Podcast",
       title: post.title,
       description,
       url: `${SITE_URL}/post/${post.id}`,
@@ -59,10 +60,8 @@ export async function generateMetadata({
   };
 }
 
-export default function PostLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function PostLayout({ children, params }: {children: React.ReactNode;params: Promise<{id:string}>}) {
+  const {id}=await params;
+  if(!/^\d+$/.test(id)||!await fetchPost(id)) notFound();
   return children;
 }

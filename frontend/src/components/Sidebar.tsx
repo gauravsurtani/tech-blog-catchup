@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useSyncExternalStore } from "react";
 import {
   Home,
   Compass,
@@ -20,6 +20,8 @@ import UserMenu from "./UserMenu";
 import SearchDialog from "./SearchDialog";
 import { useAuthEnabled } from "@/hooks/useRequireAuth";
 
+const subscribePlatform = () => () => {};
+
 const STORAGE_KEY = "sidebar-collapsed";
 
 const navItems = [
@@ -34,6 +36,7 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const isMac = useSyncExternalStore(subscribePlatform, () => /Mac/.test(navigator.platform), () => false);
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window === "undefined") return false;
     return localStorage.getItem(STORAGE_KEY) === "true";
@@ -104,7 +107,7 @@ export default function Sidebar() {
             <>
               <span className="flex-1 text-left whitespace-nowrap">Search</span>
               <kbd className="text-[10px] font-mono text-[var(--text-3)] bg-[var(--bg-hover)] px-1.5 py-0.5 rounded-[var(--radius)]">
-                {typeof navigator !== "undefined" && /Mac/.test(navigator.platform)
+                {isMac
                   ? "\u2318"
                   : "Ctrl+"}
                 K
